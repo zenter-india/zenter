@@ -137,22 +137,56 @@ function avatarInitials(name) {
   return safe.split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 }
 
+// ─── Enrichment helpers ───────────────────────────────────────────────────────
+
+const TRAVEL_LABEL = {
+  'By train':   '🚆 Train',
+  'By flight':  '✈️ Flight',
+  'By bus':     '🚌 Bus',
+  'Self-drive': '🚗 Self-drive',
+  'Other':      '🚗 Other',
+};
+const STAY_LABEL = {
+  'Need accommodation':     '🏨 Needs stay',
+  'Have accommodation':     '🏠 Has stay',
+  'Looking for room share': '🛏️ Room share',
+  'Other':                  '📦 Other',
+};
+
+function travelChips(travelMode, stayPlan) {
+  const chips = [];
+  if (travelMode && TRAVEL_LABEL[travelMode])
+    chips.push(`<span class="hm-chip hm-chip--sm">${esc(TRAVEL_LABEL[travelMode])}</span>`);
+  if (stayPlan && STAY_LABEL[stayPlan])
+    chips.push(`<span class="hm-chip hm-chip--sm">${esc(STAY_LABEL[stayPlan])}</span>`);
+  return chips.join('');
+}
+
+function bioSnippet(bio, maxLen = 60) {
+  if (!bio) return '';
+  const s = String(bio).trim();
+  return s.length > maxLen ? s.slice(0, maxLen - 1) + '…' : s;
+}
+
+// ─── Card builder ─────────────────────────────────────────────────────────────
+
 function buildCard(user) {
   const name        = user.full_name   || 'Unknown';
   const location    = [user.district, user.state].filter(Boolean).join(', ') || '—';
   const centre      = user.exam_center || '—';
   const phone       = user.phone       || '';
   const phonePretty = phone ? formatPhonePretty(phone) : '—';
-  // Strip non-digits for wa.me URL (works for E.164 like +919876543210)
   const digits      = phone.replace(/\D/g, '');
   const waHref      = digits ? `https://wa.me/${digits}` : '';
   const telHref     = phone  ? `tel:${phone}` : '';
   const color       = avatarColor(name);
   const initials    = avatarInitials(name);
+  const bio         = bioSnippet(user.bio);
+  const chips       = travelChips(user.travel_mode, user.stay_plan);
 
   return `
-    <div class="hm-card">
-      <!-- Head: avatar + name + location -->
+    <div class="hm-card hm-mate">
+      <!-- Identity -->
       <div class="hm-mate__head">
         <div class="hm-avatar"
              style="background:${color};color:#fff;flex-shrink:0;"
@@ -164,15 +198,17 @@ function buildCard(user) {
       </div>
 
       <!-- Exam centre -->
-      <p class="hm-mate__center" style="margin-top:var(--hm-space-2);">
-        ${esc(centre)}
-      </p>
+      <p class="hm-mate__center">🏛️ ${esc(centre)}</p>
 
-      <!-- Revealed contact (full phone + CTAs) -->
-      <div class="hm-contact-revealed" style="margin-top:var(--hm-space-3);padding-top:var(--hm-space-3);border-top:1px solid var(--hm-border);">
+      <!-- Social context: bio + travel/stay chips -->
+      ${bio   ? `<p class="hm-mate__bio">${esc(bio)}</p>` : ''}
+      ${chips ? `<div class="hm-mate__chips">${chips}</div>` : ''}
+
+      <!-- Revealed contact: full phone + CTAs -->
+      <div class="hm-contact-revealed" style="margin-top:auto;padding-top:var(--hm-space-3);border-top:1px solid var(--hm-border);">
         <p class="hm-contact-revealed__number">${esc(phonePretty)}</p>
         <div class="hm-contact-revealed__links">
-          ${waHref  ? `<a href="${esc(waHref)}"  target="_blank" rel="noopener noreferrer"
+          ${waHref  ? `<a href="${esc(waHref)}" target="_blank" rel="noopener noreferrer"
                           class="hm-btn hm-btn--soft hm-btn--sm">💬 WhatsApp</a>` : ''}
           ${telHref ? `<a href="${esc(telHref)}"
                           class="hm-btn hm-btn--ghost hm-btn--sm">📞 Call</a>` : ''}

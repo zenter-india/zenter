@@ -48,7 +48,6 @@
 .hm-mate {
   display: flex; flex-direction: column;
   gap: var(--hm-space-3);
-  min-height: 176px;          /* consistent height prevents layout jumps */
 }
 .hm-mate__head   { display: flex; align-items: center; gap: var(--hm-space-3); }
 .hm-mate__name   { font-weight: 600; font-size: var(--hm-text-base); color: var(--hm-text); margin: 0; }
@@ -74,6 +73,31 @@
 }
 .hm-card--interactive:hover .hm-mate__view,
 .hm-card--interactive:focus-visible .hm-mate__view { opacity: 1; }
+
+/* ── Card enrichment: bio snippet + travel/stay chips ────────────────────── */
+/* Single-line bio snippet — truncates gracefully, never breaks card layout */
+.hm-mate__bio {
+  font-size: var(--hm-text-xs);
+  color: var(--hm-text-muted);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.4;
+}
+/* Chip row for travel_mode + stay_plan */
+.hm-mate__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+}
+/* Compact chip size for card context (smaller than the landing-page chips) */
+.hm-chip--sm {
+  padding: 3px 9px;
+  font-size: var(--hm-text-xs);
+  gap: 4px;
+}
 
 /* Exam centre chip — slightly wider chip variant. */
 .hm-chip--center {

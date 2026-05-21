@@ -431,6 +431,8 @@ function refreshCardCta(userId) {
 function mateCard(user, idx) {
   const genderCls = { Female: 'hm-badge--info', Male: 'hm-badge--success' }[user.gender] || '';
   const location  = [user.district, user.state].filter(Boolean).join(', ');
+  const bio       = bioSnippet(user.bio);
+  const chips     = travelChips(user.travel_mode, user.stay_plan);
 
   return `
     <article class="hm-card hm-mate hm-card--interactive"
@@ -448,6 +450,8 @@ function mateCard(user, idx) {
         <span class="hm-badge hm-badge--success">✓ Verified</span>
       </div>
       ${user.exam_center ? `<p class="hm-mate__center">🏛️ ${esc(user.exam_center)}</p>` : ''}
+      ${bio   ? `<p class="hm-mate__bio">${esc(bio)}</p>` : ''}
+      ${chips ? `<div class="hm-mate__chips">${chips}</div>` : ''}
       <div class="hm-mate__footer">${cardFooterHtml(user)}</div>
     </article>`;
 }
@@ -535,6 +539,40 @@ function esc(str) {
   return String(str ?? '')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ─── Enrichment helpers ───────────────────────────────────────────────────────
+
+// Maps stored values → emoji + short label for compact chip display.
+const TRAVEL_LABEL = {
+  'By train':   '🚆 Train',
+  'By flight':  '✈️ Flight',
+  'By bus':     '🚌 Bus',
+  'Self-drive': '🚗 Self-drive',
+  'Other':      '🚗 Other',
+};
+const STAY_LABEL = {
+  'Need accommodation':    '🏨 Needs stay',
+  'Have accommodation':    '🏠 Has stay',
+  'Looking for room share': '🛏️ Room share',
+  'Other':                 '📦 Other',
+};
+
+// Returns up to 2 chip spans (travel + stay), or empty string if both absent.
+function travelChips(travelMode, stayPlan) {
+  const chips = [];
+  if (travelMode && TRAVEL_LABEL[travelMode])
+    chips.push(`<span class="hm-chip hm-chip--sm">${esc(TRAVEL_LABEL[travelMode])}</span>`);
+  if (stayPlan && STAY_LABEL[stayPlan])
+    chips.push(`<span class="hm-chip hm-chip--sm">${esc(STAY_LABEL[stayPlan])}</span>`);
+  return chips.join('');
+}
+
+// Returns a single-line bio snippet truncated to maxLen chars.
+function bioSnippet(bio, maxLen = 60) {
+  if (!bio) return '';
+  const s = String(bio).trim();
+  return s.length > maxLen ? s.slice(0, maxLen - 1) + '…' : s;
 }
 
 document.addEventListener('DOMContentLoaded', init);

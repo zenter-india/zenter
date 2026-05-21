@@ -66,10 +66,12 @@ export function upsertUser(payload) {
 }
 
 // Fetch all users with completed profiles for the dashboard feed.
+// Includes enrichment fields (travel_mode, stay_plan, bio) so cards can
+// show travel/stay context without a separate fetch.
 export function getAllUsers() {
   return query(
     from('users')
-      .select('id, full_name, gender, state, district, exam_center, phone, created_at')
+      .select('id, full_name, gender, state, district, exam_center, phone, travel_mode, stay_plan, bio, created_at')
       .eq('profile_completed', true)
       .order('created_at', { ascending: false })
   );
@@ -99,12 +101,12 @@ export function getAcceptedConnections(userId) {
 }
 
 // Batch-fetch user profiles by an array of ids.
-// Used by the connections page to resolve all partner profiles in one round-trip.
+// Includes enrichment fields so connections cards can show travel/stay context.
 export function getUsersByIds(ids) {
   if (!ids || ids.length === 0) return Promise.resolve({ data: [], error: null });
   return query(
     from('users')
-      .select('id, full_name, state, district, exam_center, phone')
+      .select('id, full_name, state, district, exam_center, phone, travel_mode, stay_plan, bio')
       .in('id', ids)
   );
 }
