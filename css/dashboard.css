@@ -297,9 +297,18 @@
 }
 .hm-section-card__header h3 { margin: 0; }
 
-.hm-kv { display: grid; grid-template-columns: 160px 1fr; row-gap: 12px; column-gap: var(--hm-space-4); }
-.hm-kv dt { color: var(--hm-text-subtle); font-size: var(--hm-text-sm); font-weight: 500; }
+.hm-kv { display: grid; grid-template-columns: 160px 1fr; row-gap: 12px; column-gap: var(--hm-space-4); align-items: start; }
+.hm-kv dt { color: var(--hm-text-subtle); font-size: var(--hm-text-sm); font-weight: 500; padding-top: 10px; }
 .hm-kv dd { margin: 0; color: var(--hm-text); font-weight: 500; }
-/* Empty-state prompts ("Add your college", etc.) — muted + italic so they read
-   as prompts rather than as real profile values. */
+/* Empty-state prompts — muted + italic so they differ visually from real values. */
 .hm-kv dd.hm-kv__empty { color: var(--hm-text-subtle); font-style: italic; font-weight: 400; }
+
+/* ── Inline edit mode ─────────────────────────────────────────────────────────
+   When a section enters edit mode (article.is-editing), inputs replace dd text.
+   Use the full-width hm-input / hm-select / hm-textarea — they fill the dd cell.
+   The kv grid expands vertically to accommodate input height: no layout jumps. */
+.hm-section-card.is-editing { border-color: var(--hm-primary); }
+.hm-kv .hm-input,
+.hm-kv .hm-select { width: 100%; }
+/* Bio textarea — shorter than the default 120px so it doesn't dominate the card */
+.hm-profile-bio { min-height: 80px !important; resize: vertical; }

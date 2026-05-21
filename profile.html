@@ -44,68 +44,70 @@
             <p class="hm-profile-card__name" id="hm-profile-name">Your name</p>
             <p class="hm-profile-card__phone" id="hm-profile-phone">+91 ••••• •••••</p>
             <span class="hm-badge hm-badge--success">Phone verified</span>
-            <hr class="hm-divider" />
-            <button type="button" class="hm-btn hm-btn--ghost hm-btn--block">Change photo</button>
           </div>
         </aside>
 
         <!-- RIGHT — editable sections -->
         <section>
-          <!-- About -->
-          <article class="hm-card hm-section-card">
+
+          <!-- ── About you ──────────────────────────────────────────────────── -->
+          <article class="hm-card hm-section-card" id="hm-section-about">
             <header class="hm-section-card__header">
               <h3>About you</h3>
-              <button type="button" class="hm-btn hm-btn--ghost hm-btn--sm">Edit</button>
+              <button type="button" class="hm-btn hm-btn--ghost hm-btn--sm"
+                      id="hm-edit-about">Edit</button>
             </header>
             <dl class="hm-kv">
-              <dt>Name</dt>            <dd id="hm-kv-name">—</dd>
-              <dt>Gender</dt>          <dd id="hm-kv-gender">—</dd>
-              <dt>Home city</dt>       <dd id="hm-kv-city">—</dd>
-              <dt>College</dt>         <dd id="hm-kv-college">—</dd>
+              <dt>Name</dt>    <dd id="hm-kv-name">—</dd>
+              <dt>Gender</dt>  <dd id="hm-kv-gender">—</dd>
+              <dt>College</dt> <dd id="hm-kv-college">—</dd>
             </dl>
           </article>
 
-          <!-- Centre -->
-          <article class="hm-card hm-section-card">
+          <!-- ── Exam centre ───────────────────────────────────────────────── -->
+          <article class="hm-card hm-section-card" id="hm-section-centre">
             <header class="hm-section-card__header">
               <h3>Exam centre</h3>
-              <button type="button" class="hm-btn hm-btn--ghost hm-btn--sm">Edit</button>
+              <button type="button" class="hm-btn hm-btn--ghost hm-btn--sm"
+                      id="hm-edit-centre">Edit</button>
             </header>
             <dl class="hm-kv">
-              <dt>Exam</dt>           <dd id="hm-kv-exam">NEET PG 2026</dd>
-              <dt>Centre city</dt>    <dd id="hm-kv-centre-city">—</dd>
-              <dt>Centre name</dt>    <dd id="hm-kv-centre-name">—</dd>
+              <dt>State</dt>        <dd id="hm-kv-state">—</dd>
+              <dt>District</dt>     <dd id="hm-kv-district">—</dd>
+              <dt>Exam centre</dt>  <dd id="hm-kv-exam-center">—</dd>
             </dl>
           </article>
 
-          <!-- Travel + stay -->
-          <article class="hm-card hm-section-card">
+          <!-- ── Travel & stay ─────────────────────────────────────────────── -->
+          <article class="hm-card hm-section-card" id="hm-section-travel">
             <header class="hm-section-card__header">
               <h3>Travel &amp; stay</h3>
-              <button type="button" class="hm-btn hm-btn--ghost hm-btn--sm">Edit</button>
+              <button type="button" class="hm-btn hm-btn--ghost hm-btn--sm"
+                      id="hm-edit-travel">Edit</button>
             </header>
             <dl class="hm-kv">
-              <dt>Travel mode</dt>    <dd id="hm-kv-travel">—</dd>
-              <dt>Stay plan</dt>      <dd id="hm-kv-stay">—</dd>
-              <dt>Bio</dt>            <dd id="hm-kv-bio">—</dd>
+              <dt>Travel mode</dt> <dd id="hm-kv-travel">—</dd>
+              <dt>Stay plan</dt>   <dd id="hm-kv-stay">—</dd>
+              <dt>Bio</dt>         <dd id="hm-kv-bio">—</dd>
             </dl>
           </article>
 
-          <!-- Privacy + danger zone -->
+          <!-- ── Privacy & account ─────────────────────────────────────────── -->
           <article class="hm-card hm-section-card">
             <header class="hm-section-card__header">
               <h3>Privacy &amp; account</h3>
             </header>
             <p class="hm-text-muted">
-              Your phone number is never shown to other students until <strong>both of you</strong> accept the connection.
+              Your phone number is never shown to other students until
+              <strong>both of you</strong> accept the connection.
             </p>
             <div class="d-flex flex-wrap gap-2 mt-3">
               <button type="button" class="hm-btn hm-btn--ghost">Pause my profile</button>
-              <button type="button" class="hm-btn hm-btn--ghost" style="color: var(--hm-danger); border-color: #fecaca;">
-                Delete account
-              </button>
+              <button type="button" class="hm-btn hm-btn--ghost"
+                      style="color:var(--hm-danger);border-color:#fecaca;">Delete account</button>
             </div>
           </article>
+
         </section>
       </section>
     </div>

@@ -49,7 +49,10 @@ export function getUserByPhone(phone) {
 export function getProfileByPhone(phone) {
   return query(
     from('users')
-      .select('id, phone, full_name, gender, state, district, exam_center, profile_completed, created_at')
+      .select(
+        'id, phone, full_name, gender, state, district, exam_center, ' +
+        'college, travel_mode, stay_plan, bio, profile_completed, created_at'
+      )
       .eq('phone', phone)
       .maybeSingle()
   );

@@ -1,166 +1,385 @@
-// HallMate — Profile page hydration.
-// Loaded only from profile.html (alongside app.js, which handles chrome + auth).
+// HallMate — Profile page: hydration + inline section editing.
+// Each card section (About / Centre / Travel) is independently editable.
 //
-// Flow:
-//   1. Wait for Firebase auth to resolve (requireAuth redirects if signed out).
-//   2. Look up the user's Supabase row by phone number.
-//   3. Hydrate the static profile.html shell with real values, falling back to
-//      friendly "Add your X" prompts for fields the onboarding flow doesn't yet
-//      capture (college, travel_mode, stay_plan, bio, ...).
-//
-// Notes:
-//   - Onboarding currently persists: full_name, gender, state, district,
-//     exam_center, phone. Forward-compat fields (home_city, college,
-//     centre_city, centre_name, travel_mode, stay_plan, bio) are read from the
-//     row when present and otherwise rendered as empty-state prompts.
-//   - "Home city" falls back to `district` so users who only completed
-//     onboarding still see a meaningful value.
-//   - "Centre name" falls back to `exam_center` for the same reason.
+// Edit flow per section:
+//   1. Click "Edit" → dd elements become inputs, button swaps to Save + Cancel
+//   2. Click "Save" → validate → upsertUser (Supabase) → re-render read view
+//   3. Click "Cancel" → restore read view from in-memory profileData (no fetch)
 
-import { requireAuth } from './auth.js';
-import { getProfileByPhone } from './supabase.js';
-import { formatPhonePretty } from './utils.js';
-import { STORAGE_KEYS } from './config.js';
+import { requireAuth }                from './auth.js';
+import { getProfileByPhone, upsertUser } from './supabase.js';
+import { formatPhonePretty }           from './utils.js';
+import { STORAGE_KEYS }                from './config.js';
+import { setButtonBusy }               from './ui.js';
 
-// Field id -> { selector, prompt }
-// `prompt` renders when the resolved value is empty/null.
-const FIELDS = {
-  name:        { id: 'hm-kv-name',        prompt: 'Add your name' },
-  gender:      { id: 'hm-kv-gender',      prompt: 'Add your gender' },
-  homeCity:    { id: 'hm-kv-city',        prompt: 'Add your home city' },
-  college:     { id: 'hm-kv-college',     prompt: 'Add your college' },
-  centreCity:  { id: 'hm-kv-centre-city', prompt: 'Add your centre city' },
-  centreName:  { id: 'hm-kv-centre-name', prompt: 'Add your centre name' },
-  travel:      { id: 'hm-kv-travel',      prompt: 'Add travel preference' },
-  stay:        { id: 'hm-kv-stay',        prompt: 'Add your stay plan' },
-  bio:         { id: 'hm-kv-bio',         prompt: 'Add a short bio' },
+// ─── Module state ─────────────────────────────────────────────────────────────
+let profilePhone = '';   // Firebase E.164 phone number
+let profileData  = {};   // Latest Supabase row; updated optimistically on save
+
+// ─── Option lists ─────────────────────────────────────────────────────────────
+const GENDER_OPTS = ['Female', 'Male', 'Prefer not to say'];
+
+const STATE_OPTS = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
+  'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
+  'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+  'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+  'Delhi', 'Jammu & Kashmir', 'Ladakh', 'Chandigarh', 'Puducherry', 'Other',
+];
+
+const TRAVEL_OPTS = ['By train', 'By flight', 'By bus', 'Self-drive', 'Other'];
+
+const STAY_OPTS = [
+  'Need accommodation', 'Have accommodation', 'Looking for room share', 'Other',
+];
+
+// ─── Section configs ──────────────────────────────────────────────────────────
+// key         → matches Object.entries() key used to wire buttons
+// sectionId   → <article> id
+// editBtnId   → Edit button id
+// fields[]    → defines each row: Supabase column key, dd element id, input type
+const SECTIONS = {
+  about: {
+    sectionId: 'hm-section-about',
+    editBtnId: 'hm-edit-about',
+    fields: [
+      {
+        key: 'full_name', ddId: 'hm-kv-name', type: 'text',
+        placeholder: 'Your full name', prompt: 'Add your name', required: true,
+      },
+      {
+        key: 'gender', ddId: 'hm-kv-gender', type: 'select',
+        options: GENDER_OPTS, prompt: 'Add your gender',
+      },
+      {
+        key: 'college', ddId: 'hm-kv-college', type: 'text',
+        placeholder: 'Your medical college', prompt: 'Add your college',
+      },
+    ],
+  },
+
+  centre: {
+    sectionId: 'hm-section-centre',
+    editBtnId: 'hm-edit-centre',
+    fields: [
+      {
+        key: 'state', ddId: 'hm-kv-state', type: 'select',
+        options: STATE_OPTS, prompt: 'Add your state',
+      },
+      {
+        key: 'district', ddId: 'hm-kv-district', type: 'text',
+        placeholder: 'e.g. Coimbatore', prompt: 'Add your district',
+      },
+      {
+        key: 'exam_center', ddId: 'hm-kv-exam-center', type: 'text',
+        placeholder: 'Centre name from admit card', prompt: 'Add your exam centre',
+      },
+    ],
+  },
+
+  travel: {
+    sectionId: 'hm-section-travel',
+    editBtnId: 'hm-edit-travel',
+    fields: [
+      {
+        key: 'travel_mode', ddId: 'hm-kv-travel', type: 'select',
+        options: TRAVEL_OPTS, prompt: 'Add travel preference',
+      },
+      {
+        key: 'stay_plan', ddId: 'hm-kv-stay', type: 'select',
+        options: STAY_OPTS, prompt: 'Add your stay plan',
+      },
+      {
+        key: 'bio', ddId: 'hm-kv-bio', type: 'textarea',
+        placeholder: 'Tell centre mates a little about yourself',
+        prompt: 'Add a short bio',
+      },
+    ],
+  },
 };
 
-const LOADING_TEXT = 'Loading…';
-const EMPTY_CLASS = 'hm-kv__empty';
-
+// ─── Bootstrap ────────────────────────────────────────────────────────────────
 async function init() {
   const firebaseUser = await requireAuth();
   if (!firebaseUser) return;
 
-  setLoadingState();
-
-  const phone = firebaseUser.phoneNumber || null;
-  if (!phone) {
-    renderError('Could not read your phone number from your sign-in. Please sign in again.');
+  profilePhone = firebaseUser.phoneNumber || '';
+  if (!profilePhone) {
+    setText('hm-profile-name', 'Cannot read phone — please sign in again.');
     return;
   }
 
-  // Always show the verified phone immediately — it comes from Firebase.
-  setPhone(phone);
+  // Show phone immediately (from Firebase, no Supabase latency)
+  setText('hm-profile-phone', formatPhonePretty(profilePhone));
 
-  const { data, error } = await getProfileByPhone(phone);
+  setAllLoading();
 
+  const { data, error } = await getProfileByPhone(profilePhone);
   if (error) {
-    console.error('[profile] failed to load profile', error);
-    renderError(error.message || 'Could not load your profile right now.');
+    console.error('[profile] load error', error);
+    setText('hm-profile-name', error.message || 'Could not load profile.');
     return;
   }
 
-  hydrate(data || {}, phone);
+  profileData = data || {};
+  hydrateAll();
+  wireEditButtons();
 }
 
-// ─── Rendering ────────────────────────────────────────────────────────────────
+// ─── Read-mode hydration ──────────────────────────────────────────────────────
 
-function hydrate(row, phone) {
-  const name = trimOrNull(row.full_name);
-
-  // Cache initials to sessionStorage so the navbar avatar can show real initials
-  // on every page without needing an additional Supabase fetch.
-  try {
-    const initials = avatarInitials(name);
-    sessionStorage.setItem(STORAGE_KEYS.profile, JSON.stringify({ initials }));
-    // Also update the navbar avatar on this page immediately.
-    const navAvatar = document.getElementById('hm-navbar-avatar');
-    if (navAvatar && initials !== 'HM') navAvatar.textContent = initials;
-  } catch { /* ignore — storage may be unavailable in private mode */ }
-
-  // Identity card (left column).
-  setText('hm-profile-name', name || 'Your name');
-  setAvatar(name);
-
-  // Editable sections (right column).
-  setField('name',       name);
-  setField('gender',     trimOrNull(row.gender));
-  // Home city: prefer dedicated column, fall back to onboarding `district`.
-  setField('homeCity',   trimOrNull(row.home_city) || trimOrNull(row.district));
-  setField('college',    trimOrNull(row.college));
-  // Centre city: prefer dedicated column, fall back to onboarding `state`
-  // (closest signal we have until centre_city is captured during onboarding).
-  setField('centreCity', trimOrNull(row.centre_city) || trimOrNull(row.state));
-  // Centre name: prefer dedicated column, fall back to onboarding `exam_center`.
-  setField('centreName', trimOrNull(row.centre_name) || trimOrNull(row.exam_center));
-  setField('travel',     trimOrNull(row.travel_mode));
-  setField('stay',       trimOrNull(row.stay_plan));
-  setField('bio',        trimOrNull(row.bio));
-}
-
-function setLoadingState() {
-  Object.values(FIELDS).forEach(({ id }) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = LOADING_TEXT;
-    el.classList.remove(EMPTY_CLASS);
+function setAllLoading() {
+  Object.values(SECTIONS).forEach(sec => {
+    sec.fields.forEach(f => setDd(f.ddId, null, ''));
   });
 }
 
-function setField(key, value) {
-  const meta = FIELDS[key];
-  if (!meta) return;
-  const el = document.getElementById(meta.id);
-  if (!el) return;
+function hydrateAll() {
+  const name = trimOrNull(profileData.full_name);
+
+  // Identity card (left column)
+  setText('hm-profile-name', name || 'Your name');
+  setAvatar(name);
+
+  // Cache initials for the navbar avatar across all pages
+  cacheInitials(name);
+
+  // All section fields
+  Object.values(SECTIONS).forEach(sec => hydrateSection(sec));
+}
+
+function hydrateSection(sec) {
+  sec.fields.forEach(f => {
+    setDd(f.ddId, trimOrNull(profileData[f.key]), f.prompt);
+  });
+}
+
+// Sets a <dd> to a value or an italic prompt when value is absent.
+function setDd(ddId, value, prompt) {
+  const dd = document.getElementById(ddId);
+  if (!dd) return;
   if (value) {
-    el.textContent = value;
-    el.classList.remove(EMPTY_CLASS);
+    dd.textContent = value;
+    dd.classList.remove('hm-kv__empty');
   } else {
-    el.textContent = meta.prompt;
-    el.classList.add(EMPTY_CLASS);
+    dd.textContent = prompt;
+    dd.classList.add('hm-kv__empty');
   }
 }
+
+// ─── Edit mode ────────────────────────────────────────────────────────────────
+
+function wireEditButtons() {
+  Object.entries(SECTIONS).forEach(([key, sec]) => {
+    const btn = document.getElementById(sec.editBtnId);
+    if (btn) btn.addEventListener('click', () => enterEditMode(key));
+  });
+}
+
+function enterEditMode(sectionKey) {
+  const sec     = SECTIONS[sectionKey];
+  const article = document.getElementById(sec.sectionId);
+  const editBtn = document.getElementById(sec.editBtnId);
+  if (!article || !editBtn) return;
+
+  // ── Swap Edit → Save + Cancel in the section header ──────────────────────
+  const actionWrap = document.createElement('div');
+  actionWrap.className = 'd-flex gap-2';
+  actionWrap.setAttribute('data-section-actions', '');
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type      = 'button';
+  cancelBtn.className = 'hm-btn hm-btn--ghost hm-btn--sm';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', () => exitEditMode(sectionKey));
+
+  const saveBtn = document.createElement('button');
+  saveBtn.type      = 'button';
+  saveBtn.className = 'hm-btn hm-btn--primary hm-btn--sm';
+  saveBtn.textContent = 'Save';
+  saveBtn.addEventListener('click', () => saveSection(sectionKey, saveBtn));
+
+  actionWrap.append(cancelBtn, saveBtn);
+  editBtn.replaceWith(actionWrap);
+
+  // ── Replace each <dd> text with the appropriate input ────────────────────
+  sec.fields.forEach(f => {
+    const dd = document.getElementById(f.ddId);
+    if (!dd) return;
+
+    const currentVal = trimOrNull(profileData[f.key]) || '';
+    dd.textContent = '';
+    dd.classList.remove('hm-kv__empty');
+
+    const input = buildInput(f, currentVal);
+    input.setAttribute('data-field-key', f.key);
+    dd.appendChild(input);
+  });
+
+  article.classList.add('is-editing');
+}
+
+function buildInput(field, currentVal) {
+  if (field.type === 'text') {
+    const el = document.createElement('input');
+    el.type        = 'text';
+    el.className   = 'hm-input';
+    el.value       = currentVal;
+    el.placeholder = field.placeholder || '';
+    if (field.required) el.required = true;
+    return el;
+  }
+
+  if (field.type === 'select') {
+    const el = document.createElement('select');
+    el.className = 'hm-select';
+    // Blank default option
+    const blank = document.createElement('option');
+    blank.value = ''; blank.textContent = 'Select…';
+    blank.selected = !currentVal;
+    el.appendChild(blank);
+    (field.options || []).forEach(opt => {
+      const o = document.createElement('option');
+      o.value = o.textContent = opt;
+      o.selected = (opt === currentVal);
+      el.appendChild(o);
+    });
+    return el;
+  }
+
+  if (field.type === 'textarea') {
+    const el = document.createElement('textarea');
+    el.className   = 'hm-textarea hm-profile-bio';
+    el.value       = currentVal;
+    el.placeholder = field.placeholder || '';
+    el.rows        = 3;
+    return el;
+  }
+}
+
+// ─── Save ─────────────────────────────────────────────────────────────────────
+
+async function saveSection(sectionKey, saveBtn) {
+  const sec     = SECTIONS[sectionKey];
+  const article = document.getElementById(sec.sectionId);
+
+  // Remove any previous inline error
+  article.querySelector('.hm-profile-save-error')?.remove();
+
+  // Collect + validate field values
+  const updates = {};
+  let valid = true;
+
+  for (const f of sec.fields) {
+    const dd  = document.getElementById(f.ddId);
+    const inp = dd?.querySelector('[data-field-key]');
+    if (!inp) continue;
+
+    const val = inp.value.trim() || null;
+    if (f.required && !val) {
+      inp.classList.add('hm-input--invalid');
+      valid = false;
+    } else {
+      inp.classList.remove('hm-input--invalid');
+      updates[f.key] = val;
+    }
+  }
+  if (!valid) return;
+
+  setButtonBusy(saveBtn, true, 'Saving…');
+
+  const { error } = await upsertUser({
+    phone: profilePhone,
+    profile_completed: true,
+    ...updates,
+  });
+
+  setButtonBusy(saveBtn, false);
+
+  if (error) {
+    console.error('[profile] save error', error);
+    const errEl = document.createElement('p');
+    errEl.className = 'hm-profile-save-error';
+    errEl.style.cssText =
+      'color:var(--hm-danger);font-size:var(--hm-text-xs);' +
+      'margin-top:var(--hm-space-3);grid-column:1/-1;';
+    errEl.textContent = error.message || 'Save failed. Please try again.';
+    article.querySelector('.hm-kv')?.appendChild(errEl);
+    return;
+  }
+
+  // Optimistic merge into in-memory profileData
+  Object.assign(profileData, updates);
+
+  // Keep identity card in sync if name changed
+  if ('full_name' in updates) {
+    const name = trimOrNull(profileData.full_name);
+    setText('hm-profile-name', name || 'Your name');
+    setAvatar(name);
+    cacheInitials(name);
+  }
+
+  exitEditMode(sectionKey);
+}
+
+// ─── Exit edit mode ───────────────────────────────────────────────────────────
+
+function exitEditMode(sectionKey) {
+  const sec     = SECTIONS[sectionKey];
+  const article = document.getElementById(sec.sectionId);
+  if (!article) return;
+
+  article.classList.remove('is-editing');
+  article.querySelector('.hm-profile-save-error')?.remove();
+
+  // Restore dd read values from profileData
+  hydrateSection(sec);
+
+  // Swap Save+Cancel back to Edit button
+  const actionWrap = article.querySelector('[data-section-actions]');
+  if (!actionWrap) return;
+
+  const editBtn = document.createElement('button');
+  editBtn.type      = 'button';
+  editBtn.className = 'hm-btn hm-btn--ghost hm-btn--sm';
+  editBtn.id        = sec.editBtnId;
+  editBtn.textContent = 'Edit';
+  editBtn.addEventListener('click', () => enterEditMode(sectionKey));
+  actionWrap.replaceWith(editBtn);
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function setText(id, text) {
   const el = document.getElementById(id);
   if (el) el.textContent = text;
 }
 
-function setPhone(phone) {
-  setText('hm-profile-phone', formatPhonePretty(phone) || phone);
-}
-
 function setAvatar(name) {
   const el = document.getElementById('hm-profile-avatar');
-  if (!el) return;
-  el.textContent = avatarInitials(name);
+  if (el) el.textContent = avatarInitials(name);
 }
 
-function renderError(message) {
-  Object.values(FIELDS).forEach(({ id }) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = '—';
-    el.classList.remove(EMPTY_CLASS);
-  });
-  // Surface the error in the name slot so it's visible without redesigning UI.
-  setText('hm-profile-name', message);
+function cacheInitials(name) {
+  try {
+    const initials = avatarInitials(name);
+    sessionStorage.setItem(STORAGE_KEYS.profile, JSON.stringify({ initials }));
+    const navAvatar = document.getElementById('hm-navbar-avatar');
+    if (navAvatar && initials !== 'HM') navAvatar.textContent = initials;
+  } catch { /* ignore — storage may be unavailable in private mode */ }
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function trimOrNull(value) {
-  if (value === null || value === undefined) return null;
-  const s = String(value).trim();
-  return s ? s : null;
+function trimOrNull(v) {
+  if (v == null) return null;
+  const s = String(v).trim();
+  return s || null;
 }
 
 function avatarInitials(name) {
-  const safe = (name || '').trim();
-  if (!safe) return 'HM';
-  return safe.split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+  const s = (name || '').trim();
+  if (!s) return 'HM';
+  return s.split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 }
 
 document.addEventListener('DOMContentLoaded', init);
