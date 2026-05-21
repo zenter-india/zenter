@@ -9,13 +9,25 @@
 
     <!--
       ── CENTER: Nav links ──────────────────────────────────────────────────
-      Desktop  → inline (grid col 2, centered).
-      Mobile   → position:fixed drawer (slides in from right on toggle).
-      Auth state switches which set of <li> items is visible via JS.
+      Desktop  → inline flex row (grid col 2, centered).
+      Mobile   → right-side slide drawer (280px, position:fixed).
+      Auth state switches which <li> items are visible via JS.
     -->
     <ul class="hm-nav-links" id="hm-nav-links" role="list">
 
-      <!-- Logged-OUT links (visible before sign-in) -->
+      <!-- Drawer header: "Menu" label + close button.
+           Shown only on mobile inside the drawer. Hidden on desktop via CSS. -->
+      <li class="hm-nav-links__header" aria-hidden="true">
+        <span class="hm-nav-links__header-label">Menu</span>
+        <button
+          class="hm-nav-links__close"
+          id="hm-drawer-close"
+          type="button"
+          aria-label="Close menu"
+        >✕</button>
+      </li>
+
+      <!-- ── Logged-OUT nav links ── -->
       <li data-auth="logged-out">
         <a href="/dashboard.html" data-route="dashboard">Find Mates</a>
       </li>
@@ -23,7 +35,7 @@
         <a href="/index.html#how-it-works">How it works</a>
       </li>
 
-      <!-- Logged-IN links (visible after sign-in) -->
+      <!-- ── Logged-IN primary nav links ── -->
       <li data-auth="logged-in" hidden>
         <a href="/dashboard.html" data-route="dashboard">Find Mates</a>
       </li>
@@ -31,22 +43,40 @@
         <a href="/connections.html" data-route="connections">Connections</a>
       </li>
 
+      <!--
+        ── Logged-IN secondary actions (drawer-only on mobile).
+           hm-nav-links__drawer-item keeps these hidden on desktop
+           via CSS; JS shows them when logged in by removing hidden attr.
+      -->
+      <li class="hm-nav-links__sep hm-nav-links__drawer-item" data-auth="logged-in" hidden></li>
+      <li class="hm-nav-links__drawer-item" data-auth="logged-in" hidden>
+        <a href="/profile.html" data-route="profile" class="hm-nav-links__action">Profile</a>
+      </li>
+      <li class="hm-nav-links__drawer-item" data-auth="logged-in" hidden>
+        <button
+          type="button"
+          class="hm-nav-links__action hm-nav-links__action--danger"
+          data-action="logout"
+        >Log out</button>
+      </li>
+
     </ul>
 
     <!--
       ── RIGHT: hm-nav-right ────────────────────────────────────────────────
-      Groups all right-side controls. Pushed to far right on both desktop
-      (grid col 3, justify-content:flex-end) and mobile (margin-left:auto).
+      Groups all right-side controls. Always flush right via:
+        – desktop: justify-content:flex-end on the grid col-3
+        – mobile:  margin-left:auto on the flex container
 
-      Contains (visibility controlled by auth state + viewport CSS):
+      Contents (visibility by auth state + viewport CSS):
         1. hm-nav-cta      — mobile-only; logged-out auth CTAs always visible
         2. hm-nav-actions  — desktop-only; logged-out auth CTAs
         3. hm-nav-profile  — all viewports; logged-in avatar + dropdown
-        4. hm-nav-toggle   — mobile-only; hamburger for nav-links drawer
+        4. hm-nav-toggle   — mobile-only; hamburger
     -->
     <div class="hm-nav-right">
 
-      <!-- 1. Mobile logged-out CTAs (always visible on mobile; hidden on desktop) -->
+      <!-- 1. Mobile logged-out CTAs (always in navbar on mobile) -->
       <div class="hm-nav-cta" data-auth="logged-out" aria-label="Get started">
         <a href="/login.html" class="hm-btn hm-btn--ghost hm-btn--xs">Sign in</a>
         <a href="/login.html" class="hm-btn hm-btn--primary hm-btn--xs">Get started</a>
@@ -58,7 +88,7 @@
         <a href="/login.html" class="hm-btn hm-btn--primary hm-btn--sm">Get started</a>
       </div>
 
-      <!-- 3. Logged-in avatar + dropdown (all viewports; hidden until signed in) -->
+      <!-- 3. Logged-in avatar + dropdown (all viewports; JS shows when signed in) -->
       <div class="hm-nav-profile" data-auth="logged-in" hidden>
         <button
           class="hm-nav-profile__btn"
@@ -74,9 +104,7 @@
 
         <ul class="hm-nav-profile__dropdown" id="hm-avatar-dropdown" role="menu">
           <li role="none">
-            <a href="/profile.html" class="hm-nav-profile__item" role="menuitem">
-              My Profile
-            </a>
+            <a href="/profile.html" class="hm-nav-profile__item" role="menuitem">My Profile</a>
           </li>
           <li role="none">
             <button
@@ -84,9 +112,7 @@
               class="hm-nav-profile__item hm-nav-profile__item--danger"
               role="menuitem"
               data-action="logout"
-            >
-              Log out
-            </button>
+            >Log out</button>
           </li>
         </ul>
       </div>

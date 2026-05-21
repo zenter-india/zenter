@@ -44,55 +44,95 @@ export async function mountChrome() {
 const MOBILE_BREAKPOINT = '(max-width: 991.98px)';
 
 export function wireNavbarToggle() {
-  const nav = document.getElementById('hm-navbar');
+  const nav    = document.getElementById('hm-navbar');
   const toggle = document.getElementById('hm-nav-toggle');
   if (!nav || !toggle) return;
 
-  // Guard against duplicate wiring (e.g. if mountChrome runs twice).
+  // Guard against duplicate wiring.
   if (nav.dataset.hmNavWired === '1') return;
   nav.dataset.hmNavWired = '1';
 
+  // ── Escape from backdrop-filter containing-block bug ─────────────────────
+  //
+  // The navbar has `backdrop-filter: blur()`. In Chrome/Safari this creates a
+  // NEW containing block for position:fixed descendants. That means the drawer
+  // (#hm-nav-links) — which is fixed-positioned — is sized relative to the
+  // 64-72px navbar instead of the viewport, giving it ~0px effective height.
+  //
+  // Fix: move BOTH the drawer and the backdrop to <body> before attaching
+  // any listeners. Elements on <body> have no transform/filter ancestor, so
+  // position:fixed is always viewport-relative.
+  const navLinks = document.getElementById('hm-nav-links');
+  if (navLinks && navLinks.parentElement !== document.body) {
+    document.body.appendChild(navLinks);
+  }
+
+  // ── Backdrop (also on <body> for the same reason) ─────────────────────────
+  let backdrop = document.getElementById('hm-drawer-backdrop');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.id        = 'hm-drawer-backdrop';
+    backdrop.className = 'hm-drawer-backdrop';
+    backdrop.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(backdrop);
+  }
+
+  // ── Open / close helpers ──────────────────────────────────────────────────
   const closeMenu = () => {
     if (!nav.classList.contains('is-open')) return;
     nav.classList.remove('is-open');
+    navLinks?.classList.remove('is-open');
+    backdrop.classList.remove('is-open');
     toggle.setAttribute('aria-expanded', 'false');
     toggle.setAttribute('aria-label', 'Open menu');
-    // Release body scroll-lock applied when drawer was opened.
     document.body.style.overflow = '';
   };
 
   const openMenu = () => {
     nav.classList.add('is-open');
+    navLinks?.classList.add('is-open');
+    backdrop.classList.add('is-open');
     toggle.setAttribute('aria-expanded', 'true');
     toggle.setAttribute('aria-label', 'Close menu');
-    // Prevent page behind the drawer from scrolling.
     document.body.style.overflow = 'hidden';
   };
 
-  // Toggle button — open/close drawer.
+  // ── Hamburger toggle ──────────────────────────────────────────────────────
   toggle.addEventListener('click', (e) => {
     e.stopPropagation();
     if (nav.classList.contains('is-open')) closeMenu();
     else openMenu();
   });
 
-  // Click on any nav link or drawer action auto-closes the drawer on mobile.
-  nav.addEventListener('click', (e) => {
-    const link = e.target.closest(
-      '.hm-nav-links a, .hm-nav-links__action, .hm-nav-actions a, .hm-nav-actions button'
-    );
-    if (!link) return;
-    if (window.matchMedia(MOBILE_BREAKPOINT).matches) closeMenu();
+  // ── Close button inside drawer ────────────────────────────────────────────
+  const closeBtn = document.getElementById('hm-drawer-close');
+  if (closeBtn) closeBtn.addEventListener('click', closeMenu);
+
+  // ── Clicking a nav link / drawer action auto-closes on mobile ─────────────
+  // navLinks is now on body so we listen on it directly (no longer inside nav).
+  const DRAWER_SELECTORS = '.hm-nav-links a, .hm-nav-links__action, .hm-nav-actions a, .hm-nav-actions button';
+  [nav, navLinks].forEach((root) => {
+    if (!root) return;
+    root.addEventListener('click', (e) => {
+      const link = e.target.closest(DRAWER_SELECTORS);
+      if (!link) return;
+      if (window.matchMedia(MOBILE_BREAKPOINT).matches) closeMenu();
+    });
   });
 
-  // Click outside the navbar closes the menu.
+  // ── Backdrop click closes the drawer ─────────────────────────────────────
+  backdrop.addEventListener('click', closeMenu);
+
+  // ── Click outside navbar + drawer closes the menu ─────────────────────────
   document.addEventListener('click', (e) => {
     if (!nav.classList.contains('is-open')) return;
-    if (nav.contains(e.target)) return;
+    if (nav.contains(e.target))      return; // inside navbar
+    if (navLinks?.contains(e.target)) return; // inside drawer (now on body)
+    if (e.target === backdrop)        return; // backdrop has its own listener
     closeMenu();
   });
 
-  // Escape key closes the menu and returns focus to the toggle.
+  // ── Escape key ───────────────────────────────────────────────────────────
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (!nav.classList.contains('is-open')) return;
@@ -100,8 +140,7 @@ export function wireNavbarToggle() {
     toggle.focus();
   });
 
-  // If the viewport grows past the mobile breakpoint while the drawer is
-  // open, drop the open state so the desktop layout is clean.
+  // ── Viewport resize past breakpoint — clean up open state ────────────────
   const mql = window.matchMedia(MOBILE_BREAKPOINT);
   const onBreakpointChange = (ev) => { if (!ev.matches) closeMenu(); };
   if (mql.addEventListener) mql.addEventListener('change', onBreakpointChange);

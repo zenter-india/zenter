@@ -130,24 +130,105 @@
 
 .hm-nav-toggle {
   display: none;
-  width: 40px; height: 40px;
+  width: 44px; height: 44px;
   flex-shrink: 0;
-  border: 1px solid var(--hm-border);
+  /* Stronger border + tinted background for better contrast against glassy navbar */
+  border: 1.5px solid var(--hm-border-strong);
   background: var(--hm-surface);
-  border-radius: var(--hm-radius-sm);
+  border-radius: var(--hm-radius-md);
   align-items: center; justify-content: center;
   cursor: pointer;
+  transition: background var(--hm-duration-fast) var(--hm-ease),
+              border-color var(--hm-duration-fast) var(--hm-ease),
+              box-shadow var(--hm-duration-fast) var(--hm-ease);
 }
-.hm-nav-toggle span { display: block; width: 18px; height: 2px; background: var(--hm-text); position: relative; }
-.hm-nav-toggle span::before, .hm-nav-toggle span::after {
-  content: ''; position: absolute; left: 0; width: 18px; height: 2px; background: var(--hm-text);
+.hm-nav-toggle:hover  { background: var(--hm-surface-2); border-color: var(--hm-text-subtle); }
+.hm-nav-toggle:active { background: var(--hm-border); box-shadow: none; }
+
+/* Hamburger bars — slightly wider (20px), rounded caps, with animated transitions */
+.hm-nav-toggle span {
+  display: block;
+  width: 20px; height: 2px;
+  background: var(--hm-text);
+  border-radius: 2px;
+  position: relative;
+  transition: background var(--hm-duration-base) var(--hm-ease),
+              transform var(--hm-duration-base) var(--hm-ease);
+}
+.hm-nav-toggle span::before,
+.hm-nav-toggle span::after {
+  content: '';
+  position: absolute; left: 0;
+  width: 20px; height: 2px;
+  background: var(--hm-text);
+  border-radius: 2px;
+  transition: top    var(--hm-duration-base) var(--hm-ease),
+              transform var(--hm-duration-base) var(--hm-ease),
+              background var(--hm-duration-base) var(--hm-ease);
 }
 .hm-nav-toggle span::before { top: -6px; }
 .hm-nav-toggle span::after  { top:  6px; }
 
+/* ── X animation when drawer is open ──────────────────────────────────────── */
+.hm-navbar.is-open .hm-nav-toggle {
+  background: var(--hm-surface-2);
+  border-color: var(--hm-border-strong);
+}
+.hm-navbar.is-open .hm-nav-toggle span            { background: transparent; }
+.hm-navbar.is-open .hm-nav-toggle span::before    { top: 0; transform: rotate(45deg); }
+.hm-navbar.is-open .hm-nav-toggle span::after     { top: 0; transform: rotate(-45deg); }
+
 /* hm-nav-cta — mobile-only auth CTA container. Hidden on desktop by default;
    responsive.css shows it at ≤991px. */
 .hm-nav-cta { display: none; align-items: center; gap: var(--hm-space-2); flex-shrink: 0; }
+
+/* ── Drawer backdrop ─────────────────────────────────────────────────────── */
+/* Created by JS (wireNavbarToggle) and appended to <body> so it is not
+   affected by the navbar's backdrop-filter stacking context. */
+.hm-drawer-backdrop {
+  position: fixed; inset: 0;
+  z-index: 1028; /* below drawer (1029) and navbar (1030) */
+  background: rgba(15, 23, 42, 0.50);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--hm-duration-base) var(--hm-ease);
+}
+.hm-drawer-backdrop.is-open { opacity: 1; pointer-events: auto; }
+
+/* ── Drawer header (Menu label + close button) ───────────────────────────── */
+/* Hidden on desktop — only meaningful inside the slide drawer. */
+.hm-nav-links__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 4px 12px;
+  margin-bottom: var(--hm-space-2);
+  border-bottom: 1px solid var(--hm-border);
+  list-style: none;
+  flex-shrink: 0;
+}
+.hm-nav-links__header-label {
+  font-size: var(--hm-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hm-text-subtle);
+}
+.hm-nav-links__close {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  border: 1px solid var(--hm-border);
+  background: var(--hm-surface-2);
+  border-radius: var(--hm-radius-sm);
+  font-size: 16px; line-height: 1;
+  color: var(--hm-text-muted);
+  cursor: pointer;
+  transition: background var(--hm-duration-fast) var(--hm-ease),
+              color var(--hm-duration-fast) var(--hm-ease);
+}
+.hm-nav-links__close:hover { background: var(--hm-border); color: var(--hm-text); }
 
 /* ── Mobile drawer action items ──────────────────────────────────────────── */
 /* Separator between nav links and logged-in actions inside the drawer. */
