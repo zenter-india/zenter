@@ -187,7 +187,7 @@ html, body { overflow-x: hidden; max-width: 100%; }
 }
 
 /* ============================================================
-   ≥ 992px — DESKTOP: hide mobile-only elements
+   ≥ 992px — DESKTOP navbar + layout
 ============================================================ */
 @media (min-width: 992px) {
 
@@ -198,6 +198,21 @@ html, body { overflow-x: hidden; max-width: 100%; }
   .hm-nav-links__header,
   .hm-nav-links__drawer-item,
   .hm-nav-links__sep { display: none !important; }
+
+  /* ── Desktop navbar alignment fixes ────────────────────────────────────
+     Pin hm-nav-right explicitly to grid column 3 so it stays in the right
+     slot regardless of how many items are visible in the center column.
+     justify-content:flex-end (from components.css) then right-aligns Sign in
+     / avatar within that column.                                         */
+  .hm-nav-right {
+    grid-column: 3;
+    justify-self: stretch; /* fill the full 1fr column */
+  }
+
+  /* Logged-out nav links (How it works) are mobile-drawer-only on desktop.
+     The center col is intentionally empty for logged-out users; it fills
+     with Find Mates + Connections once JS resolves the logged-in state.  */
+  .hm-nav-links li[data-auth="logged-out"] { display: none !important; }
 
   /* Desktop page top-padding */
   .hm-page { padding-top: var(--hm-space-8); }

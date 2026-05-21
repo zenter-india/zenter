@@ -1,0 +1,193 @@
+// HallMate — Connections page.
+// Fetches accepted connections for the signed-in user, resolves the partner
+// profile for each, and renders contact cards with WhatsApp + Call CTAs.
+//
+// Query flow:
+//   1. requireAuth()  → Firebase user → phone
+//   2. getProfileByPhone(phone) → current user's Supabase row (need the uuid)
+//   3. getAcceptedConnections(userId) → rows where sender|receiver = me, status='accepted'
+//   4. Derive otherIds = [ the side that is NOT me ] (deduplicated)
+//   5. getUsersByIds(otherIds) → batch fetch partner profiles in one query
+//   6. Render cards (name · location · exam centre · phone · WhatsApp · Call)
+
+import { requireAuth }           from './auth.js';
+import {
+  getProfileByPhone,
+  getAcceptedConnections,
+  getUsersByIds,
+}                                from './supabase.js';
+import { formatPhonePretty }     from './utils.js';
+
+// ─── Bootstrap ────────────────────────────────────────────────────────────────
+
+async function init() {
+  const firebaseUser = await requireAuth();
+  if (!firebaseUser) return;
+
+  const root = document.getElementById('hm-connections-root');
+  if (!root) return;
+
+  setLoading(root);
+
+  // 1. Resolve current user's Supabase UUID (needed to join connections table)
+  const { data: me, error: meErr } = await getProfileByPhone(firebaseUser.phoneNumber);
+  if (meErr || !me) {
+    renderError(root, 'Could not load your profile. Please sign in again.');
+    return;
+  }
+
+  // 2. Fetch all accepted connections where current user is sender OR receiver
+  const { data: connections, error: connErr } = await getAcceptedConnections(me.id);
+  if (connErr) {
+    renderError(root, connErr.message || 'Could not load connections.');
+    return;
+  }
+
+  if (!connections || connections.length === 0) {
+    renderEmpty(root);
+    return;
+  }
+
+  // 3. Derive the "other" user's id for every accepted connection (deduplicated
+  //    with a Set to prevent rendering duplicate cards if rows somehow repeat)
+  const otherIds = [...new Set(
+    connections.map(c => c.sender_id === me.id ? c.receiver_id : c.sender_id)
+  )];
+
+  // 4. Batch-fetch all partner profiles in one round-trip
+  const { data: partners, error: partnersErr } = await getUsersByIds(otherIds);
+  if (partnersErr || !partners) {
+    renderError(root, 'Could not load connection profiles.');
+    return;
+  }
+
+  if (partners.length === 0) {
+    renderEmpty(root);
+    return;
+  }
+
+  // 5. Render
+  const byId = Object.fromEntries(partners.map(u => [u.id, u]));
+  renderConnections(root, otherIds, byId);
+}
+
+// ─── Render helpers ───────────────────────────────────────────────────────────
+
+function setLoading(root) {
+  root.innerHTML = `
+    <div style="text-align:center;padding:var(--hm-space-7) var(--hm-space-5);">
+      <div class="hm-loader__spinner" style="margin:0 auto;"></div>
+      <p class="hm-text-muted" style="margin-top:var(--hm-space-3);">Loading connections…</p>
+    </div>`;
+}
+
+function renderEmpty(root) {
+  root.innerHTML = `
+    <div class="hm-empty">
+      <div class="hm-empty__icon" aria-hidden="true">🤝</div>
+      <h3>No connections yet</h3>
+      <p class="hm-text-muted" style="max-width:360px;margin:0 auto var(--hm-space-4);">
+        Browse centre mates and send a connection request.
+        Phone numbers reveal only after both of you accept.
+      </p>
+      <a href="/dashboard.html" class="hm-btn hm-btn--primary">Find centre mates</a>
+    </div>`;
+}
+
+function renderError(root, msg) {
+  root.innerHTML = `
+    <div class="hm-empty">
+      <div class="hm-empty__icon" aria-hidden="true">⚠️</div>
+      <h3>Something went wrong</h3>
+      <p class="hm-text-muted">${esc(msg)}</p>
+      <button type="button" class="hm-btn hm-btn--ghost" onclick="location.reload()">
+        Try again
+      </button>
+    </div>`;
+}
+
+function renderConnections(root, otherIds, byId) {
+  const cards = otherIds
+    .map(id => {
+      const user = byId[id];
+      return user ? buildCard(user) : '';
+    })
+    .filter(Boolean)
+    .join('');
+
+  root.innerHTML = `<div class="hm-grid-cards">${cards}</div>`;
+}
+
+// ─── Card builder ─────────────────────────────────────────────────────────────
+
+const AVATAR_COLORS = [
+  '#7C3AED', '#2563EB', '#059669', '#D97706',
+  '#DC2626', '#DB2777', '#0891B2',
+];
+
+function avatarColor(name) {
+  let h = 0;
+  for (const ch of (name || '')) h = (h * 31 + ch.charCodeAt(0)) | 0;
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+}
+
+function avatarInitials(name) {
+  const safe = (name || '').trim();
+  if (!safe) return '?';
+  return safe.split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+}
+
+function buildCard(user) {
+  const name        = user.full_name   || 'Unknown';
+  const location    = [user.district, user.state].filter(Boolean).join(', ') || '—';
+  const centre      = user.exam_center || '—';
+  const phone       = user.phone       || '';
+  const phonePretty = phone ? formatPhonePretty(phone) : '—';
+  // Strip non-digits for wa.me URL (works for E.164 like +919876543210)
+  const digits      = phone.replace(/\D/g, '');
+  const waHref      = digits ? `https://wa.me/${digits}` : '';
+  const telHref     = phone  ? `tel:${phone}` : '';
+  const color       = avatarColor(name);
+  const initials    = avatarInitials(name);
+
+  return `
+    <div class="hm-card">
+      <!-- Head: avatar + name + location -->
+      <div class="hm-mate__head">
+        <div class="hm-avatar"
+             style="background:${color};color:#fff;flex-shrink:0;"
+             aria-hidden="true">${esc(initials)}</div>
+        <div style="min-width:0;">
+          <p class="hm-mate__name">${esc(name)}</p>
+          <p class="hm-mate__sub">${esc(location)}</p>
+        </div>
+      </div>
+
+      <!-- Exam centre -->
+      <p class="hm-mate__center" style="margin-top:var(--hm-space-2);">
+        ${esc(centre)}
+      </p>
+
+      <!-- Revealed contact (full phone + CTAs) -->
+      <div class="hm-contact-revealed" style="margin-top:var(--hm-space-3);padding-top:var(--hm-space-3);border-top:1px solid var(--hm-border);">
+        <p class="hm-contact-revealed__number">${esc(phonePretty)}</p>
+        <div class="hm-contact-revealed__links">
+          ${waHref  ? `<a href="${esc(waHref)}"  target="_blank" rel="noopener noreferrer"
+                          class="hm-btn hm-btn--soft hm-btn--sm">💬 WhatsApp</a>` : ''}
+          ${telHref ? `<a href="${esc(telHref)}"
+                          class="hm-btn hm-btn--ghost hm-btn--sm">📞 Call</a>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+// ─── Utility ──────────────────────────────────────────────────────────────────
+
+function esc(str) {
+  return String(str ?? '').replace(
+    /[&<>"']/g,
+    c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])
+  );
+}
+
+document.addEventListener('DOMContentLoaded', init);

@@ -83,6 +83,29 @@ export function getMyConnections(userId) {
   );
 }
 
+// Fetch only ACCEPTED connections for the connections page.
+// Returns rows with sender_id + receiver_id so the caller can derive the
+// "other" user's id (whichever side is NOT the current user).
+export function getAcceptedConnections(userId) {
+  return query(
+    from('connections')
+      .select('id, sender_id, receiver_id')
+      .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+      .eq('status', 'accepted')
+  );
+}
+
+// Batch-fetch user profiles by an array of ids.
+// Used by the connections page to resolve all partner profiles in one round-trip.
+export function getUsersByIds(ids) {
+  if (!ids || ids.length === 0) return Promise.resolve({ data: [], error: null });
+  return query(
+    from('users')
+      .select('id, full_name, state, district, exam_center, phone')
+      .in('id', ids)
+  );
+}
+
 export function sendConnectionRequest(senderId, receiverId) {
   return query(
     from('connections')

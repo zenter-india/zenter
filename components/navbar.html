@@ -9,14 +9,15 @@
 
     <!--
       ── CENTER: Nav links ──────────────────────────────────────────────────
-      Desktop  → inline flex row (grid col 2, centered).
-      Mobile   → right-side slide drawer (280px, position:fixed).
-      Auth state switches which <li> items are visible via JS.
+      Desktop  → inline, grid col 2. Logged-out items hidden on desktop via
+                 CSS (.hm-nav-links li[data-auth="logged-out"]{display:none})
+                 so the center is empty until the user logs in.
+      Mobile   → right-side 280px drawer (position:fixed, slides from right).
+      JS toggles hidden attr on data-auth items after Firebase resolves.
     -->
     <ul class="hm-nav-links" id="hm-nav-links" role="list">
 
-      <!-- Drawer header: "Menu" label + close button.
-           Shown only on mobile inside the drawer. Hidden on desktop via CSS. -->
+      <!-- Drawer header (mobile only — hidden on desktop via CSS) -->
       <li class="hm-nav-links__header" aria-hidden="true">
         <span class="hm-nav-links__header-label">Menu</span>
         <button
@@ -27,15 +28,13 @@
         >✕</button>
       </li>
 
-      <!-- ── Logged-OUT nav links ── -->
-      <li data-auth="logged-out">
-        <a href="/dashboard.html" data-route="dashboard">Find Mates</a>
-      </li>
+      <!-- ── Logged-OUT: only "How it works" (mobile drawer only).
+               Desktop hides all logged-out items via CSS. -->
       <li data-auth="logged-out">
         <a href="/index.html#how-it-works">How it works</a>
       </li>
 
-      <!-- ── Logged-IN primary nav links ── -->
+      <!-- ── Logged-IN primary links (desktop center + mobile drawer) -->
       <li data-auth="logged-in" hidden>
         <a href="/dashboard.html" data-route="dashboard">Find Mates</a>
       </li>
@@ -43,10 +42,20 @@
         <a href="/connections.html" data-route="connections">Connections</a>
       </li>
 
-      <!--
-        ── Utility links (drawer-only on mobile, always visible regardless of auth).
-           hm-nav-links__drawer-item keeps these hidden on desktop via CSS.
-      -->
+      <!-- ── Logged-IN secondary (mobile drawer only — hidden on desktop) -->
+      <li class="hm-nav-links__sep hm-nav-links__drawer-item" data-auth="logged-in" hidden></li>
+      <li class="hm-nav-links__drawer-item" data-auth="logged-in" hidden>
+        <a href="/profile.html" data-route="profile" class="hm-nav-links__action">Profile</a>
+      </li>
+      <li class="hm-nav-links__drawer-item" data-auth="logged-in" hidden>
+        <button
+          type="button"
+          class="hm-nav-links__action hm-nav-links__action--danger"
+          data-action="logout"
+        >Log out</button>
+      </li>
+
+      <!-- ── Utility links (drawer only, always visible regardless of auth) -->
       <li class="hm-nav-links__sep hm-nav-links__drawer-item"></li>
       <li class="hm-nav-links__drawer-item">
         <a href="mailto:support@hallmate.in" class="hm-nav-links__action">Contact us</a>
@@ -59,30 +68,27 @@
 
     <!--
       ── RIGHT: hm-nav-right ────────────────────────────────────────────────
-      Groups all right-side controls. Always flush right via:
-        – desktop: justify-content:flex-end on the grid col-3
-        – mobile:  margin-left:auto on the flex container
+      Pinned to grid column 3 (1fr, justify-content:flex-end) on desktop.
+      Uses margin-left:auto on mobile flex layout.
 
-      Contents (visibility by auth state + viewport CSS):
-        1. hm-nav-cta      — mobile-only; logged-out auth CTAs always visible
-        2. hm-nav-actions  — desktop-only; logged-out auth CTAs
-        3. hm-nav-profile  — all viewports; logged-in avatar + dropdown
-        4. hm-nav-toggle   — mobile-only; hamburger
+      1. hm-nav-cta      — mobile-only; logged-out Sign in
+      2. hm-nav-actions  — desktop-only; logged-out Sign in (right-pinned)
+      3. hm-nav-profile  — all viewports; logged-in avatar + dropdown
+      4. hm-nav-toggle   — mobile-only; hamburger
     -->
     <div class="hm-nav-right">
 
-      <!-- 1. Mobile logged-out CTAs (always in navbar on mobile) -->
-      <!-- 1. Mobile logged-out CTA (always visible on mobile) -->
+      <!-- 1. Mobile CTA (logged-out, always visible on mobile) -->
       <div class="hm-nav-cta" data-auth="logged-out">
         <a href="/login.html" class="hm-btn hm-btn--primary hm-btn--xs">Sign in</a>
       </div>
 
-      <!-- 2. Desktop logged-out CTA (hidden on mobile, right-aligned via hm-nav-right) -->
+      <!-- 2. Desktop CTA (logged-out, hidden on mobile) -->
       <div class="hm-nav-actions" data-auth="logged-out">
         <a href="/login.html" class="hm-btn hm-btn--primary hm-btn--sm">Sign in</a>
       </div>
 
-      <!-- 3. Logged-in avatar + dropdown (all viewports; JS shows when signed in) -->
+      <!-- 3. Logged-in avatar + dropdown (all viewports) -->
       <div class="hm-nav-profile" data-auth="logged-in" hidden>
         <button
           class="hm-nav-profile__btn"
@@ -111,7 +117,7 @@
         </ul>
       </div>
 
-      <!-- 4. Hamburger toggle (mobile only) -->
+      <!-- 4. Hamburger (mobile only) -->
       <button
         class="hm-nav-toggle"
         type="button"
