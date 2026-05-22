@@ -77,5 +77,15 @@
   text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;
 }
 
-/* reCAPTCHA is disabled — container kept in HTML but hidden. */
-#hm-recaptcha-container { display: none; }
+/* reCAPTCHA: invisible mode — the container must exist in the DOM so the SDK
+   can render its iframe, but it takes no visual space. The floating badge
+   (bottom-right corner) is also hidden; reCAPTCHA use is disclosed in the
+   Privacy Policy per Google's terms. */
+#hm-recaptcha-container {
+  position: absolute;
+  width:    0;
+  height:   0;
+  overflow: hidden;
+  border:   0;
+}
+.grecaptcha-badge { visibility: hidden !important; }
