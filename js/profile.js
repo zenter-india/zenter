@@ -6,12 +6,13 @@
 //   2. Click "Save" → validate → upsertUser (Supabase) → re-render read view
 //   3. Click "Cancel" → restore read view from in-memory profileData (no fetch)
 
-import { requireAuth }                from './auth.js';
-import { getProfileByPhone, upsertUser } from './supabase.js';
-import { formatPhonePretty }           from './utils.js';
-import { STORAGE_KEYS }                from './config.js';
-import { setButtonBusy }               from './ui.js';
-import { STATES, wireDistrictCascade } from './location-data.js';
+import { requireAuth, logout }                         from './auth.js';
+import { getProfileByPhone, upsertUser,
+         setPausedStatus, deleteUserData }              from './supabase.js';
+import { formatPhonePretty }                           from './utils.js';
+import { STORAGE_KEYS, ROUTES }                        from './config.js';
+import { setButtonBusy, toast }                        from './ui.js';
+import { STATES, wireDistrictCascade }                 from './location-data.js';
 
 // ─── Module state ─────────────────────────────────────────────────────────────
 let profilePhone = '';   // Firebase E.164 phone number
@@ -87,11 +88,6 @@ const SECTIONS = {
         key: 'stay_plan', ddId: 'hm-kv-stay', type: 'select',
         options: STAY_OPTS, prompt: 'Add your stay plan',
       },
-      {
-        key: 'bio', ddId: 'hm-kv-bio', type: 'textarea',
-        placeholder: 'Tell centre mates a little about yourself',
-        prompt: 'Add a short bio',
-      },
     ],
   },
 };
@@ -122,6 +118,7 @@ async function init() {
   profileData = data || {};
   hydrateAll();
   wireEditButtons();
+  wireAccountActions();
 }
 
 // ─── Read-mode hydration ──────────────────────────────────────────────────────
@@ -426,6 +423,103 @@ function avatarInitials(name) {
   const s = (name || '').trim();
   if (!s) return 'HM';
   return s.split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+}
+
+// ─── Account actions: pause + delete ─────────────────────────────────────────
+
+function openModal(id)  { document.getElementById(id)?.classList.add('is-open'); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('is-open'); }
+
+/** Sync the Pause button label + paused notice with current profileData state. */
+function renderPauseState() {
+  const btn    = document.getElementById('hm-pause-profile');
+  const notice = document.getElementById('hm-paused-notice');
+  const paused = !!profileData.is_profile_paused;
+  if (btn)    btn.textContent = paused ? 'Reactivate profile' : 'Pause my profile';
+  if (notice) notice.hidden   = !paused;
+}
+
+function wireAccountActions() {
+  renderPauseState();
+
+  // ── Pause / Reactivate ────────────────────────────────────────────────────
+  document.getElementById('hm-pause-profile')?.addEventListener('click', () => {
+    if (profileData.is_profile_paused) {
+      // Reactivate: no confirmation needed — just a beneficial toggle
+      doPauseToggle(false);
+    } else {
+      openModal('hm-modal-pause');
+    }
+  });
+
+  document.getElementById('hm-modal-pause-cancel')
+    ?.addEventListener('click', () => closeModal('hm-modal-pause'));
+
+  document.getElementById('hm-modal-pause')
+    ?.addEventListener('click', e => {
+      if (e.target.id === 'hm-modal-pause') closeModal('hm-modal-pause');
+    });
+
+  document.getElementById('hm-modal-pause-confirm')
+    ?.addEventListener('click', async () => {
+      const btn = document.getElementById('hm-modal-pause-confirm');
+      setButtonBusy(btn, true, 'Pausing…');
+      await doPauseToggle(true);
+      setButtonBusy(btn, false);
+      closeModal('hm-modal-pause');
+    });
+
+  // ── Delete account ────────────────────────────────────────────────────────
+  document.getElementById('hm-delete-account')
+    ?.addEventListener('click', () => openModal('hm-modal-delete'));
+
+  document.getElementById('hm-modal-delete-cancel')
+    ?.addEventListener('click', () => closeModal('hm-modal-delete'));
+
+  document.getElementById('hm-modal-delete')
+    ?.addEventListener('click', e => {
+      if (e.target.id === 'hm-modal-delete') closeModal('hm-modal-delete');
+    });
+
+  document.getElementById('hm-modal-delete-confirm')
+    ?.addEventListener('click', async () => {
+      const btn = document.getElementById('hm-modal-delete-confirm');
+      setButtonBusy(btn, true, 'Deleting…');
+      await doDeleteAccount(btn);
+    });
+}
+
+async function doPauseToggle(pausing) {
+  const { error } = await setPausedStatus(profilePhone, pausing);
+  if (error) {
+    toast(error.message || 'Could not update profile. Please try again.', { variant: 'danger' });
+    return;
+  }
+  profileData.is_profile_paused = pausing;
+  renderPauseState();
+  toast(
+    pausing ? 'Profile paused — you\'re hidden from Find Mates.'
+            : 'Profile reactivated — you\'re visible again!',
+    { variant: pausing ? 'info' : 'success' }
+  );
+}
+
+async function doDeleteAccount(confirmBtn) {
+  if (!profileData.id) {
+    toast('Cannot delete — profile not loaded. Please refresh.', { variant: 'danger' });
+    setButtonBusy(confirmBtn, false);
+    return;
+  }
+
+  const { error } = await deleteUserData(profileData.id);
+  if (error) {
+    toast(error.message || 'Delete failed. Please try again.', { variant: 'danger' });
+    setButtonBusy(confirmBtn, false);
+    return;
+  }
+
+  // Sign out Firebase session then go to landing
+  await logout(ROUTES.landing);
 }
 
 document.addEventListener('DOMContentLoaded', init);

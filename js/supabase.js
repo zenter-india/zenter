@@ -41,18 +41,14 @@ export function getUserByPhone(phone) {
 }
 
 // Fetch the full profile row for the current user (looked up by phone).
-// Returns { data: <row|null>, error }. Selects only the columns guaranteed by
-// the current onboarding schema; richer fields (home_city, college, etc.) are
-// merged in by the profile page from row[field] if the column exists on the
-// server — this keeps the helper resilient to forward-compat columns being
-// missing without throwing PGRST errors.
 export function getProfileByPhone(phone) {
   return query(
     from('users')
       .select(
         'id, phone, full_name, gender, state, district, ' +
         'exam_centre_state, exam_centre_district, exam_center, ' +
-        'college, travel_mode, stay_plan, bio, profile_completed, created_at'
+        'college, travel_mode, stay_plan, bio, ' +
+        'profile_completed, is_profile_paused, created_at'
       )
       .eq('phone', phone)
       .maybeSingle()
@@ -66,16 +62,38 @@ export function upsertUser(payload) {
   );
 }
 
-// Fetch all users with completed profiles for the dashboard feed.
-// Includes enrichment fields (travel_mode, stay_plan, bio) so cards can
-// show travel/stay context without a separate fetch.
+// Fetch all users with completed, non-paused profiles for the dashboard feed.
+// Paused users are excluded. Old users without is_profile_paused (null) still appear.
 export function getAllUsers() {
   return query(
     from('users')
       .select('id, full_name, gender, state, district, exam_centre_state, exam_centre_district, exam_center, phone, travel_mode, stay_plan, bio, created_at')
       .eq('profile_completed', true)
+      .or('is_profile_paused.is.null,is_profile_paused.eq.false')
       .order('created_at', { ascending: false })
   );
+}
+
+// Set or clear the is_profile_paused flag for the current user.
+export function setPausedStatus(phone, paused) {
+  return query(
+    from('users')
+      .update({ is_profile_paused: paused })
+      .eq('phone', phone)
+      .select('id')
+      .single()
+  );
+}
+
+// Delete all user data: connections first (FK), then the profile row itself.
+export async function deleteUserData(userId) {
+  const { error: connErr } = await query(
+    from('connections')
+      .delete()
+      .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
+  );
+  if (connErr) return { error: connErr };
+  return query(from('users').delete().eq('id', userId));
 }
 
 // ─── Connection helpers ───────────────────────────────────────────────────────
