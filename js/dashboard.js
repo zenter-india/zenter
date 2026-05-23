@@ -17,6 +17,7 @@ let displayedUsers  = [];
 let lastFocusedCard = null;
 let modalUser       = null;
 let myUserId        = null;
+let myExamType      = null;   // permanent — set during onboarding
 let firebaseUser    = null;   // stored for lazy connections load
 let connectionsLoaded = false;
 let blockedUserIds  = new Set(); // blocked_user_id values for the current user
@@ -42,7 +43,12 @@ async function init() {
   wireTabs();
 
   const { data: me } = await getUserByPhone(firebaseUser.phoneNumber);
-  myUserId = me?.id || null;
+  myUserId   = me?.id        || null;
+  myExamType = me?.exam_type || 'NEET PG'; // legacy users default to NEET PG
+
+  // Reflect the user's permanent exam type in the header label.
+  const examLabel = document.getElementById('hm-exam-label');
+  if (examLabel) examLabel.textContent = myExamType;
 
   // Load blocked-user IDs up front so filtering is instant throughout the session.
   if (myUserId) {
@@ -50,7 +56,6 @@ async function init() {
     blockedUserIds = new Set((blocked || []).map(b => b.blocked_user_id));
   }
 
-  wireExamSwitcher();
   wireFilters();
   wireModal();
   wireConnectionActions();
@@ -70,7 +75,7 @@ async function init() {
 async function loadData() {
   renderSkeletons();
   const [usersRes, connsRes] = await Promise.all([
-    getAllUsers(),
+    getAllUsers(myExamType),
     myUserId ? getMyConnections(myUserId) : Promise.resolve({ data: [], error: null }),
   ]);
 
@@ -140,58 +145,6 @@ async function activateTab(name) {
       await runConnections(root, firebaseUser);
     }
   }
-}
-
-// ─── Exam-type switcher ───────────────────────────────────────────────────────
-
-const ACTIVE_EXAM = 'NEET PG'; // only live exam context for now
-
-function wireExamSwitcher() {
-  const btn  = document.getElementById('hm-exam-switcher-btn');
-  const menu = document.getElementById('hm-exam-switcher-menu');
-  if (!btn || !menu) return;
-
-  // Toggle dropdown open/closed
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const opening = menu.hidden;
-    menu.hidden = !opening;
-    btn.setAttribute('aria-expanded', String(opening));
-  });
-
-  // Handle option selection
-  menu.addEventListener('click', (e) => {
-    const item = e.target.closest('.hm-exam-switcher__item');
-    if (!item) return;
-    const exam = item.dataset.exam;
-
-    // Close menu
-    menu.hidden = true;
-    btn.setAttribute('aria-expanded', 'false');
-
-    if (exam === ACTIVE_EXAM) return; // already on Find Mates for this exam
-
-    // Persist selection for future use, then go to maintenance
-    try { localStorage.setItem('hm.selected_exam_type', exam); } catch {}
-    window.location.href = '/maintenance.html';
-  });
-
-  // Close on any outside click
-  document.addEventListener('click', () => {
-    if (!menu.hidden) {
-      menu.hidden = true;
-      btn.setAttribute('aria-expanded', 'false');
-    }
-  });
-
-  // Close on Escape
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !menu.hidden) {
-      menu.hidden = true;
-      btn.setAttribute('aria-expanded', 'false');
-      btn.focus();
-    }
-  });
 }
 
 // ─── Filtering ────────────────────────────────────────────────────────────────

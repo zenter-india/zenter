@@ -45,23 +45,8 @@
 
       <header class="hm-feed-header">
         <div>
-          <!-- Exam-type switcher — NEET PG is the only active context for now -->
-          <div class="hm-exam-switcher" id="hm-exam-switcher">
-            <button class="hm-exam-switcher__btn" id="hm-exam-switcher-btn"
-                    type="button" aria-haspopup="listbox" aria-expanded="false"
-                    aria-label="Switch exam type">
-              <span class="hm-eyebrow hm-exam-switcher__label" id="hm-exam-switcher-label">NEET PG</span>
-              <span class="hm-exam-switcher__arrow" aria-hidden="true">▾</span>
-            </button>
-            <ul class="hm-exam-switcher__menu" id="hm-exam-switcher-menu"
-                role="listbox" aria-label="Select exam type" hidden>
-              <li role="option" class="hm-exam-switcher__item is-active" data-exam="NEET PG"  aria-selected="true">NEET PG</li>
-              <li role="option" class="hm-exam-switcher__item" data-exam="NEET UG"  aria-selected="false">NEET UG</li>
-              <li role="option" class="hm-exam-switcher__item" data-exam="INICET"   aria-selected="false">INICET</li>
-              <li role="option" class="hm-exam-switcher__item" data-exam="NEET MDS" aria-selected="false">NEET MDS</li>
-              <li role="option" class="hm-exam-switcher__item" data-exam="NEET SS"  aria-selected="false">NEET SS</li>
-            </ul>
-          </div>
+          <!-- Exam type — fixed per account (set during onboarding) -->
+          <span class="hm-eyebrow" id="hm-exam-label">NEET PG</span>
           <h1 style="margin-top: 12px;">Find HallMates</h1>
           <p class="hm-text-muted">
             Students registered at the same exam centre.

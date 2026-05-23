@@ -27,14 +27,14 @@
 
         <div class="hm-empty__icon" aria-hidden="true" style="margin:0 auto var(--hm-space-4);">🏛️</div>
 
-        <h1 id="hm-exam-name" style="margin-bottom:var(--hm-space-2);">Coming soon</h1>
+        <h1 style="margin-bottom:var(--hm-space-2);">NEET PG 2026 HallMates are now active.</h1>
 
-        <p class="hm-text-muted" style="max-width:400px;margin:0 auto var(--hm-space-5);">
-          HallMates will start appearing once exam dates are officially announced.
+        <p class="hm-text-muted" style="max-width:440px;margin:0 auto var(--hm-space-5);">
+          Other exam communities will open once official schedules are announced.
         </p>
 
         <a href="/dashboard.html" class="hm-btn hm-btn--primary hm-btn--sm">
-          ← Back to NEET PG
+          ← Back to dashboard
         </a>
 
       </div>
@@ -44,16 +44,6 @@
   <div data-include="footer"></div>
 
   <script type="module" src="/js/app.js"></script>
-  <script>
-    // Show the exam name from localStorage if redirected from the switcher
-    try {
-      const exam = localStorage.getItem('hm.selected_exam_type');
-      if (exam) {
-        const el = document.getElementById('hm-exam-name');
-        if (el) el.textContent = exam;
-      }
-    } catch {}
-  </script>
   <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
   <script>
     window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };

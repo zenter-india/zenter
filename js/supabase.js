@@ -36,7 +36,10 @@ export function from(table) {
 // Check if a user with this phone exists and whether profile is complete.
 export function getUserByPhone(phone) {
   return query(
-    from('users').select('id, profile_completed').eq('phone', phone).maybeSingle()
+    from('users')
+      .select('id, profile_completed, exam_type')
+      .eq('phone', phone)
+      .maybeSingle()
   );
 }
 
@@ -62,16 +65,24 @@ export function upsertUser(payload) {
   );
 }
 
-// Fetch all users with completed, non-paused profiles for the dashboard feed.
-// Paused users are excluded. Old users without is_profile_paused (null) still appear.
-export function getAllUsers() {
-  return query(
-    from('users')
-      .select('id, full_name, gender, state, district, exam_centre_state, exam_centre_district, exam_center, phone, travel_mode, stay_plan, bio, created_at')
-      .eq('profile_completed', true)
-      .or('is_profile_paused.is.null,is_profile_paused.eq.false')
-      .order('created_at', { ascending: false })
-  );
+// Fetch all users with completed, non-paused profiles for the dashboard feed,
+// scoped to the requested exam ecosystem.
+//   - examType='NEET PG' (or null): include both 'NEET PG' AND legacy rows with
+//     null exam_type — so users created before exam_type existed remain visible.
+//   - examType='NEET UG' / 'INICET' / etc.: strict equality only.
+export function getAllUsers(examType = 'NEET PG') {
+  let q = from('users')
+    .select('id, full_name, gender, state, district, exam_centre_state, exam_centre_district, exam_center, phone, travel_mode, stay_plan, bio, exam_type, created_at')
+    .eq('profile_completed', true)
+    .or('is_profile_paused.is.null,is_profile_paused.eq.false');
+
+  if (examType === 'NEET PG') {
+    q = q.or('exam_type.eq.NEET PG,exam_type.is.null');
+  } else if (examType) {
+    q = q.eq('exam_type', examType);
+  }
+
+  return query(q.order('created_at', { ascending: false }));
 }
 
 // Set or clear the is_profile_paused flag for the current user.

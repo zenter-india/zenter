@@ -23,7 +23,8 @@ const GENDER_OPTS = ['Female', 'Male', 'Prefer not to say'];
 
 // STATES imported from location-data.js — single source of truth for all 36 entries.
 
-const EXAM_TYPE_OPTS = ['NEET PG', 'NEET UG', 'INICET', 'NEET MDS', 'NEET SS'];
+// Exam type is permanent per account — set once during onboarding and not
+// editable from the profile page. Kept in the DB for filtering only.
 
 const TRAVEL_OPTS = ['By train', 'By flight', 'By bus', 'Self-drive', 'Other'];
 
@@ -60,10 +61,6 @@ const SECTIONS = {
     sectionId: 'hm-section-centre',
     editBtnId: 'hm-edit-centre',
     fields: [
-      {
-        key: 'exam_type', ddId: 'hm-kv-exam-type', type: 'select',
-        options: EXAM_TYPE_OPTS, prompt: 'Add your exam type',
-      },
       {
         key: 'exam_centre_state', ddId: 'hm-kv-exam-state', type: 'select',
         options: STATES, prompt: 'Add exam centre state',
