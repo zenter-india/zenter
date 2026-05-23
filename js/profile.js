@@ -121,6 +121,15 @@ async function init() {
   hydrateAll();
   wireEditButtons();
   wireAccountActions();
+
+  // Allow the navbar dropdown's "Pause profile" / "Delete account" deep-links
+  // (/profile.html#pause, /profile.html#delete) to open the existing modals.
+  const hash = (location.hash || '').slice(1).toLowerCase();
+  if (hash === 'pause')  document.getElementById('hm-pause-profile')?.click();
+  if (hash === 'delete') document.getElementById('hm-delete-account')?.click();
+  if (hash === 'pause' || hash === 'delete') {
+    history.replaceState(null, '', location.pathname);
+  }
 }
 
 // ─── Read-mode hydration ──────────────────────────────────────────────────────
