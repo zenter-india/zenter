@@ -44,13 +44,12 @@ export { signInWithPhoneNumber, onAuthStateChanged, signOut };
 //
 // • E2E / Playwright (window.__hm_e2e = true):
 //     No-op mock — reCAPTCHA skipped entirely, test phone OTPs accepted.
-//     _reset() is Firebase's internal post-verify hook; must exist or the SDK
-//     throws "r._reset is not a function".
 //
 // • Production (real users):
-//     Invisible reCAPTCHA — runs a silent bot check in the background with no
-//     user-visible popup, checkbox, or badge. Satisfies Firebase's verifier
-//     requirement while being 100% transparent to the user.
+//     ⚠️ TEMPORARY DEBUG (2026-05-24): switched from 'invisible' → 'normal'
+//     (visible checkbox) to validate live OTP delivery. Revert to 'invisible'
+//     once recaptcha/api2/pat 401 + private-token warnings are confirmed
+//     harmless and SMS reliably reaches users on the live domain.
 export function createRecaptcha(containerId = 'hm-recaptcha-container') {
   if (typeof window !== 'undefined' && window.__hm_e2e) {
     return {
@@ -62,10 +61,11 @@ export function createRecaptcha(containerId = 'hm-recaptcha-container') {
     };
   }
 
-  // Invisible reCAPTCHA: no UI, no popup, fully silent for real users.
+  // Visible reCAPTCHA — renders an inline checkbox in #hm-recaptcha-container.
   const verifier = new RecaptchaVerifier(auth, containerId, {
-    size: 'invisible',
+    size: 'normal',
     callback:           () => {},
+    'expired-callback': () => { console.warn('[recaptcha] expired — user must redo the check'); },
     'error-callback':   (err) => { console.warn('[recaptcha] check failed', err); },
   });
   // Ensure _reset exists — Firebase calls it internally after OTP confirmation.
