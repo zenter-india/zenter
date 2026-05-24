@@ -59,16 +59,16 @@ async function init() {
 
   document.getElementById('hm-form-step3').addEventListener('submit', (e) => {
     e.preventDefault();
+    // Only state + district are required — exam centre name is optional and
+    // exam_type is no longer collected during onboarding (kept in DB for
+    // backward compatibility with existing users).
     if (!validate([
       { id: 'hm-exam-state',    errId: 'hm-err-exam-state',    msg: 'Select your exam centre state.' },
       { id: 'hm-exam-district', errId: 'hm-err-exam-district', msg: 'Select your exam centre district.' },
-      { id: 'hm-exam-center',   errId: 'hm-err-exam-center',   msg: 'Enter your exam centre name.' },
-      { id: 'hm-exam-type',     errId: 'hm-err-exam-type',     msg: 'Select your exam type.' },
     ])) return;
     collected.exam_centre_state    = val('hm-exam-state');
     collected.exam_centre_district = val('hm-exam-district');
-    collected.exam_center          = val('hm-exam-center');
-    collected.exam_type            = val('hm-exam-type');
+    collected.exam_center          = val('hm-exam-center') || null;
     goToStep(4);
   });
 
@@ -97,7 +97,6 @@ async function saveProfile() {
     exam_centre_state:     collected.exam_centre_state,
     exam_centre_district:  collected.exam_centre_district,
     exam_center:           collected.exam_center,
-    exam_type:             collected.exam_type,
     travel_mode:           collected.travel_mode,
     stay_plan:             collected.stay_plan,
     profile_completed:     true,

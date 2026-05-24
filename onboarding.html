@@ -4,7 +4,10 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#FF6B35" />
-  <title>Set up your profile — Zenter</title>
+  <title>Set up your profile — HallMate by Zenter</title>
+  <meta name="description" content="Complete your HallMate by Zenter profile to start matching with exam centre mates." />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="canonical" href="https://zenter.in/onboarding.html" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -107,31 +110,7 @@
           <p class="hm-auth__subtitle">We use this to match you with students at the same centre.</p>
           <form id="hm-form-step3" novalidate>
             <div class="row g-3">
-              <!-- Row 1: Exam type · Exam centre name -->
-              <div class="col-sm-6">
-                <div class="hm-field">
-                  <label class="hm-label" for="hm-exam-type">Exam type <span class="text-danger">*</span></label>
-                  <select class="hm-select" id="hm-exam-type" required>
-                    <option value="">Select exam…</option>
-                    <option value="NEET PG">NEET PG</option>
-                    <option value="NEET UG">NEET UG</option>
-                    <option value="INICET">INICET</option>
-                    <option value="NEET MDS">NEET MDS</option>
-                    <option value="NEET SS">NEET SS</option>
-                  </select>
-                  <span class="hm-help">ℹ️ Your selected exam community cannot be changed later.</span>
-                  <p class="text-danger small mt-1" id="hm-err-exam-type" hidden></p>
-                </div>
-              </div>
-              <div class="col-sm-6">
-                <div class="hm-field">
-                  <label class="hm-label" for="hm-exam-center">Exam centre name <span class="text-danger">*</span></label>
-                  <input class="hm-input" id="hm-exam-center" type="text" placeholder="Centre name from admit card" required />
-                  <span class="hm-help">As shown on your admit card.</span>
-                  <p class="text-danger small mt-1" id="hm-err-exam-center" hidden></p>
-                </div>
-              </div>
-              <!-- Row 2: Exam centre state · Exam centre district -->
+              <!-- Row 1: Exam centre state · Exam centre district -->
               <div class="col-sm-6">
                 <div class="hm-field">
                   <label class="hm-label" for="hm-exam-state">Exam centre state <span class="text-danger">*</span></label>
@@ -148,6 +127,14 @@
                     <option value="">Select state first…</option>
                   </select>
                   <p class="text-danger small mt-1" id="hm-err-exam-district" hidden></p>
+                </div>
+              </div>
+              <!-- Row 2: Exam centre name (optional) -->
+              <div class="col-12">
+                <div class="hm-field">
+                  <label class="hm-label" for="hm-exam-center">Exam centre name <span class="hm-text-subtle">(optional)</span></label>
+                  <input class="hm-input" id="hm-exam-center" type="text" placeholder="Enter exam centre name (optional)" />
+                  <span class="hm-help">You can add or update this later from your profile.</span>
                 </div>
               </div>
             </div>
