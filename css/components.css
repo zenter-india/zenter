@@ -3,15 +3,28 @@
 /* ── Feedback modal ─────────────────────────────────────────────────────────
    Loaded on every page via navbar component — must not depend on dashboard.css */
 .hm-feedback-overlay {
-  display: none;
+  display: flex; /* always flex — visibility controlled by opacity+pointer-events */
   position: fixed; inset: 0; z-index: 1060;
   background: rgba(15, 23, 42, 0.52);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   align-items: center; justify-content: center;
   padding: var(--hm-space-4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease-out;
 }
-.hm-feedback-overlay.is-open { display: flex; }
+.hm-feedback-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+@keyframes hm-feedback-enter {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);   }
+}
+.hm-feedback-overlay.is-open .hm-feedback-box {
+  animation: hm-feedback-enter 220ms ease-out both;
+}
 
 .hm-feedback-box {
   width: 100%; max-width: 400px;

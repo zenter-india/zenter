@@ -69,6 +69,17 @@
   color: var(--hm-text-muted);
 }
 
+/* Tab panel entrance — fade-up when panel is revealed */
+@keyframes hm-panel-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+#hm-panel-requests:not([hidden]),
+#hm-panel-find-mates:not([hidden]),
+#hm-panel-connections:not([hidden]) {
+  animation: hm-panel-enter 180ms ease-out both;
+}
+
 /* ── Dashboard tab bar ─────────────────────────────────────────────────────── */
 .hm-tabs {
   display: flex;
@@ -189,6 +200,17 @@
   line-height: 1;
   font-style: normal;
 }
+
+/* Card hover micro-interaction — subtle lift on hover, press on active */
+.hm-card--interactive {
+  transition: transform 140ms ease-out, box-shadow 140ms ease-out;
+  will-change: transform;
+}
+.hm-card--interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--hm-shadow-md);
+}
+.hm-card--interactive:active { transform: scale(0.99); transition-duration: 60ms; }
 
 .hm-mate__footer {
   display: flex; justify-content: space-between; align-items: center;
