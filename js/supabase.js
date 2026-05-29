@@ -112,7 +112,7 @@ export async function deleteUserData(userId) {
 export function getMyConnections(userId) {
   return query(
     from('connections')
-      .select('id, sender_id, receiver_id, status')
+      .select('id, sender_id, receiver_id, status, created_at, updated_at')
       .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
       .in('status', ['pending', 'accepted', 'rejected'])
   );
@@ -207,7 +207,7 @@ export function sendConnectionRequest(senderId, receiverId) {
 export function respondToRequest(connectionId, status) {
   return query(
     from('connections')
-      .update({ status })
+      .update({ status, updated_at: new Date().toISOString() })
       .eq('id', connectionId)
       .select('id')
       .single()

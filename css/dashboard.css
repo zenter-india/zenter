@@ -1,5 +1,49 @@
 /* HallMate — Dashboard + profile page styling. */
 
+/* ── Connection 3-section layout ─────────────────────────────────────────── */
+.hm-conn-section { margin-bottom: var(--hm-space-7); }
+.hm-conn-section:last-child { margin-bottom: 0; }
+
+.hm-conn-section__header {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--hm-border);
+  padding-bottom: var(--hm-space-3);
+  margin-bottom: var(--hm-space-4);
+}
+
+.hm-conn-section__title {
+  font-size: var(--hm-text-lg);
+  font-weight: 700;
+  color: var(--hm-text);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--hm-space-2);
+  flex: 1;
+}
+
+.hm-conn-section__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  background: var(--hm-primary-100);
+  color: var(--hm-primary);
+  border-radius: var(--hm-radius-pill);
+  font-size: var(--hm-text-xs);
+  font-weight: 700;
+  padding: 0 6px;
+}
+
+.hm-conn-section__empty {
+  padding: var(--hm-space-4) 0;
+  font-size: var(--hm-text-sm);
+  font-style: italic;
+  color: var(--hm-text-muted);
+}
+
 /* ── Dashboard tab bar ─────────────────────────────────────────────────────── */
 .hm-tabs {
   display: flex;
