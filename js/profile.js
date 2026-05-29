@@ -26,7 +26,7 @@ const GENDER_OPTS = ['Male', 'Female', 'Other'];
 // Exam type is permanent per account — set once during onboarding and not
 // editable from the profile page. Kept in the DB for filtering only.
 
-const TRAVEL_OPTS = ['By train', 'By flight', 'By bus', 'Self-drive', 'Other'];
+const TRAVEL_OPTS = ['By train', 'By flight', 'By bus', 'Self-drive', 'Shared Cab', 'Other'];
 
 const STAY_OPTS = [
   'Need accommodation', 'Have accommodation', 'Looking for room share', 'Other',

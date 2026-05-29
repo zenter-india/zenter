@@ -293,7 +293,8 @@ const TRAVEL_LABEL = {
   'By train':   '🚂 Train',
   'By flight':  '✈️ Flight',
   'By bus':     '🚌 Bus',
-  'Self-drive': '🚗 Self-drive',
+  'Self-drive': '🚗 Self Drive',
+  'Shared Cab': '🚕 Shared Cab',
   'Other':      '🚗 Other',
 };
 const STAY_LABEL = {
