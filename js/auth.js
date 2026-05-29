@@ -96,7 +96,10 @@ export async function requireAuth(redirectTo = ROUTES.login) {
 }
 
 // On the login page: skip the flow if already signed in.
+// Returns true when a redirect was triggered (caller should keep its loading
+// gate up while the browser navigates away — avoids flashing the login form).
 export async function redirectIfAuthed(redirectTo = ROUTES.dashboard) {
   const user = await whenReady();
-  if (user) window.location.replace(redirectTo);
+  if (user) { window.location.replace(redirectTo); return true; }
+  return false;
 }

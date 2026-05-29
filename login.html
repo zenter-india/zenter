@@ -38,6 +38,13 @@
   <link rel="icon" href="/assets/logos/favicon.svg" type="image/svg+xml" />
 </head>
 <body>
+  <!-- Auth gate — covers the page until we confirm the user is NOT already
+       signed in. Prevents the login form from flashing before redirect. -->
+  <div id="hm-auth-gate" class="hm-auth-gate" aria-hidden="true">
+    <span class="hm-auth-gate__mark">Z</span>
+    <div class="hm-loader__spinner"></div>
+  </div>
+
   <div data-include="navbar"></div>
 
   <main class="hm-auth" id="hm-main">

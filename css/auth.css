@@ -1,5 +1,23 @@
 /* HallMate — Auth screens (login + onboarding). */
 
+/* Auth gate — branded full-screen loader shown on the login page until the
+   auth state resolves. Hidden (faded out) once we confirm no signed-in user. */
+.hm-auth-gate {
+  position: fixed; inset: 0; z-index: 2000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--hm-space-4);
+  background: var(--hm-surface);
+  transition: opacity 200ms ease-out;
+}
+.hm-auth-gate.is-hidden { opacity: 0; pointer-events: none; }
+.hm-auth-gate__mark {
+  width: 48px; height: 48px;
+  border-radius: var(--hm-radius-lg);
+  background: var(--hm-primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--hm-font-display); font-weight: 700; font-size: 24px;
+}
+
 .hm-auth {
   min-height: calc(100vh - var(--hm-navbar-h));
   display: grid;
@@ -77,15 +95,16 @@
   text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;
 }
 
-/* reCAPTCHA: TEMPORARY DEBUG — visible (size:'normal') mode.
-   Container sits in-flow above the Send OTP button; the Google widget
-   renders inline at its native ~304x78px after Firebase calls verify().
-   Center it for clean alignment within the auth card.
-   When reverting to invisible mode, restore the 0x0 absolute styling. */
+/* reCAPTCHA: invisible mode (production). The container must exist in the DOM
+   so the SDK can render its iframe, but it takes no visual space — kept
+   absolute + 0x0 so its in-flow position inside the phone form leaves no
+   whitespace. The floating bottom-right badge is also hidden; reCAPTCHA
+   usage is disclosed in the Privacy Policy per Google's terms. */
 #hm-recaptcha-container {
-  display: flex;
-  justify-content: center;
-  margin: var(--hm-space-4) 0;
-  min-height: 0; /* avoid pre-render reserved space */
+  position: absolute;
+  width:    0;
+  height:   0;
+  overflow: hidden;
+  border:   0;
 }
 .grecaptcha-badge { visibility: hidden !important; }

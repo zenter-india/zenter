@@ -1,19 +1,24 @@
 // HallMate — Login page OTP flow.
 // Loaded only from login.html. Handles: phone → send OTP → verify → post-login redirect.
 
-import { auth, createRecaptcha, signInWithPhoneNumber } from './firebase-config.js';
+import { auth, createRecaptcha, resetRecaptcha, signInWithPhoneNumber } from './firebase-config.js';
 import { handlePostLogin, redirectIfAuthed } from './auth.js';
 import { normalizePhoneIN } from './utils.js';
 import { setButtonBusy } from './ui.js';
 
-let recaptchaVerifier = null;
 let confirmationResult = null;
 let resendTimer = null;
 
 // ─── Init ───────────────────────────────────────────────────────────────────
 
 async function init() {
-  await redirectIfAuthed(); // skip flow if already signed in
+  // If already signed in, redirectIfAuthed() returns true and the browser is
+  // navigating away — keep the auth gate up so the login form never flashes.
+  const redirected = await redirectIfAuthed();
+  if (redirected) return;
+
+  // Not signed in → fade the gate out to reveal the login form.
+  document.getElementById('hm-auth-gate')?.classList.add('is-hidden');
 
   document.getElementById('hm-form-phone').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -51,16 +56,11 @@ async function sendOtp() {
   setButtonBusy(btn, true, 'Sending…');
 
   try {
-    // Clear verifier AND its DOM node before recreating — avoids "already rendered" error.
-    if (recaptchaVerifier) {
-      try { recaptchaVerifier.clear(); } catch { /* ignore */ }
-      recaptchaVerifier = null;
-    }
-    const rcContainer = document.getElementById('hm-recaptcha-container');
-    if (rcContainer) rcContainer.innerHTML = '';
-    recaptchaVerifier = createRecaptcha('hm-recaptcha-container');
-
-    confirmationResult = await signInWithPhoneNumber(auth, phone, recaptchaVerifier);
+    // Singleton verifier — same instance across retries. Firebase handles
+    // re-execution and token refresh internally; manual clear-on-every-click
+    // caused "already rendered" + flicker bugs in the previous version.
+    const verifier = createRecaptcha('hm-recaptcha-container');
+    confirmationResult = await signInWithPhoneNumber(auth, phone, verifier);
 
     document.getElementById('hm-otp-target').textContent = phone;
     showStep('otp');
@@ -68,8 +68,8 @@ async function sendOtp() {
     document.getElementById('hm-otp-1')?.focus();
   } catch (err) {
     console.error('[login] sendOtp', err);
-    try { recaptchaVerifier?.clear(); } catch { /* ignore */ }
-    recaptchaVerifier = null;
+    // Tear down the cached verifier so the next attempt gets a clean one.
+    resetRecaptcha();
     showError('phone', toMessage(err));
   } finally {
     setButtonBusy(btn, false);
