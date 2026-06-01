@@ -177,7 +177,7 @@ function renderSection({ title, icon, count, empty, cards }) {
 // Shared head — identical to mateCard() in dashboard.js
 function cardHead(user) {
   const name       = user.full_name || 'Unknown';
-  const genderIcon = { Female: '♀', Male: '♂' }[user.gender] || '';
+  // gender colour from genderCls — no symbol needed
   const genderCls  = { Female: 'hm-badge--female', Male: 'hm-badge--male' }[user.gender] || '';
   return `
     <div class="hm-mate__head">
@@ -186,7 +186,7 @@ function cardHead(user) {
       <div class="hm-mate__head-info">
         <p class="hm-mate__name">${esc(name)}</p>
         <div class="hm-mate__badges">
-          ${user.gender ? `<span class="hm-badge ${genderCls}"><span class="hm-gender-symbol">${genderIcon}</span> ${esc(user.gender)}</span>` : ''}
+          ${user.gender ? `<span class="hm-badge ${genderCls}">${esc(user.gender)}</span>` : ''}
           <span class="hm-badge hm-badge--verified">✓ Verified</span>
         </div>
       </div>
