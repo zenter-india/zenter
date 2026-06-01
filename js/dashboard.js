@@ -437,7 +437,7 @@ function renderRequests() {
 }
 
 function requestCard(user, connectionId) {
-  const genderIcon = { Female: '♀', Male: '♂' }[user.gender] || '';
+  // gender colour from genderCls — no symbol needed
   const genderCls  = { Female: 'hm-badge--female', Male: 'hm-badge--male' }[user.gender] || '';
 
   const homeDistrict = user.district || '';
@@ -470,7 +470,7 @@ function requestCard(user, connectionId) {
         <div class="hm-mate__head-info">
           <p class="hm-mate__name">${esc(user.full_name)}</p>
           <div class="hm-mate__badges">
-            ${user.gender ? `<span class="hm-badge ${genderCls}"><span class="hm-gender-symbol">${genderIcon}</span> ${esc(user.gender)}</span>` : ''}
+            ${user.gender ? `<span class="hm-badge ${genderCls}">${esc(user.gender)}</span>` : ''}
             <span class="hm-badge hm-badge--verified">✓ Verified</span>
           </div>
         </div>
@@ -670,7 +670,7 @@ function refreshCardCta(userId) {
 
 function mateCard(user, idx) {
   // Gender: icon symbol + colour class
-  const genderIcon = { Female: '♀', Male: '♂' }[user.gender] || '';
+  // gender colour from genderCls — no symbol needed
   const genderCls  = { Female: 'hm-badge--female', Male: 'hm-badge--male' }[user.gender] || '';
 
   // Home location: district in bold, state in muted gray
@@ -707,7 +707,7 @@ function mateCard(user, idx) {
           <p class="hm-mate__name">${esc(user.full_name)}</p>
           <div class="hm-mate__badges">
             ${user.gender
-              ? `<span class="hm-badge ${genderCls}"><span class="hm-gender-symbol">${genderIcon}</span> ${esc(user.gender)}</span>`
+              ? `<span class="hm-badge ${genderCls}">${esc(user.gender)}</span>`
               : ''}
             <span class="hm-badge hm-badge--verified">✓ Verified</span>
           </div>
