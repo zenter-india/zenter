@@ -3,7 +3,7 @@
 // and dispatches to a page-specific initializer based on the current route.
 
 import { mountChrome, highlightActiveNav, $, $$, on, toast } from './ui.js';
-import { whenReady, onAuthChange, getCurrentUser, logout, requireAuth, redirectIfAuthed } from './auth.js';
+import { whenReady, onAuthChange, getCurrentUser, logout, requireAuth } from './auth.js';
 import { currentRoute } from './utils.js';
 import { ROUTES, STORAGE_KEYS } from './config.js';
 
@@ -211,9 +211,8 @@ async function initLanding() {
 }
 
 async function initLogin() {
-  // If already signed in, skip the OTP flow.
-  await redirectIfAuthed(ROUTES.dashboard);
-  // Phase 2: wire phone form -> Firebase RecaptchaVerifier -> signInWithPhoneNumber.
+  // Redirect-if-authed + auth gate are owned by login.js. No duplicate redirect
+  // here — running it twice means two whenReady() awaits + two replace() calls.
 }
 
 async function initOnboarding() {

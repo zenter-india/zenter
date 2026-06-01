@@ -12,13 +12,19 @@ let resendTimer = null;
 // ─── Init ───────────────────────────────────────────────────────────────────
 
 async function init() {
+  const gate       = document.getElementById('hm-auth-gate');
+  const revealGate = () => gate?.classList.add('is-hidden');
+  // Safety net — never let the gate hang the page even if auth resolution fails.
+  const gateSafety = setTimeout(revealGate, 8000);
+
   // If already signed in, redirectIfAuthed() returns true and the browser is
   // navigating away — keep the auth gate up so the login form never flashes.
   const redirected = await redirectIfAuthed();
   if (redirected) return;
 
   // Not signed in → fade the gate out to reveal the login form.
-  document.getElementById('hm-auth-gate')?.classList.add('is-hidden');
+  clearTimeout(gateSafety);
+  revealGate();
 
   document.getElementById('hm-form-phone').addEventListener('submit', (e) => {
     e.preventDefault();

@@ -21,6 +21,7 @@ let myExamType      = null;   // permanent — set during onboarding
 let firebaseUser    = null;   // stored for lazy connections load
 let connectionsLoaded = false;
 let blockedUserIds  = new Set(); // blocked_user_id values for the current user
+let dataLoaded      = false;     // true once loadData() has hydrated — gates empty states
 
 const FILTERS = [
   // fallback: old users who predate exam_centre_* columns still match via state/district
@@ -37,6 +38,11 @@ const AVATAR_COLORS = ['#FF6B35','#4F46E5','#10B981','#F59E0B','#8B5CF6','#06B6D
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 async function init() {
+  // Show the deep-linked tab IMMEDIATELY (sync, before the async auth await)
+  // so a #connections / #requests link never flashes the default Find Mates
+  // panel while Firebase resolves.
+  applyInitialTabFromHash();
+
   firebaseUser = await requireOnboarded();
   if (!firebaseUser) return;
 
@@ -92,6 +98,7 @@ async function loadData() {
     (u) => u.id !== myUserId && !blockedUserIds.has(u.id)
   );
 
+  dataLoaded = true; // gate empty states until real data is present
   renderRequests();
   updateNavBadge();
   applyFilters();
@@ -100,6 +107,29 @@ async function loadData() {
 // ─── Tab switching ────────────────────────────────────────────────────────────
 
 const VALID_TABS = ['requests', 'find-mates', 'connections'];
+
+const TAB_PANELS = () => ({
+  'requests':    document.getElementById('hm-panel-requests'),
+  'find-mates':  document.getElementById('hm-panel-find-mates'),
+  'connections': document.getElementById('hm-panel-connections'),
+});
+
+// Synchronously reflect the URL-hash tab before async auth resolves, so a
+// deep-link (e.g. #connections) shows the correct panel on first paint instead
+// of flashing the default Find Mates panel during the auth await. Does NOT
+// lazy-load connections (firebaseUser isn't ready yet) — wireTabs() handles that.
+function applyInitialTabFromHash() {
+  const h   = location.hash.slice(1);
+  const tab = VALID_TABS.includes(h) ? h : 'find-mates';
+  if (tab === 'find-mates') return; // HTML default already correct — nothing to do
+
+  document.querySelectorAll('.hm-tab[data-tab]').forEach(btn => {
+    const active = btn.dataset.tab === tab;
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-selected', String(active));
+  });
+  Object.entries(TAB_PANELS()).forEach(([key, el]) => { if (el) el.hidden = key !== tab; });
+}
 
 function wireTabs() {
   // Resolve starting tab from URL hash; default to 'find-mates'
@@ -124,7 +154,7 @@ function wireTabs() {
 }
 
 async function activateTab(name) {
-  const tab = VALID_TABS.includes(name) ? name : 'requests';
+  const tab = VALID_TABS.includes(name) ? name : 'find-mates';
 
   document.querySelectorAll('.hm-tab[data-tab]').forEach(btn => {
     const active = btn.dataset.tab === tab;
@@ -389,12 +419,17 @@ function renderRequests() {
     .filter(Boolean);
 
   if (items.length === 0) {
-    grid.innerHTML = `
-      <div class="hm-empty" style="grid-column:1/-1;">
-        <div class="hm-empty__icon" aria-hidden="true">🤝</div>
-        <h3>No pending requests</h3>
-        <p class="hm-text-muted">When HallMates send you connection requests, they'll appear here.</p>
-      </div>`;
+    // Before data has hydrated, show a spinner — NEVER the empty state. Avoids a
+    // "No pending requests" flash that then re-renders with cards once data loads.
+    grid.innerHTML = dataLoaded
+      ? `<div class="hm-empty" style="grid-column:1/-1;">
+           <div class="hm-empty__icon" aria-hidden="true">🤝</div>
+           <h3>No pending requests</h3>
+           <p class="hm-text-muted">When HallMates send you connection requests, they'll appear here.</p>
+         </div>`
+      : `<div style="grid-column:1/-1;text-align:center;padding:var(--hm-space-7) 0;">
+           <div class="hm-loader__spinner" style="margin:0 auto;"></div>
+         </div>`;
     return;
   }
 
