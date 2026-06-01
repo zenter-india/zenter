@@ -5,6 +5,7 @@ import { auth, createRecaptcha, resetRecaptcha, signInWithPhoneNumber } from './
 import { handlePostLogin, redirectIfAuthed } from './auth.js';
 import { normalizePhoneIN } from './utils.js';
 import { setButtonBusy } from './ui.js';
+import { STORAGE_KEYS, ROUTES } from './config.js';
 
 let confirmationResult = null;
 let resendTimer = null;
@@ -12,12 +13,22 @@ let resendTimer = null;
 // ─── Init ───────────────────────────────────────────────────────────────────
 
 async function init() {
-  // The login form is visible immediately (no blocking gate) — critical for
-  // mobile where Firebase init can take a few seconds. We redirect already-
-  // authenticated users in the background once auth resolves; the brief form
-  // visibility for that rare case is far better than making EVERY logged-out
-  // visitor wait on a spinner.
-  redirectIfAuthed(); // fire-and-forget — navigates away if a session exists
+  // FAST PATH — synchronous sessionStorage check. If the user is already
+  // authenticated (session cached from a previous visit), redirect instantly
+  // before the form ever renders. This eliminates the "login page flashes
+  // briefly then redirects" glitch (e.g. Contact Us → Back to Sign In).
+  try {
+    const cachedUser = sessionStorage.getItem(STORAGE_KEYS.authUser);
+    const completed  = sessionStorage.getItem(STORAGE_KEYS.profileCompleted);
+    if (cachedUser && completed === 'true') {
+      window.location.replace(ROUTES.dashboard);
+      return; // don't render or wire the form at all
+    }
+  } catch { /* sessionStorage unavailable in some private-mode browsers */ }
+
+  // ASYNC PATH — Firebase confirms the session (covers cold-start / no-cache).
+  // For logged-out users the form is already visible by the time this resolves.
+  redirectIfAuthed(); // fire-and-forget
 
   document.getElementById('hm-form-phone').addEventListener('submit', (e) => {
     e.preventDefault();
