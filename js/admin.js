@@ -76,7 +76,6 @@ async function loadDashboard() {
   if (statsRes.data) {
     setStat('stat-total-users',  statsRes.data.totalUsers);
     setStat('stat-active-users', statsRes.data.activeUsers);
-    setStat('stat-connections',  statsRes.data.connections);
     setStat('stat-feedback',     statsRes.data.feedback);
     setStat('stat-reports',      statsRes.data.reports);
   }
@@ -200,21 +199,6 @@ async function loadAnalytics() {
   const s = statsRes.data || {};
   const a = analyticsRes.data || {};
   el.innerHTML = `
-    <div class="adm-stats" style="margin-bottom:24px;">
-      ${[
-        ['Total Users',   s.totalUsers,  ''],
-        ['Active Users',  s.activeUsers, 'Not paused'],
-        ['Connections',   s.connections, 'Accepted'],
-        ['Pending Reqs',  a.pendingConnections, 'Awaiting reply'],
-        ['Feedback',      s.feedback,    ''],
-        ['Reports',       s.reports,     'Blocked users'],
-      ].map(([label,val,hint]) => `
-        <div class="adm-stat">
-          <div class="adm-stat__label">${esc(label)}</div>
-          <div class="adm-stat__value">${val ?? '—'}</div>
-          ${hint ? `<div class="adm-stat__hint">${esc(hint)}</div>` : ''}
-        </div>`).join('')}
-    </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">
       ${renderBreakdown('Exam Type Distribution',   a.byExam)}
       ${renderBreakdown('Gender Distribution',      a.byGender)}
