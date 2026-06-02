@@ -450,7 +450,6 @@ function doReveal() {
       </div>
     </div>`;
   if (actionsEl) actionsEl.innerHTML = '';
-  showSafetyConsent();
 }
 
 // ─── Count ────────────────────────────────────────────────────────────────────
