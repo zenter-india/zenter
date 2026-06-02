@@ -366,7 +366,7 @@ export function getPlatformConfig() {
   return query(from('platform_config').select('key, value'));
 }
 
-export function getRecentReports(limit = 100) {
+export function getRecentUserReports(limit = 100) {
   return query(
     from('user_reports')
       .select('id, reporter_id, reported_id, reason, details, status, resolved_by, resolved_note, created_at, updated_at')

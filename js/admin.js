@@ -135,8 +135,8 @@ function renderFilteredFeedback() {
 }
 
 async function loadReports() {
-  const { getRecentReports } = await import('./supabase.js');
-  const { data, error } = await getRecentReports(200);
+  const { getRecentUserReports } = await import('./supabase.js');
+  const { data, error } = await getRecentUserReports(200);
   if (error || !data) { document.getElementById('adm-reports-list').innerHTML = emptyState('⚠️','Could not load.'); return; }
   allReports = data;
   renderFilteredReports();
