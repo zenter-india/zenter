@@ -227,6 +227,28 @@
     </div>
   </div>
 
+  <!-- Safety consent dialog — shown after phone reveal and after accepting a request -->
+  <div id="hm-safety-dialog" class="hm-modal-overlay" role="dialog" aria-modal="true"
+       aria-labelledby="hm-safety-dialog-title" style="z-index:1060;">
+    <div class="hm-modal" style="max-width:420px;padding:var(--hm-space-6);">
+      <div style="font-size:2rem;text-align:center;margin-bottom:var(--hm-space-3);">🛡️</div>
+      <h3 id="hm-safety-dialog-title"
+          style="margin:0 0 var(--hm-space-3);text-align:center;font-size:var(--hm-text-lg);">
+        Safety Reminder
+      </h3>
+      <p style="margin:0 0 var(--hm-space-5);color:var(--hm-text-muted);font-size:var(--hm-text-sm);line-height:1.65;text-align:center;">
+        In view of individual safety concerns, before travelling or staying together,
+        kindly verify the other mate with their Hall ticket and ID proof.
+        <br><br>
+        All the best for your exams. You will do good! 😊
+      </p>
+      <button type="button" class="hm-btn hm-btn--primary" id="hm-safety-agree"
+              style="width:100%;">
+        I Agree
+      </button>
+    </div>
+  </div>
+
   <script type="module" src="/js/app.js"></script>
   <script type="module" src="/js/dashboard.js"></script>
   <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>

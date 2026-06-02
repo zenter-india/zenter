@@ -367,6 +367,7 @@ async function doAccept(userId, connId) {
   connectionsLoaded = false; // Connections tab re-fetches to include new contact
   notifyConnectionsChanged();
   toast('Connected! You can now reveal their contact.', { variant: 'success' });
+  showSafetyConsent();
 
   // Auto-navigate to the Connections tab so the user immediately sees the
   // new contact. Works whether the accept came from a Requests card or
@@ -392,6 +393,17 @@ async function doWithdraw(userId, connId) {
   toast('Request cancelled.', { variant: 'info' });
 }
 
+// ─── Safety consent dialog ────────────────────────────────────────────────────
+// Shown after phone reveal AND after accepting a connection request.
+function showSafetyConsent() {
+  const overlay = document.getElementById('hm-safety-dialog');
+  if (!overlay) return;
+  overlay.classList.add('is-open');
+  document.getElementById('hm-safety-agree')?.addEventListener('click', () => {
+    overlay.classList.remove('is-open');
+  }, { once: true });
+}
+
 function doReveal() {
   if (!modalUser?.phone) return;
   const phone  = modalUser.phone;
@@ -411,6 +423,7 @@ function doReveal() {
       </div>
     </div>`;
   if (actionsEl) actionsEl.innerHTML = '';
+  showSafetyConsent();
 }
 
 // ─── Count ────────────────────────────────────────────────────────────────────
