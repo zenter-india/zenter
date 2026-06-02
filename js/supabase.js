@@ -261,6 +261,17 @@ export function getBlockedUserIds(userId) {
   );
 }
 
+/** Returns { blocker_user_id }[] — users who have blocked userId.
+ *  Used to hide the blocker from the blocked user's find-mates feed
+ *  so neither side sees each other while a block is active. */
+export function getBlockedByIds(userId) {
+  return query(
+    from('blocked_users')
+      .select('blocker_user_id')
+      .eq('blocked_user_id', userId)
+  );
+}
+
 /** Full block list with reason + timestamps — for the Blocked Users page. */
 export function getBlockedList(userId) {
   return query(

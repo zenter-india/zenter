@@ -3,7 +3,7 @@
 import { requireOnboarded } from './auth.js';
 import { getAllUsers, getUserByPhone, getMyConnections,
          sendConnectionRequest, respondToRequest, deleteRequest,
-         getBlockedUserIds, blockUser,
+         getBlockedUserIds, getBlockedByIds, blockUser,
          deleteConnectionsBetween } from './supabase.js';
 import { debounce } from './utils.js';
 import { toast, setButtonBusy } from './ui.js';
@@ -21,7 +21,8 @@ let myExamType            = null;   // permanent — set during onboarding
 let myExamCentreState     = null;   // state-level matching boundary
 let firebaseUser    = null;   // stored for lazy connections load
 let connectionsLoaded = false;
-let blockedUserIds  = new Set(); // blocked_user_id values for the current user
+let blockedUserIds  = new Set(); // users the current user has blocked
+let blockedByIds    = new Set(); // users who have blocked the current user
 let dataLoaded      = false;     // true once loadData() has hydrated — gates empty states
 
 const FILTERS = [
@@ -93,10 +94,14 @@ async function init() {
   const examLabel = document.getElementById('hm-exam-label');
   if (examLabel) examLabel.textContent = myExamType;
 
-  // Load blocked-user IDs up front so filtering is instant throughout the session.
+  // Load both block directions so neither side sees the other while blocked.
   if (myUserId) {
-    const { data: blocked } = await getBlockedUserIds(myUserId);
-    blockedUserIds = new Set((blocked || []).map(b => b.blocked_user_id));
+    const [blockedRes, blockedByRes] = await Promise.all([
+      getBlockedUserIds(myUserId),  // users I blocked
+      getBlockedByIds(myUserId),    // users who blocked me
+    ]);
+    blockedUserIds = new Set((blockedRes.data  || []).map(b => b.blocked_user_id));
+    blockedByIds   = new Set((blockedByRes.data || []).map(b => b.blocker_user_id));
   }
 
   wireFilters();
@@ -123,8 +128,12 @@ async function loadData() {
   try {
     if (sessionStorage.getItem('hm.unblocked') && myUserId) {
       sessionStorage.removeItem('hm.unblocked');
-      const { data: fresh } = await getBlockedUserIds(myUserId);
-      blockedUserIds = new Set((fresh || []).map(b => b.blocked_user_id));
+      const [blockedRes, blockedByRes] = await Promise.all([
+        getBlockedUserIds(myUserId),
+        getBlockedByIds(myUserId),
+      ]);
+      blockedUserIds = new Set((blockedRes.data  || []).map(b => b.blocked_user_id));
+      blockedByIds   = new Set((blockedByRes.data || []).map(b => b.blocker_user_id));
     }
   } catch {}
 
@@ -138,7 +147,8 @@ async function loadData() {
   Relationships.hydrate(connsRes.data || [], myUserId);
   allUsers = (usersRes.data || []).filter((u) => {
     if (u.id === myUserId) return false;
-    if (blockedUserIds.has(u.id)) return false;
+    if (blockedUserIds.has(u.id)) return false; // users I blocked
+    if (blockedByIds.has(u.id))   return false; // users who blocked me
     // Exam-centre-state matching: only show users going to the same exam state.
     // Home location is irrelevant — two users from different cities still match
     // as long as their exam centre is in the same state.
@@ -1017,10 +1027,13 @@ document.addEventListener('DOMContentLoaded', init);
 window.addEventListener('pageshow', async (e) => {
   if (!e.persisted) return; // normal load — init() already ran
   if (!myUserId) return;
-  // Re-fetch blocked IDs with the latest state
-  const { getBlockedUserIds: fetchBlocked } = await import('./supabase.js');
-  const { data: blocked } = await fetchBlocked(myUserId);
-  blockedUserIds = new Set((blocked || []).map(b => b.blocked_user_id));
-  // Reload the feed so unblocked users reappear and stale ones disappear
+  // Re-fetch both block directions with latest state
+  const { getBlockedUserIds: fetchBlocked, getBlockedByIds: fetchBlockedBy } = await import('./supabase.js');
+  const [blockedRes, blockedByRes] = await Promise.all([
+    fetchBlocked(myUserId),
+    fetchBlockedBy(myUserId),
+  ]);
+  blockedUserIds = new Set((blockedRes.data  || []).map(b => b.blocked_user_id));
+  blockedByIds   = new Set((blockedByRes.data || []).map(b => b.blocker_user_id));
   await loadData();
 });
