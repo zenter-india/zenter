@@ -8,7 +8,7 @@ import { getAllUsers, getUserByPhone, getMyConnections,
 import { debounce } from './utils.js';
 import { toast, setButtonBusy } from './ui.js';
 import * as Relationships from './relationships.js';
-import { populateStateSelect, wireDistrictCascade } from './location-data.js';
+import { populateStateSelect, wireDistrictCascade, DISTRICTS_BY_STATE } from './location-data.js';
 
 const { REL } = Relationships;
 
@@ -27,11 +27,11 @@ let dataLoaded      = false;     // true once loadData() has hydrated — gates 
 const FILTERS = [
   // State/district filters removed — state-level matching is enforced on load.
   // Remaining filters let users narrow within their state.
-  { id: 'hm-filter-center',   key: 'exam_center',          type: 'text'   },
-  { id: 'hm-filter-district', key: 'exam_centre_district', type: 'text'   },
   { id: 'hm-filter-gender',   key: 'gender',               type: 'select' },
   { id: 'hm-filter-travel',   key: 'travel_mode',          type: 'select' },
   { id: 'hm-filter-stay',     key: 'stay_plan',            type: 'select' },
+  { id: 'hm-filter-district', key: 'exam_centre_district', type: 'select' },
+  { id: 'hm-filter-center',   key: 'exam_center',          type: 'text'   },
 ];
 
 const AVATAR_COLORS = ['#FF6B35','#4F46E5','#10B981','#F59E0B','#8B5CF6','#06B6D4','#EF4444'];
@@ -59,6 +59,21 @@ async function init() {
   myExamCentreState = (myRole === 'admin' || myRole === 'superadmin')
     ? null
     : (me?.exam_centre_state || null);
+
+  // Populate the district filter dropdown with districts from the user's exam state.
+  // Admin has no state boundary so show all districts (sorted A-Z).
+  const districtEl = document.getElementById('hm-filter-district');
+  if (districtEl) {
+    const stateForDistricts = me?.exam_centre_state || null;
+    const districts = stateForDistricts
+      ? (DISTRICTS_BY_STATE[stateForDistricts] || [])
+      : Object.values(DISTRICTS_BY_STATE).flat().sort();
+    districts.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d; opt.textContent = d;
+      districtEl.appendChild(opt);
+    });
+  }
 
   // Cache role so the navbar admin link can show/hide without an extra fetch.
   // Also update the DOM directly — renderNavAuthState() in app.js fires before
