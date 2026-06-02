@@ -51,12 +51,13 @@ async function init() {
   const { data: me } = await getUserByPhone(firebaseUser.phoneNumber);
   myUserId             = me?.id        || null;
   myExamType           = me?.exam_type || 'NEET UG';
-  // State-level boundary: exam centre state if set, else home state.
+  // Match only on exam_centre_state — where the exam is held.
+  // Home location (state/district) is irrelevant for matching.
   // Admins/superadmins bypass the filter so they can see all users.
   const myRole = me?.role || 'user';
   myExamCentreState = (myRole === 'admin' || myRole === 'superadmin')
     ? null
-    : (me?.exam_centre_state || me?.state || null);
+    : (me?.exam_centre_state || null);
 
   // Cache role so the navbar admin link can show/hide without an extra fetch
   try { sessionStorage.setItem('hm.user.role', me?.role || 'user'); } catch {}
@@ -106,11 +107,11 @@ async function loadData() {
   allUsers = (usersRes.data || []).filter((u) => {
     if (u.id === myUserId) return false;
     if (blockedUserIds.has(u.id)) return false;
-    // State-level visibility: only show users whose exam centre state matches.
-    // Fallback: if the other user has no exam_centre_state, use their home state.
+    // Exam-centre-state matching: only show users going to the same exam state.
+    // Home location is irrelevant — two users from different cities still match
+    // as long as their exam centre is in the same state.
     if (myExamCentreState) {
-      const uState = u.exam_centre_state || u.state;
-      if (uState !== myExamCentreState) return false;
+      if (u.exam_centre_state !== myExamCentreState) return false;
     }
     return true;
   });
