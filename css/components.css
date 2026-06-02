@@ -690,8 +690,8 @@
 .hm-announcement-bar__ticker:hover { animation-play-state: paused; }
 .hm-announcement-bar__text {
   /* Right-only padding = equal separator on BOTH sides of every loop cycle.
-     padding: 0 48px caused double-gap (48+48=96px) between repetitions. */
-  padding: 0 60px 0 0;
+     padding: 0 48px caused double-gap (48+48=96px). Tightened to 40px. */
+  padding: 0 40px 0 0;
   flex-shrink: 0;
 }
 @keyframes hm-ticker-scroll {
