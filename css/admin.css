@@ -372,3 +372,86 @@ body.adm-body {
   .adm-search  { width: 100%; }
   .adm-actions { flex-direction: column; }
 }
+
+/* ── Phase 3: Exams, Analytics, Settings, Announcements ── */
+
+/* Exam lifecycle cards grid */
+.adm-exams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+.adm-exam-card {
+  background: var(--adm-surface);
+  border: 1px solid var(--adm-border);
+  border-radius: 12px;
+  padding: 18px 20px;
+}
+.adm-exam-card__header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+  font-size: 15px; font-weight: 600;
+}
+.adm-exam-card__actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.adm-btn.is-current { box-shadow: 0 0 0 2px var(--adm-primary); }
+
+/* Settings layout */
+.adm-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+/* Toggle row */
+.adm-toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 10px 0;
+  border-bottom: 1px solid var(--adm-border);
+}
+.adm-toggle-row:last-child { border-bottom: 0; }
+.adm-toggle-label { font-size: 13px; font-weight: 500; color: var(--adm-text); }
+.adm-toggle-sub   { font-size: 11px; color: var(--adm-text-muted); margin-top: 2px; }
+
+/* Toggle switch */
+.adm-switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+.adm-switch input { opacity: 0; width: 0; height: 0; }
+.adm-switch__track {
+  position: absolute; inset: 0;
+  background: var(--adm-surface-2);
+  border-radius: 11px;
+  cursor: pointer;
+  transition: background 160ms;
+}
+.adm-switch__track::after {
+  content: '';
+  position: absolute; left: 3px; top: 3px;
+  width: 16px; height: 16px;
+  background: var(--adm-text-dim);
+  border-radius: 50%;
+  transition: transform 160ms, background 160ms;
+}
+.adm-switch input:checked + .adm-switch__track { background: rgba(255,107,53,0.25); }
+.adm-switch input:checked + .adm-switch__track::after {
+  transform: translateX(18px);
+  background: var(--adm-primary);
+}
+
+/* Announcement row in settings */
+.adm-ann-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid var(--adm-border);
+  font-size: 13px;
+}
+.adm-ann-row:last-child { border-bottom: 0; }
+.adm-ann-row__text { flex: 1; min-width: 0; }
+
+/* Status pill extras */
+.adm-pill--pending    { background: rgba(245,158,11,0.15); color: #F59E0B; }
+.adm-pill--reviewing  { background: rgba(59,130,246,0.15);  color: #3B82F6; }
+.adm-pill--resolved   { background: rgba(16,185,129,0.12);  color: #10B981; }
+.adm-pill--dismissed  { background: rgba(148,163,184,0.12); color: #94A3B8; }
+.adm-pill--live        { background: rgba(16,185,129,0.15);  color: #10B981; }
+.adm-pill--maintenance { background: rgba(245,158,11,0.15);  color: #F59E0B; }
+.adm-pill--coming_soon { background: rgba(59,130,246,0.15);  color: #3B82F6; }
+.adm-pill--disabled    { background: rgba(239,68,68,0.15);   color: #EF4444; }
+.adm-pill--info        { background: rgba(59,130,246,0.15);  color: #3B82F6; }

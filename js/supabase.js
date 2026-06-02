@@ -343,3 +343,100 @@ export function deleteRequest(connectionId) {
     from('connections').delete().eq('id', connectionId)
   );
 }
+
+// ─── Phase 3: Announcements, Platform Config, Reports, Audit ─────────────────
+
+/** Active announcements for the public banner (sorted by priority). */
+export function getActiveAnnouncements(examType = null) {
+  let q = from('announcements')
+    .select('id, message, priority, exam_target, expires_at')
+    .eq('is_active', true)
+    .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
+    .order('priority', { ascending: false });
+  if (examType) q = q.or(`exam_target.is.null,exam_target.eq.${examType}`);
+  return query(q);
+}
+
+export function getAllAnnouncements() {
+  return query(from('announcements').select('*').order('priority', { ascending: false }));
+}
+
+/** Platform config: feature toggles + exam config. */
+export function getPlatformConfig() {
+  return query(from('platform_config').select('key, value'));
+}
+
+export function getRecentReports(limit = 100) {
+  return query(
+    from('user_reports')
+      .select('id, reporter_id, reported_id, reason, details, status, resolved_by, resolved_note, created_at, updated_at')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+  );
+}
+
+export function getAuditLog(limit = 100) {
+  return query(
+    from('audit_log')
+      .select('id, admin_phone, action, target_type, target_id, details, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+  );
+}
+
+/** Admin analytics: richer breakdown queries. */
+export async function getAnalyticsData() {
+  const [examR, genderR, districtR, pendingR, connR] = await Promise.all([
+    query(from('users').select('exam_type').eq('profile_completed', true)),
+    query(from('users').select('gender').eq('profile_completed', true)),
+    query(from('users').select('district').eq('profile_completed', true).not('district', 'is', null)),
+    query(from('connections').select('id').eq('status', 'pending')),
+    query(from('connections').select('id').eq('status', 'accepted')),
+  ]);
+  const countBy = (arr, key) => (arr || []).reduce((acc, r) => {
+    const v = r[key] || 'Unknown'; acc[v] = (acc[v] || 0) + 1; return acc;
+  }, {});
+  return {
+    data: {
+      byExam:     countBy(examR.data,     'exam_type'),
+      byGender:   countBy(genderR.data,   'gender'),
+      byDistrict: countBy(districtR.data, 'district'),
+      pendingConnections:  pendingR.data?.length || 0,
+      acceptedConnections: connR.data?.length    || 0,
+    },
+    error: examR.error || genderR.error || null,
+  };
+}
+
+// Admin mutations (SECURITY DEFINER)
+export function adminUpsertAnnouncement(data, requesterPhone) {
+  return query(supabase.rpc('admin_upsert_announcement', {
+    p_id: data.id || null, p_message: data.message, p_is_active: data.is_active,
+    p_priority: data.priority || 0, p_exam_target: data.exam_target || null,
+    p_expires_at: data.expires_at || null, p_requester_phone: requesterPhone,
+  }));
+}
+
+export function adminDeleteAnnouncement(id, requesterPhone) {
+  return query(supabase.rpc('admin_delete_announcement', {
+    p_id: id, p_requester_phone: requesterPhone,
+  }));
+}
+
+export function adminUpdateConfig(key, value, requesterPhone) {
+  return query(supabase.rpc('admin_update_config', {
+    p_key: key, p_value: value, p_requester_phone: requesterPhone,
+  }));
+}
+
+export function adminUpdateReport(id, status, note, requesterPhone) {
+  return query(supabase.rpc('admin_update_report', {
+    p_id: id, p_status: status, p_note: note || null, p_requester_phone: requesterPhone,
+  }));
+}
+
+export function adminSetUserRole(targetId, role, requesterPhone) {
+  return query(supabase.rpc('admin_set_user_role', {
+    p_target_id: targetId, p_role: role, p_requester_phone: requesterPhone,
+  }));
+}
