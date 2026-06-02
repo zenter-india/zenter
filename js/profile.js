@@ -29,7 +29,7 @@ const GENDER_OPTS = ['Male', 'Female', 'Other'];
 const TRAVEL_OPTS = ['By train', 'By flight', 'By bus', 'Self-drive', 'Shared Cab', 'Other'];
 const TRAVEL_DISPLAY = {
   'By train': '🚂 Train', 'By flight': '✈️ Flight', 'By bus': '🚌 Bus',
-  'Self-drive': '🚗 Self Drive', 'Shared Cab': '🚕 Shared Cab', 'Other': '🚐 Yet to Decide',
+  'Self-drive': '🚗 Self Drive', 'Shared Cab': '🚕 Shared Cab', 'Other': 'Yet to Decide',
 };
 
 const STAY_OPTS = [
@@ -39,7 +39,7 @@ const STAY_DISPLAY = {
   'Need accommodation': '🏨 Need accommodation',
   'Have accommodation': '🏠 Have accommodation',
   'Looking for room share': '🛏️ Room share',
-  'Other': '🏡 Yet to Decide',
+  'Other': 'Yet to Decide',
 };
 
 // ─── Section configs ──────────────────────────────────────────────────────────
