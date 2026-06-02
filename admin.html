@@ -52,8 +52,6 @@
     <main class="adm-main">
       <div class="adm-topbar">
         <div style="display:flex;align-items:center;gap:12px;">
-          <!-- Back to app — visible on all screen sizes, prominent on mobile -->
-          <a href="/dashboard.html" class="adm-topbar__back">← App</a>
           <span class="adm-topbar__title" id="adm-page-title">Dashboard</span>
         </div>
         <div class="adm-topbar__user">
@@ -71,10 +69,10 @@
           <p class="adm-sub">Operational overview of Zenter.</p>
 
           <div class="adm-stats" id="adm-stats">
-            <div class="adm-stat"><div class="adm-stat__label">Total Users</div><div class="adm-stat__value" id="stat-total-users">—</div></div>
-            <div class="adm-stat"><div class="adm-stat__label">Active Users</div><div class="adm-stat__value" id="stat-active-users">—</div><div class="adm-stat__hint">Not paused</div></div>
-            <div class="adm-stat"><div class="adm-stat__label">Feedback</div><div class="adm-stat__value" id="stat-feedback">—</div></div>
-            <div class="adm-stat"><div class="adm-stat__label">Reports</div><div class="adm-stat__value" id="stat-reports">—</div><div class="adm-stat__hint">User blocks</div></div>
+            <div class="adm-stat adm-stat--link" data-nav="users"  style="cursor:pointer;" title="View all users"><div class="adm-stat__label">Total Users</div><div class="adm-stat__value" id="stat-total-users">—</div></div>
+            <div class="adm-stat adm-stat--link" data-nav="users"  style="cursor:pointer;" title="View active users"><div class="adm-stat__label">Active Users</div><div class="adm-stat__value" id="stat-active-users">—</div><div class="adm-stat__hint">Not paused</div></div>
+            <div class="adm-stat adm-stat--link" data-nav="feedback" style="cursor:pointer;" title="View feedback"><div class="adm-stat__label">Feedback</div><div class="adm-stat__value" id="stat-feedback">—</div></div>
+            <div class="adm-stat adm-stat--link" data-nav="reports"  style="cursor:pointer;" title="View reports"><div class="adm-stat__label">Reports</div><div class="adm-stat__value" id="stat-reports">—</div><div class="adm-stat__hint">User blocks</div></div>
           </div>
 
           <div class="adm-card">

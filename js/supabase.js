@@ -81,7 +81,7 @@ export async function getAdminStats() {
 export function getRecentUsers(limit = 50) {
   return query(
     from('users')
-      .select('id, full_name, gender, phone, exam_type, state, district, profile_completed, is_profile_paused, account_status, role, created_at')
+      .select('id, full_name, gender, phone, exam_type, state, district, exam_centre_state, exam_centre_district, exam_center, profile_completed, is_profile_paused, account_status, role, created_at')
       .order('created_at', { ascending: false })
       .limit(limit)
   );

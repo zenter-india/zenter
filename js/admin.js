@@ -347,6 +347,13 @@ function openAnnouncementForm(existing) {
   overlay.hidden = false;
 }
 
+// ─── Stat-box navigation ─────────────────────────────────────────────────────
+document.addEventListener('click', (e) => {
+  const stat = e.target.closest('[data-nav]');
+  if (!stat) return;
+  navigateTo(stat.dataset.nav);
+});
+
 // ─── Delegated action handlers ────────────────────────────────────────────────
 
 document.addEventListener('click', async (e) => {
@@ -441,6 +448,24 @@ document.addEventListener('click', async (e) => {
     }); return;
   }
 
+  // ── Delete user ───────────────────────────────────────────────────────────
+  if (action === 'delete-user') {
+    const userName = btn.dataset.name || 'this user';
+    confirm_({
+      title: `Delete ${esc(userName)}?`,
+      msg: 'This permanently removes all their data — profile, connections, and blocks. This cannot be undone.',
+      danger: true,
+    }, async () => {
+      btn.disabled = true;
+      const { deleteUserData } = await import('./supabase.js');
+      const { error } = await deleteUserData(id);
+      if (error) { toast('Error: ' + error.message, 'error'); btn.disabled = false; return; }
+      allUsers = allUsers.filter(u => u.id !== id);
+      renderFilteredUsers();
+      toast(`${esc(userName)} deleted ✓`, 'info');
+    }); return;
+  }
+
   // ── Exam status ───────────────────────────────────────────────────────────
   if (action === 'set-exam-status') {
     const examId = btn.dataset.exam;
@@ -511,23 +536,43 @@ function renderUsersTable(users, withActions = false) {
   const rows = users.map(u => {
     const status  = u.account_status || 'active';
     const display = u.is_profile_paused ? 'paused' : status;
-    const isAdmin = u.role === 'admin'; const isSuperAdmin = u.role === 'superadmin';
+    const isAdmin = u.role === 'admin';
+    const isSuperAdmin = u.role === 'superadmin';
+    const isPrivileged = isAdmin || isSuperAdmin;
+
+    // Exam centre: state → district → centre name
+    const examCentreState    = u.exam_centre_state    || '—';
+    const examCentreDistrict = u.exam_centre_district || '—';
+    const examCentreName     = u.exam_center          || '—';
+
     const actions = withActions ? `<td>
-      <div class="adm-actions">
+      <div class="adm-actions" style="gap:4px;">
         ${isSuperAdmin
           ? '<span class="adm-pill adm-pill--admin" style="font-size:10px;">⚡ superadmin</span>'
           : `<button class="adm-btn adm-btn--sm ${isAdmin ? 'adm-btn--danger' : 'adm-btn--ok'}"
               data-action="set-role" data-id="${esc(u.id)}" data-role="${isAdmin ? 'user' : 'admin'}">
               ${isAdmin ? 'Revoke admin' : 'Make admin'}
             </button>`}
+        ${!isPrivileged
+          ? `<button class="adm-btn adm-btn--sm adm-btn--danger"
+               data-action="delete-user" data-id="${esc(u.id)}" data-name="${esc(u.full_name||'User')}">
+               Delete
+             </button>`
+          : `<span class="adm-pill" style="font-size:10px;opacity:.5;" title="Revoke admin first to delete">Protected</span>`}
       </div>
     </td>` : '';
+
     return `<tr>
       <td>${esc(u.full_name||'—')}</td>
       <td style="font-size:11px">${esc(formatPhonePretty(u.phone)||u.phone||'—')}</td>
       <td>${esc(u.gender||'—')}</td>
       <td>${esc(u.exam_type||'—')}</td>
       <td style="font-size:11px">${esc([u.district,u.state].filter(Boolean).join(', ')||'—')}</td>
+      <td style="font-size:11px">
+        <div>${esc(examCentreState)}</div>
+        <div style="color:var(--adm-text-dim)">${esc(examCentreDistrict)}</div>
+        <div style="color:var(--adm-text-dim);font-size:10px;">${esc(examCentreName)}</div>
+      </td>
       <td><span class="adm-pill adm-pill--${esc(u.role||'user')}">${esc(u.role||'user')}</span></td>
       <td><span class="adm-pill adm-pill--${esc(display)}">${esc(display)}</span></td>
       <td style="font-size:11px">${esc(fmtDate(u.created_at))}</td>
@@ -535,7 +580,11 @@ function renderUsersTable(users, withActions = false) {
     </tr>`;
   }).join('');
   const ah = withActions ? '<th>Actions</th>' : '';
-  return `<table class="adm-table"><thead><tr><th>Name</th><th>Phone</th><th>Gender</th><th>Exam</th><th>Location</th><th>Role</th><th>Status</th><th>Joined</th>${ah}</tr></thead><tbody>${rows}</tbody></table>`;
+  return `<table class="adm-table"><thead><tr>
+    <th>Name</th><th>Phone</th><th>Gender</th><th>Exam</th>
+    <th>Home Location</th><th>Exam Centre</th>
+    <th>Role</th><th>Status</th><th>Joined</th>${ah}
+  </tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function renderFeedbackTable(items) {
