@@ -74,6 +74,7 @@ export async function logout(redirectTo = ROUTES.landing) {
   await signOut(auth);
   sessionStorage.removeItem(STORAGE_KEYS.authUser);
   sessionStorage.removeItem(STORAGE_KEYS.profileCompleted);
+  sessionStorage.removeItem('hm.user.role'); // admin cache
   window.location.assign(redirectTo);
 }
 
@@ -117,4 +118,42 @@ export async function redirectIfAuthed(redirectTo = ROUTES.dashboard) {
   const user = await whenReady();
   if (user) { window.location.replace(redirectTo); return true; }
   return false;
+}
+
+// ─── Admin guard ─────────────────────────────────────────────────────────────
+// Requires Firebase auth + Supabase role='admin'. Caches role in sessionStorage
+// so admin pages render instantly on subsequent navigations (no flicker).
+// Non-admin users are bounced to /dashboard.html — never see admin UI.
+const ROLE_CACHE_KEY = 'hm.user.role';
+
+export async function requireAdmin() {
+  const user = await whenReady();
+  if (!user) {
+    sessionStorage.setItem(STORAGE_KEYS.redirectAfterLogin, window.location.pathname);
+    window.location.replace(ROUTES.login);
+    return null;
+  }
+
+  // Fast path: cached admin role from a previous visit this session
+  try {
+    if (sessionStorage.getItem(ROLE_CACHE_KEY) === 'admin') return user;
+  } catch { /* private mode */ }
+
+  // Slow path: ask Supabase
+  const { getRoleByPhone } = await import('./supabase.js');
+  const { data, error } = await getRoleByPhone(user.phoneNumber);
+  const role = error ? null : (data?.role || 'user');
+  try { sessionStorage.setItem(ROLE_CACHE_KEY, role || 'user'); } catch {}
+
+  if (role !== 'admin') {
+    window.location.replace(ROUTES.dashboard); // bounce non-admins, no UI flash
+    return null;
+  }
+  return user;
+}
+
+/** Synchronous cached-role read. Returns 'user' / 'moderator' / 'admin' / null. */
+export function getCachedRole() {
+  try { return sessionStorage.getItem(ROLE_CACHE_KEY) || null; }
+  catch { return null; }
 }

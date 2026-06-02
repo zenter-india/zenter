@@ -37,9 +37,115 @@ export function from(table) {
 export function getUserByPhone(phone) {
   return query(
     from('users')
-      .select('id, profile_completed, exam_type')
+      .select('id, profile_completed, exam_type, role')
       .eq('phone', phone)
       .maybeSingle()
+  );
+}
+
+// ─── Admin platform — Phase 1 ────────────────────────────────────────────────
+
+/** Read-only role lookup by phone. Used by requireAdmin() guard. */
+export function getRoleByPhone(phone) {
+  return query(
+    from('users').select('role').eq('phone', phone).maybeSingle()
+  );
+}
+
+/** Fetch counts for the admin dashboard. Each query is small (HEAD count). */
+export async function getAdminStats() {
+  const headCount = (table, predicate) => {
+    const q = from(table).select('*', { count: 'exact', head: true });
+    return predicate ? predicate(q) : q;
+  };
+  const [usersR, activeR, conxR, feedbackR, reportsR] = await Promise.all([
+    headCount('users'),
+    headCount('users', q => q.or('is_profile_paused.is.null,is_profile_paused.eq.false')),
+    headCount('connections', q => q.eq('status', 'accepted')),
+    headCount('feedbacks'),
+    headCount('blocked_users'),
+  ]);
+  return {
+    data: {
+      totalUsers:  usersR.count    ?? 0,
+      activeUsers: activeR.count   ?? 0,
+      connections: conxR.count     ?? 0,
+      feedback:    feedbackR.count ?? 0,
+      reports:     reportsR.count  ?? 0,
+    },
+    error: usersR.error || activeR.error || conxR.error || feedbackR.error || reportsR.error || null,
+  };
+}
+
+/** Recent users list for the admin Users section — includes moderation fields. */
+export function getRecentUsers(limit = 50) {
+  return query(
+    from('users')
+      .select('id, full_name, gender, phone, exam_type, state, district, profile_completed, is_profile_paused, account_status, role, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+  );
+}
+
+/** Recent feedback with resolution state. */
+export function getRecentFeedbacks(limit = 50) {
+  return query(
+    from('feedbacks')
+      .select('id, user_name, user_id, exam_type, feedback_message, is_resolved, resolved_at, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+  );
+}
+
+// ─── Admin mutation helpers (call SECURITY DEFINER DB functions) ──────────
+// All mutations go through server-side functions that verify admin role —
+// direct anon-key writes to protected columns are blocked by a DB trigger.
+
+export function adminSetUserStatus(targetId, requesterPhone, status) {
+  return query(
+    supabase.rpc('admin_set_user_status', {
+      p_target_id:       targetId,
+      p_requester_phone: requesterPhone,
+      p_status:          status,
+    })
+  );
+}
+
+export function adminSetUserPaused(targetId, requesterPhone, paused) {
+  return query(
+    supabase.rpc('admin_set_user_paused', {
+      p_target_id:       targetId,
+      p_requester_phone: requesterPhone,
+      p_paused:          paused,
+    })
+  );
+}
+
+export function adminResolveFeedback(feedbackId, requesterPhone) {
+  return query(
+    supabase.rpc('admin_resolve_feedback', {
+      p_feedback_id:     feedbackId,
+      p_requester_phone: requesterPhone,
+    })
+  );
+}
+
+export function adminDeleteFeedback(feedbackId, requesterPhone) {
+  return query(
+    supabase.rpc('admin_delete_feedback', {
+      p_feedback_id:     feedbackId,
+      p_requester_phone: requesterPhone,
+    })
+  );
+}
+
+/** Recent reports (blocks with reasons). */
+export function getRecentReports(limit = 50) {
+  return query(
+    from('blocked_users')
+      .select('id, blocker_user_id, blocked_user_id, reason, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit)
   );
 }
 
@@ -74,7 +180,9 @@ export function getAllUsers(examType = 'NEET UG') {
   let q = from('users')
     .select('id, full_name, gender, state, district, exam_centre_state, exam_centre_district, exam_center, phone, travel_mode, stay_plan, bio, exam_type, created_at')
     .eq('profile_completed', true)
-    .or('is_profile_paused.is.null,is_profile_paused.eq.false');
+    .or('is_profile_paused.is.null,is_profile_paused.eq.false')
+    // Exclude admin-suspended and admin-banned users from the public feed
+    .or('account_status.is.null,account_status.eq.active');
 
   if (!examType || examType === 'NEET UG') {
     // Include legacy null-exam_type rows alongside explicit NEET UG rows.
@@ -234,4 +342,101 @@ export function deleteRequest(connectionId) {
   return query(
     from('connections').delete().eq('id', connectionId)
   );
+}
+
+// ─── Phase 3: Announcements, Platform Config, Reports, Audit ─────────────────
+
+/** Active announcements for the public banner (sorted by priority). */
+export function getActiveAnnouncements(examType = null) {
+  let q = from('announcements')
+    .select('id, message, priority, exam_target, expires_at')
+    .eq('is_active', true)
+    .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
+    .order('priority', { ascending: false });
+  if (examType) q = q.or(`exam_target.is.null,exam_target.eq.${examType}`);
+  return query(q);
+}
+
+export function getAllAnnouncements() {
+  return query(from('announcements').select('*').order('priority', { ascending: false }));
+}
+
+/** Platform config: feature toggles + exam config. */
+export function getPlatformConfig() {
+  return query(from('platform_config').select('key, value'));
+}
+
+export function getRecentUserReports(limit = 100) {
+  return query(
+    from('user_reports')
+      .select('id, reporter_id, reported_id, reason, details, status, resolved_by, resolved_note, created_at, updated_at')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+  );
+}
+
+export function getAuditLog(limit = 100) {
+  return query(
+    from('audit_log')
+      .select('id, admin_phone, action, target_type, target_id, details, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+  );
+}
+
+/** Admin analytics: richer breakdown queries. */
+export async function getAnalyticsData() {
+  const [examR, genderR, districtR, pendingR, connR] = await Promise.all([
+    query(from('users').select('exam_type').eq('profile_completed', true)),
+    query(from('users').select('gender').eq('profile_completed', true)),
+    query(from('users').select('district').eq('profile_completed', true).not('district', 'is', null)),
+    query(from('connections').select('id').eq('status', 'pending')),
+    query(from('connections').select('id').eq('status', 'accepted')),
+  ]);
+  const countBy = (arr, key) => (arr || []).reduce((acc, r) => {
+    const v = r[key] || 'Unknown'; acc[v] = (acc[v] || 0) + 1; return acc;
+  }, {});
+  return {
+    data: {
+      byExam:     countBy(examR.data,     'exam_type'),
+      byGender:   countBy(genderR.data,   'gender'),
+      byDistrict: countBy(districtR.data, 'district'),
+      pendingConnections:  pendingR.data?.length || 0,
+      acceptedConnections: connR.data?.length    || 0,
+    },
+    error: examR.error || genderR.error || null,
+  };
+}
+
+// Admin mutations (SECURITY DEFINER)
+export function adminUpsertAnnouncement(data, requesterPhone) {
+  return query(supabase.rpc('admin_upsert_announcement', {
+    p_id: data.id || null, p_message: data.message, p_is_active: data.is_active,
+    p_priority: data.priority || 0, p_exam_target: data.exam_target || null,
+    p_expires_at: data.expires_at || null, p_requester_phone: requesterPhone,
+  }));
+}
+
+export function adminDeleteAnnouncement(id, requesterPhone) {
+  return query(supabase.rpc('admin_delete_announcement', {
+    p_id: id, p_requester_phone: requesterPhone,
+  }));
+}
+
+export function adminUpdateConfig(key, value, requesterPhone) {
+  return query(supabase.rpc('admin_update_config', {
+    p_key: key, p_value: value, p_requester_phone: requesterPhone,
+  }));
+}
+
+export function adminUpdateReport(id, status, note, requesterPhone) {
+  return query(supabase.rpc('admin_update_report', {
+    p_id: id, p_status: status, p_note: note || null, p_requester_phone: requesterPhone,
+  }));
+}
+
+export function adminSetUserRole(targetId, role, requesterPhone) {
+  return query(supabase.rpc('admin_set_user_role', {
+    p_target_id: targetId, p_role: role, p_requester_phone: requesterPhone,
+  }));
 }

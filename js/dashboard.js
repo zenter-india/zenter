@@ -16,21 +16,21 @@ let allUsers        = [];
 let displayedUsers  = [];
 let lastFocusedCard = null;
 let modalUser       = null;
-let myUserId        = null;
-let myExamType      = null;   // permanent — set during onboarding
+let myUserId              = null;
+let myExamType            = null;   // permanent — set during onboarding
+let myExamCentreDistrict  = null;   // district-level matching boundary
 let firebaseUser    = null;   // stored for lazy connections load
 let connectionsLoaded = false;
 let blockedUserIds  = new Set(); // blocked_user_id values for the current user
 let dataLoaded      = false;     // true once loadData() has hydrated — gates empty states
 
 const FILTERS = [
-  // fallback: old users who predate exam_centre_* columns still match via state/district
-  { id: 'hm-filter-exam-state',    key: 'exam_centre_state',    fallback: 'state',    type: 'select' },
-  { id: 'hm-filter-exam-district', key: 'exam_centre_district', fallback: 'district', type: 'select' },
-  { id: 'hm-filter-center',        key: 'exam_center',                                type: 'text'   },
-  { id: 'hm-filter-gender',        key: 'gender',                                     type: 'select' },
-  { id: 'hm-filter-travel',        key: 'travel_mode',                                type: 'select' },
-  { id: 'hm-filter-stay',          key: 'stay_plan',                                  type: 'select' },
+  // State/district filters removed — district-level matching is now enforced on load.
+  // Remaining filters let users narrow within their district.
+  { id: 'hm-filter-center',  key: 'exam_center',  type: 'text'   },
+  { id: 'hm-filter-gender',  key: 'gender',       type: 'select' },
+  { id: 'hm-filter-travel',  key: 'travel_mode',  type: 'select' },
+  { id: 'hm-filter-stay',    key: 'stay_plan',    type: 'select' },
 ];
 
 const AVATAR_COLORS = ['#FF6B35','#4F46E5','#10B981','#F59E0B','#8B5CF6','#06B6D4','#EF4444'];
@@ -49,8 +49,13 @@ async function init() {
   wireTabs();
 
   const { data: me } = await getUserByPhone(firebaseUser.phoneNumber);
-  myUserId   = me?.id        || null;
-  myExamType = me?.exam_type || 'NEET UG'; // legacy users (null) treated as NEET UG
+  myUserId             = me?.id        || null;
+  myExamType           = me?.exam_type || 'NEET UG';
+  // District-level boundary: exam centre district if set, else home district
+  myExamCentreDistrict = me?.exam_centre_district || me?.district || null;
+
+  // Cache role so the navbar admin link can show/hide without an extra fetch
+  try { sessionStorage.setItem('hm.user.role', me?.role || 'user'); } catch {}
 
   // Non-NEET UG exam types → maintenance page (product focus is NEET UG).
   if (myExamType !== 'NEET UG') {
@@ -94,9 +99,17 @@ async function loadData() {
   if (usersRes.error) { renderError(usersRes.error.message); return; }
 
   Relationships.hydrate(connsRes.data || [], myUserId);
-  allUsers = (usersRes.data || []).filter(
-    (u) => u.id !== myUserId && !blockedUserIds.has(u.id)
-  );
+  allUsers = (usersRes.data || []).filter((u) => {
+    if (u.id === myUserId) return false;
+    if (blockedUserIds.has(u.id)) return false;
+    // District-level visibility: only show users whose exam centre district matches.
+    // Fallback: if the other user has no exam_centre_district, use their home district.
+    if (myExamCentreDistrict) {
+      const uDistrict = u.exam_centre_district || u.district;
+      if (uDistrict !== myExamCentreDistrict) return false;
+    }
+    return true;
+  });
 
   dataLoaded = true; // gate empty states until real data is present
   renderRequests();
@@ -226,16 +239,7 @@ function wireFilters() {
       ?.addEventListener(type === 'text' ? 'input' : 'change', debouncedApply);
   });
 
-  // Populate exam centre state dropdown and wire district cascade
-  const stateEl    = document.getElementById('hm-filter-exam-state');
-  const districtEl = document.getElementById('hm-filter-exam-district');
-  if (stateEl && districtEl) {
-    populateStateSelect(stateEl, { defaultLabel: 'All states' });
-    wireDistrictCascade(stateEl, districtEl, {
-      filterMode:   true,
-      noStateLabel: 'All districts',
-    });
-  }
+  // State/district dropdowns removed — district matching is enforced at load time.
 
   document.getElementById('hm-filter-clear')?.addEventListener('click', clearFilters);
 
@@ -248,7 +252,6 @@ function wireFilters() {
 function clearFilters() {
   FILTERS.forEach(({ id }) => { const el = document.getElementById(id); if (el) el.value = ''; });
   // Trigger cascade so district options reset to "All districts" when state is cleared
-  document.getElementById('hm-filter-exam-state')?.dispatchEvent(new Event('change'));
   applyFilters();
 }
 
@@ -634,8 +637,8 @@ function renderEmpty(isFiltered) {
       <h3>${isFiltered ? 'No centre mates found' : 'No mates yet'}</h3>
       <p class="hm-text-muted">
         ${isFiltered
-          ? 'No centre mates match the selected filters. Try widening your search.'
-          : 'Be the first to join your exam centre.'}
+          ? 'No aspirants in your exam centre district match the filters.'
+          : 'Be the first aspirant from your exam centre district on Zenter.'}
       </p>
       ${isFiltered ? `<button class="hm-btn hm-btn--ghost hm-btn--sm" onclick="document.getElementById('hm-filter-clear').click()">Clear filters</button>` : ''}
     </div>`);

@@ -5,5 +5,7 @@ Disallow: /profile.html
 Disallow: /onboarding.html
 Disallow: /connections.html
 Disallow: /blocked-users.html
+Disallow: /admin.html
+Disallow: /admin/
 
 Sitemap: https://zenter.in/sitemap.xml

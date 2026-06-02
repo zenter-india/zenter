@@ -665,3 +665,40 @@
   }
   .hm-exam-selector::-webkit-scrollbar { display: none; }
 }
+
+/* ── Announcement ticker bar ────────────────────────────────────────────────
+   Appears below the navbar on public + dashboard pages.
+   Admin-managed via /admin.html → Settings → Announcements. */
+.hm-announcement-bar {
+  background: var(--hm-primary);
+  color: #fff;
+  height: 36px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 99;
+  font-size: 13px;
+  font-weight: 500;
+}
+.hm-announcement-bar__ticker {
+  display: flex;
+  white-space: nowrap;
+  animation: hm-ticker-scroll 28s linear infinite;
+  will-change: transform;
+}
+.hm-announcement-bar__ticker:hover { animation-play-state: paused; }
+.hm-announcement-bar__text {
+  /* Right-only padding = equal separator on BOTH sides of every loop cycle.
+     padding: 0 48px caused double-gap (48+48=96px). Tightened to 40px. */
+  padding: 0 40px 0 0;
+  flex-shrink: 0;
+}
+@keyframes hm-ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@media (max-width: 480px) {
+  .hm-announcement-bar { font-size: 12px; height: 32px; }
+  .hm-announcement-bar__ticker { animation-duration: 20s; }
+}
