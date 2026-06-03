@@ -59,8 +59,9 @@ export async function getAdminStats() {
     return predicate ? predicate(q) : q;
   };
   const [usersR, activeR, conxR, feedbackR, reportsR] = await Promise.all([
-    headCount('users'),
-    headCount('users', q => q.or('is_profile_paused.is.null,is_profile_paused.eq.false')),
+    // Exclude seeded users from all KPI counts
+    headCount('users', q => q.or('is_seeded_user.is.null,is_seeded_user.eq.false')),
+    headCount('users', q => q.or('is_seeded_user.is.null,is_seeded_user.eq.false').or('is_profile_paused.is.null,is_profile_paused.eq.false')),
     headCount('connections', q => q.eq('status', 'accepted')),
     headCount('feedbacks'),
     headCount('blocked_users'),
@@ -78,13 +79,14 @@ export async function getAdminStats() {
 }
 
 /** Recent users list for the admin Users section — includes moderation fields. */
-export function getRecentUsers(limit = 50) {
-  return query(
-    from('users')
-      .select('id, full_name, gender, phone, exam_type, state, district, exam_centre_state, exam_centre_district, exam_center, profile_completed, is_profile_paused, account_status, role, created_at')
-      .order('created_at', { ascending: false })
-      .limit(limit)
-  );
+export function getRecentUsers(limit = 50, { seededOnly = false, excludeSeeded = false } = {}) {
+  let q = from('users')
+    .select('id, full_name, gender, phone, exam_type, state, district, exam_centre_state, exam_centre_district, exam_center, profile_completed, is_profile_paused, account_status, role, is_seeded_user, created_at')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (seededOnly)    q = q.eq('is_seeded_user', true);
+  if (excludeSeeded) q = q.or('is_seeded_user.is.null,is_seeded_user.eq.false');
+  return query(q);
 }
 
 /** Recent feedback with resolution state. */
@@ -397,10 +399,12 @@ export function getAuditLog(limit = 100) {
 
 /** Admin analytics: richer breakdown queries. */
 export async function getAnalyticsData() {
+  // Exclude seeded/demo users from all analytics so metrics reflect real growth
+  const realUsers = (q) => q.or('is_seeded_user.is.null,is_seeded_user.eq.false');
   const [examR, genderR, districtR, pendingR, connR] = await Promise.all([
-    query(from('users').select('exam_type').eq('profile_completed', true)),
-    query(from('users').select('gender').eq('profile_completed', true)),
-    query(from('users').select('district').eq('profile_completed', true).not('district', 'is', null)),
+    query(realUsers(from('users').select('exam_type').eq('profile_completed', true))),
+    query(realUsers(from('users').select('gender').eq('profile_completed', true))),
+    query(realUsers(from('users').select('district').eq('profile_completed', true).not('district', 'is', null))),
     query(from('connections').select('id').eq('status', 'pending')),
     query(from('connections').select('id').eq('status', 'accepted')),
   ]);
@@ -450,4 +454,14 @@ export function adminSetUserRole(targetId, role, requesterPhone) {
   return query(supabase.rpc('admin_set_user_role', {
     p_target_id: targetId, p_role: role, p_requester_phone: requesterPhone,
   }));
+}
+
+/** Delete ALL seeded users in bulk (admin only). */
+export function adminDeleteAllSeeded() {
+  return query(from('users').delete().eq('is_seeded_user', true));
+}
+
+/** Toggle visibility of a single seeded user by pausing/unpausing. */
+export function adminHideSeededUser(targetId, hidden) {
+  return query(from('users').update({ is_profile_paused: hidden }).eq('id', targetId).eq('is_seeded_user', true));
 }

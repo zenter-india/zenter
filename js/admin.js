@@ -97,18 +97,21 @@ async function loadUsers() {
   allUsers = data;
   renderFilteredUsers();
   const rerender = debounce(renderFilteredUsers, 180);
-  ['adm-user-search','adm-user-filter-exam','adm-user-filter-gender']
+  ['adm-user-search','adm-user-filter-exam','adm-user-filter-gender','adm-user-filter-seeded']
     .forEach(id => document.getElementById(id)?.addEventListener('input', rerender));
 }
 
 function renderFilteredUsers() {
-  const search = (document.getElementById('adm-user-search')?.value || '').toLowerCase();
-  const exam   = document.getElementById('adm-user-filter-exam')?.value   || '';
-  const gender = document.getElementById('adm-user-filter-gender')?.value || '';
+  const search  = (document.getElementById('adm-user-search')?.value || '').toLowerCase();
+  const exam    = document.getElementById('adm-user-filter-exam')?.value    || '';
+  const gender  = document.getElementById('adm-user-filter-gender')?.value  || '';
+  const seeded  = document.getElementById('adm-user-filter-seeded')?.value  || '';
   const filtered = allUsers.filter(u => {
     if (search && !`${u.full_name} ${u.phone}`.toLowerCase().includes(search)) return false;
     if (exam   && u.exam_type !== exam)  return false;
     if (gender && u.gender   !== gender) return false;
+    if (seeded === 'seeded' && !u.is_seeded_user) return false;
+    if (seeded === 'real'   &&  u.is_seeded_user) return false;
     return true;
   });
   const el = document.getElementById('adm-users-list');
@@ -449,6 +452,23 @@ document.addEventListener('click', async (e) => {
   }
 
   // ── Delete user ───────────────────────────────────────────────────────────
+  if (action === 'delete-all-seeded') {
+    const count = allUsers.filter(u => u.is_seeded_user).length;
+    confirm_({
+      title: `Delete all ${count} seeded users?`,
+      msg: 'This permanently removes all demo/seed accounts. Real users are unaffected. Cannot be undone.',
+      danger: true,
+    }, async () => {
+      btn.disabled = true;
+      const { adminDeleteAllSeeded } = await import('./supabase.js');
+      const { error } = await adminDeleteAllSeeded();
+      if (error) { toast('Error: ' + error.message, 'error'); btn.disabled = false; return; }
+      allUsers = allUsers.filter(u => !u.is_seeded_user);
+      renderFilteredUsers();
+      toast(`${count} seeded users deleted ✓`, 'info');
+    }); return;
+  }
+
   if (action === 'delete-user') {
     const userName = btn.dataset.name || 'this user';
     confirm_({
@@ -545,8 +565,13 @@ function renderUsersTable(users, withActions = false) {
     const examCentreDistrict = u.exam_centre_district || '—';
     const examCentreName     = u.exam_center          || '—';
 
+    const seededBadge = u.is_seeded_user
+      ? `<span class="adm-pill" style="font-size:10px;background:#fef3c7;color:#92400e;border:1px solid #fde68a;">🌱 seeded</span>`
+      : '';
+
     const actions = withActions ? `<td>
       <div class="adm-actions" style="gap:4px;">
+        ${seededBadge}
         ${isSuperAdmin
           ? '<span class="adm-pill adm-pill--admin" style="font-size:10px;">⚡ superadmin</span>'
           : `<button class="adm-btn adm-btn--sm ${isAdmin ? 'adm-btn--danger' : 'adm-btn--ok'}"
