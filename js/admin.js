@@ -137,25 +137,24 @@ async function loadSeeded() {
     districts.forEach(d => { const o = document.createElement('option'); o.value = o.textContent = d; distEl.appendChild(o); });
   }
 
-  // Set toggle state based on whether ALL seeded users are paused
+  // Toggle: show or hide exam centre name on seeded user cards in Find Mates
   const toggle = document.getElementById('adm-seeded-visibility-toggle');
   const label  = document.getElementById('adm-seeded-visibility-label');
   if (toggle) {
-    const allHidden = data.length > 0 && data.every(u => u.is_profile_paused);
-    toggle.checked = !allHidden; // checked = visible
-    label.textContent = allHidden ? 'Hidden from Find Mates' : 'Visible in Find Mates';
+    const { getPlatformConfig, adminUpdateConfig } = await import('./supabase.js');
+    const { data: cfgRows } = await getPlatformConfig();
+    const showExamCentre = (cfgRows || []).find(r => r.key === 'seeded_exam_centre_visible')?.value !== false;
+    toggle.checked = showExamCentre;
+    label.textContent = showExamCentre ? 'Exam centre visible on cards' : 'Exam centre hidden on cards';
+
     toggle.addEventListener('change', async () => {
-      const hide = !toggle.checked;
-      label.textContent = 'Updating…';
       toggle.disabled = true;
-      const { toggleSeededUserPause } = await import('./supabase.js');
-      // Toggle all seeded users at once
-      await Promise.all(allSeeded.map(u => toggleSeededUserPause(u.id, hide)));
-      allSeeded.forEach(u => u.is_profile_paused = hide);
+      label.textContent = 'Saving…';
+      const { error } = await adminUpdateConfig('seeded_exam_centre_visible', toggle.checked, adminPhone);
       toggle.disabled = false;
-      label.textContent = hide ? 'Hidden from Find Mates' : 'Visible in Find Mates';
-      renderFilteredSeeded();
-      toast(hide ? 'All seeded users hidden from Find Mates ✓' : 'All seeded users visible in Find Mates ✓', 'success');
+      if (error) { toast('Error: ' + error.message, 'error'); toggle.checked = !toggle.checked; return; }
+      label.textContent = toggle.checked ? 'Exam centre visible on cards' : 'Exam centre hidden on cards';
+      toast(toggle.checked ? 'Exam centre shown on seeded cards ✓' : 'Exam centre hidden on seeded cards ✓', 'success');
     });
   }
 

@@ -3,7 +3,8 @@
 import { requireOnboarded } from './auth.js';
 import { getAllUsers, getUserByPhone, getMyConnections,
          sendConnectionRequest, respondToRequest, deleteRequest,
-         getBlockedUserIds, getBlockedByIds, getSeededUsers, blockUser,
+         getBlockedUserIds, getBlockedByIds, getSeededUsers,
+         getPlatformConfig, blockUser,
          deleteConnectionsBetween } from './supabase.js';
 import { debounce } from './utils.js';
 import { toast, setButtonBusy } from './ui.js';
@@ -139,16 +140,26 @@ async function loadData() {
     }
   } catch {}
 
-  const [usersRes, seededRes, connsRes] = await Promise.all([
+  const [usersRes, seededRes, connsRes, cfgRes] = await Promise.all([
     getAllUsers(myExamType),
     getSeededUsers(myExamType),   // separate table — merged into feed below
     myUserId ? getMyConnections(myUserId) : Promise.resolve({ data: [], error: null }),
+    getPlatformConfig(),
   ]);
 
   if (usersRes.error) { renderError(usersRes.error.message); return; }
 
+  // Check if exam centre should be shown on seeded user cards
+  const showSeededExamCentre = (cfgRes.data || [])
+    .find(r => r.key === 'seeded_exam_centre_visible')?.value !== false;
+
+  // Strip exam_center from seeded users if admin toggled it off
+  const seededUsers = (seededRes.data || []).map(u =>
+    showSeededExamCentre ? u : { ...u, exam_center: null }
+  );
+
   // Merge real + seeded users into one combined list for the feed
-  const combined = [...(usersRes.data || []), ...(seededRes.data || [])];
+  const combined = [...(usersRes.data || []), ...seededUsers];
 
   Relationships.hydrate(connsRes.data || [], myUserId);
 
