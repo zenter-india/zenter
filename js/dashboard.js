@@ -30,10 +30,10 @@ const FILTERS = [
   // State/district filters removed — state-level matching is enforced on load.
   // Remaining filters let users narrow within their state.
   { id: 'hm-filter-gender',   key: 'gender',               type: 'select' },
-  { id: 'hm-filter-travel',   key: 'travel_mode',          type: 'select' },
-  { id: 'hm-filter-stay',     key: 'stay_plan',            type: 'select' },
   { id: 'hm-filter-district', key: 'exam_centre_district', type: 'select' },
   { id: 'hm-filter-center',   key: 'exam_center',          type: 'text'   },
+  { id: 'hm-filter-travel',   key: 'travel_mode',          type: 'select' },
+  { id: 'hm-filter-stay',     key: 'stay_plan',            type: 'select' },
 ];
 
 const AVATAR_COLORS = ['#FF6B35','#4F46E5','#10B981','#F59E0B','#8B5CF6','#06B6D4','#EF4444'];
