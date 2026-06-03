@@ -493,12 +493,5 @@ export function adminSetUserRole(targetId, role, requesterPhone) {
   }));
 }
 
-/** Delete ALL seeded users in bulk (admin only). */
-export function adminDeleteAllSeeded() {
-  return query(from('users').delete().eq('is_seeded_user', true));
-}
-
-/** Toggle visibility of a single seeded user by pausing/unpausing. */
-export function adminHideSeededUser(targetId, hidden) {
-  return query(from('users').update({ is_profile_paused: hidden }).eq('id', targetId).eq('is_seeded_user', true));
-}
+// adminDeleteAllSeeded and adminHideSeededUser removed — seeded users now live
+// in the seeded_users table. Use deleteAllSeededUsers / toggleSeededUserPause instead.
