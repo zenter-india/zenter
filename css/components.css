@@ -673,6 +673,32 @@
   .hm-exam-selector::-webkit-scrollbar { display: none; }
 }
 
+/* ── Zenter Plus reveal usage banner ──────────────────────────────────────── */
+.hm-reveal-banner {
+  background: #fff3ed;
+  border: 1px solid #fed7aa;
+  border-radius: var(--hm-radius-lg);
+  padding: 10px 16px;
+  margin-bottom: var(--hm-space-3);
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text);
+}
+.hm-reveal-banner__text--limit {
+  color: var(--hm-danger, #dc2626);
+}
+.hm-reveal-banner__link {
+  color: var(--hm-primary);
+  font-weight: 600;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+/* Plus item in navbar dropdown */
+.hm-nav-profile__item--plus {
+  color: var(--hm-primary) !important;
+  font-weight: 600;
+}
+
 /* ── Announcement ticker bar ────────────────────────────────────────────────
    Appears below the navbar on public + dashboard pages.
    Admin-managed via /admin.html → Settings → Announcements. */

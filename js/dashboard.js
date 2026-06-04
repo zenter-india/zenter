@@ -21,6 +21,9 @@ let modalUser       = null;
 let myUserId              = null;
 let myExamType            = null;   // permanent — set during onboarding
 let myExamCentreState     = null;   // state-level matching boundary
+let myPlusMember          = false;  // Zenter Plus membership
+let myRevealsUsed         = 0;      // contact reveals used so far
+let myFreeLimit           = 2;      // from platform_config
 let firebaseUser    = null;   // stored for lazy connections load
 let connectionsLoaded = false;
 let blockedUserIds  = new Set(); // users the current user has blocked
@@ -62,6 +65,10 @@ async function init() {
   myExamCentreState = (myRole === 'admin' || myRole === 'superadmin')
     ? null
     : (me?.exam_centre_state || null);
+
+  // Zenter Plus state
+  myPlusMember  = me?.plus_member === true;
+  myRevealsUsed = me?.contact_reveals_used || 0;
 
   // Populate the district filter dropdown with districts from the user's exam state.
   // Admin has no state boundary so show all districts (sorted A-Z).
@@ -149,9 +156,16 @@ async function loadData() {
 
   if (usersRes.error) { renderError(usersRes.error.message); return; }
 
+  // Read free reveal limit from config
+  const cfgRows = cfgRes.data || [];
+  myFreeLimit = cfgRows.find(r => r.key === 'free_reveal_limit')?.value ?? 2;
+  const plusEnabled = cfgRows.find(r => r.key === 'plus_enabled')?.value !== false;
+
+  // Show reveal usage banner for non-plus free users when Plus is enabled
+  renderRevealBanner(plusEnabled);
+
   // Check if exam centre should be shown on seeded user cards
-  const showSeededExamCentre = (cfgRes.data || [])
-    .find(r => r.key === 'seeded_exam_centre_visible')?.value !== false;
+  const showSeededExamCentre = cfgRows.find(r => r.key === 'seeded_exam_centre_visible')?.value !== false;
 
   // Strip exam_center from seeded users if admin toggled it off
   const seededUsers = (seededRes.data || []).map(u =>
@@ -434,6 +448,25 @@ async function doWithdraw(userId, connId) {
   connectionsLoaded = false;
   notifyConnectionsChanged();
   toast('Request cancelled.', { variant: 'info' });
+}
+
+// ─── Zenter Plus reveal usage banner ─────────────────────────────────────────
+function renderRevealBanner(plusEnabled) {
+  const banner = document.getElementById('hm-reveal-banner');
+  if (!banner) return;
+  // Hide for Plus members, admins, or when Plus feature is off
+  if (myPlusMember || !plusEnabled) { banner.hidden = true; return; }
+  const remaining = Math.max(0, myFreeLimit - myRevealsUsed);
+  banner.hidden = false;
+  banner.innerHTML = remaining > 0
+    ? `<span class="hm-reveal-banner__text">
+         You have <strong>${remaining} free contact reveal${remaining === 1 ? '' : 's'}</strong> remaining.
+         <a href="/plus.html" class="hm-reveal-banner__link">Get Zenter Plus for unlimited →</a>
+       </span>`
+    : `<span class="hm-reveal-banner__text hm-reveal-banner__text--limit">
+         You've used all your free reveals.
+         <a href="/plus.html" class="hm-reveal-banner__link">Upgrade to Zenter Plus →</a>
+       </span>`;
 }
 
 // ─── Zenter Plus upgrade prompt ───────────────────────────────────────────────
