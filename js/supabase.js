@@ -81,7 +81,7 @@ export async function getAdminStats() {
 /** Recent users list for the admin Users section — includes moderation fields. */
 export function getRecentUsers(limit = 50, { seededOnly = false, excludeSeeded = false } = {}) {
   let q = from('users')
-    .select('id, full_name, gender, phone, exam_type, state, district, exam_centre_state, exam_centre_district, exam_center, profile_completed, is_profile_paused, account_status, role, is_seeded_user, plus_member, contact_reveals_used, is_verified_aspirant, created_at')
+    .select('id, full_name, gender, phone, exam_type, state, district, exam_centre_state, exam_centre_district, exam_center, profile_completed, is_profile_paused, account_status, role, is_seeded_user, plus_member, contact_reveals_used, is_verified_aspirant, verification_requested, verification_rejected, nta_application_number, created_at')
     .order('created_at', { ascending: false })
     .limit(limit);
   if (seededOnly)    q = q.eq('is_seeded_user', true);
@@ -159,7 +159,7 @@ export function getProfileByPhone(phone) {
         'id, phone, full_name, gender, state, district, ' +
         'exam_centre_state, exam_centre_district, exam_center, exam_type, ' +
         'college, travel_mode, stay_plan, bio, ' +
-        'profile_completed, is_profile_paused, plus_member, contact_reveals_used, is_verified_aspirant, created_at'
+        'profile_completed, is_profile_paused, plus_member, contact_reveals_used, is_verified_aspirant, verification_requested, verification_rejected, nta_application_number, created_at'
       )
       .eq('phone', phone)
       .maybeSingle()
@@ -515,5 +515,18 @@ export function adminSetPlusMember(targetId, isPlus) {
 
 /** Grant or revoke Verified Aspirant status (admit card verified by admin). */
 export function adminSetVerifiedAspirant(targetId, isVerified) {
-  return query(from('users').update({ is_verified_aspirant: isVerified }).eq('id', targetId).select('id').single());
+  const updates = isVerified
+    ? { is_verified_aspirant: true,  verification_requested: false, verification_rejected: false }
+    : { is_verified_aspirant: false, verification_requested: false, verification_rejected: true  };
+  return query(from('users').update(updates).eq('id', targetId).select('id').single());
+}
+
+/** User submits NTA application number and requests verification. */
+export function requestAdmitCardVerification(phone, ntaNumber) {
+  return query(
+    from('users')
+      .update({ nta_application_number: ntaNumber.trim(), verification_requested: true, verification_rejected: false })
+      .eq('phone', phone)
+      .select('id').single()
+  );
 }

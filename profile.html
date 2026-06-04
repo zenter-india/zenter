@@ -55,6 +55,32 @@
               <a href="/plus.html" style="font-size:var(--hm-text-xs);color:var(--hm-primary);font-weight:600;">Get Zenter Plus →</a>
             </div>
 
+            <!-- Admit card verification -->
+            <div id="hm-verification-section" style="margin-top:var(--hm-space-4);width:100%;text-align:left;" hidden>
+              <p style="font-size:var(--hm-text-xs);font-weight:700;color:var(--hm-text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Admit Card Verification</p>
+              <!-- Already verified -->
+              <div id="hm-verified-state" hidden>
+                <span class="hm-badge hm-badge--verified-full" style="display:inline-flex;">✓ Admit card verified</span>
+              </div>
+              <!-- Pending review -->
+              <div id="hm-pending-state" hidden>
+                <span class="hm-badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;">⏳ Pending review</span>
+                <p style="font-size:11px;color:var(--hm-text-muted);margin-top:4px;">We'll verify your details shortly.</p>
+              </div>
+              <!-- Rejected -->
+              <div id="hm-rejected-state" hidden>
+                <span class="hm-badge" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;">✗ Not verified</span>
+                <p style="font-size:11px;color:var(--hm-text-muted);margin-top:4px;">Resubmit with correct details.</p>
+              </div>
+              <!-- Not submitted yet OR rejected — show form -->
+              <div id="hm-verify-form">
+                <input type="text" id="hm-nta-number" class="hm-input" placeholder="Enter NTA Application Number"
+                  style="margin-top:6px;font-size:13px;" maxlength="20" autocomplete="off" />
+                <button type="button" class="hm-btn hm-btn--primary hm-btn--sm hm-btn--block"
+                  id="hm-request-verify" style="margin-top:6px;">Request Verification</button>
+              </div>
+            </div>
+
             <!-- Paused notice — shown when profile is hidden from Find Mates -->
             <div id="hm-paused-notice" hidden
                  style="margin-top:var(--hm-space-3);padding:8px 12px;

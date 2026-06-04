@@ -184,6 +184,25 @@ function hydrateAll() {
     if (plusUpgrade) plusUpgrade.hidden = false;
   }
 
+  // Admit card verification section
+  const verSection   = document.getElementById('hm-verification-section');
+  const verifiedEl   = document.getElementById('hm-verified-state');
+  const pendingEl    = document.getElementById('hm-pending-state');
+  const rejectedEl   = document.getElementById('hm-rejected-state');
+  const verFormEl    = document.getElementById('hm-verify-form');
+  const ntaInput     = document.getElementById('hm-nta-number');
+
+  if (verSection) {
+    verSection.hidden = false;
+    verifiedEl.hidden  = !profileData.is_verified_aspirant;
+    pendingEl.hidden   = !profileData.verification_requested || profileData.is_verified_aspirant;
+    rejectedEl.hidden  = !profileData.verification_rejected;
+    // Show form if not verified and not pending
+    verFormEl.hidden   = profileData.is_verified_aspirant || profileData.verification_requested;
+    // Pre-fill if previously submitted
+    if (ntaInput && profileData.nta_application_number) ntaInput.value = profileData.nta_application_number;
+  }
+
   // All section fields
   Object.values(SECTIONS).forEach(sec => hydrateSection(sec));
 }
@@ -517,6 +536,25 @@ function renderPauseState() {
 
 function wireAccountActions() {
   renderPauseState();
+
+  // ── Admit Card Verification Request ──────────────────────────────────────
+  document.getElementById('hm-request-verify')?.addEventListener('click', async () => {
+    const ntaVal = document.getElementById('hm-nta-number')?.value?.trim();
+    if (!ntaVal || ntaVal.length < 4) {
+      toast('Please enter a valid NTA Application Number.', { variant: 'danger' }); return;
+    }
+    const btn = document.getElementById('hm-request-verify');
+    btn.disabled = true; btn.textContent = 'Submitting…';
+    const { requestAdmitCardVerification } = await import('./supabase.js');
+    const { error } = await requestAdmitCardVerification(profilePhone, ntaVal);
+    btn.disabled = false; btn.textContent = 'Request Verification';
+    if (error) { toast(error.message || 'Could not submit. Please try again.', { variant: 'danger' }); return; }
+    profileData.nta_application_number = ntaVal;
+    profileData.verification_requested = true;
+    profileData.verification_rejected  = false;
+    hydrateAll(); // re-render to show pending state
+    toast('Verification request submitted. We\'ll review your details shortly.', { variant: 'success' });
+  });
 
   // ── Pause / Reactivate ────────────────────────────────────────────────────
   document.getElementById('hm-pause-profile')?.addEventListener('click', () => {

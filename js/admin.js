@@ -801,10 +801,15 @@ function renderUsersTable(users, withActions = false) {
           ? '<span class="adm-pill" style="background:#fef9c3;color:#854d0e;border:1px solid #fef08a;">⭐ Plus</span>'
           : '<span style="font-size:11px;color:var(--adm-text-dim);">Free</span>'}
       </td>
-      <td>
+      <td style="font-size:12px;">
         ${u.is_verified_aspirant
           ? '<span class="adm-pill" style="background:#16a34a;color:#fff;">✓ Verified</span>'
-          : '<span class="adm-pill" style="background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;">~ Phone only</span>'}
+          : u.verification_requested
+            ? `<span class="adm-pill" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;">⏳ Pending</span>
+               <div style="font-size:10px;color:var(--adm-text-dim);margin-top:2px;">${esc(u.nta_application_number||'')}</div>`
+            : u.verification_rejected
+              ? '<span class="adm-pill" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;">✗ Rejected</span>'
+              : '<span style="color:var(--adm-text-dim);">Phone only</span>'}
       </td>
       <td><span class="adm-pill adm-pill--${esc(display)}">${esc(display)}</span></td>
       <td style="font-size:11px">${esc(fmtDate(u.created_at))}</td>
