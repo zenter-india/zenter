@@ -250,6 +250,36 @@
     </div>
   </div>
 
+  <!-- Zenter Plus upgrade prompt — shown when free reveal limit is reached -->
+  <div id="hm-upgrade-dialog" class="hm-modal-overlay" role="dialog" aria-modal="true"
+       aria-labelledby="hm-upgrade-title" style="z-index:1060;">
+    <div class="hm-modal" style="max-width:420px;padding:var(--hm-space-6);">
+      <div style="font-size:2rem;text-align:center;margin-bottom:var(--hm-space-3);">⭐</div>
+      <h3 id="hm-upgrade-title"
+          style="margin:0 0 var(--hm-space-3);text-align:center;font-size:var(--hm-text-lg);font-weight:700;">
+        Upgrade to Zenter Plus
+      </h3>
+      <p id="hm-upgrade-msg"
+         style="margin:0 0 var(--hm-space-5);color:var(--hm-text-muted);font-size:var(--hm-text-sm);line-height:1.65;text-align:center;">
+      </p>
+      <div style="background:var(--hm-surface-2);border-radius:var(--hm-radius-lg);padding:var(--hm-space-4);margin-bottom:var(--hm-space-5);">
+        <p style="margin:0 0 var(--hm-space-2);font-weight:700;font-size:var(--hm-text-sm);">Zenter Plus — ₹9 / exam season</p>
+        <ul style="margin:0;padding-left:var(--hm-space-4);font-size:var(--hm-text-sm);color:var(--hm-text-muted);line-height:1.8;">
+          <li>Unlimited contact reveals</li>
+          <li>Verified Aspirant Badge</li>
+          <li>Featured profile visibility</li>
+          <li>Early Supporter Badge</li>
+        </ul>
+      </div>
+      <button type="button" class="hm-btn hm-btn--primary" style="width:100%;margin-bottom:var(--hm-space-2);" disabled>
+        Coming soon
+      </button>
+      <button type="button" class="hm-btn hm-btn--ghost" id="hm-upgrade-close" style="width:100%;">
+        Maybe later
+      </button>
+    </div>
+  </div>
+
   <script type="module" src="/js/app.js"></script>
   <script type="module" src="/js/dashboard.js"></script>
   <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>

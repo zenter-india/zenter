@@ -4,7 +4,7 @@ import { requireOnboarded } from './auth.js';
 import { getAllUsers, getUserByPhone, getMyConnections,
          sendConnectionRequest, respondToRequest, deleteRequest,
          getBlockedUserIds, getBlockedByIds, getSeededUsers,
-         getPlatformConfig, blockUser,
+         getPlatformConfig, attemptReveal, blockUser,
          deleteConnectionsBetween } from './supabase.js';
 import { debounce } from './utils.js';
 import { toast, setButtonBusy } from './ui.js';
@@ -436,6 +436,20 @@ async function doWithdraw(userId, connId) {
   toast('Request cancelled.', { variant: 'info' });
 }
 
+// ─── Zenter Plus upgrade prompt ───────────────────────────────────────────────
+function showUpgradePrompt(rev) {
+  const overlay = document.getElementById('hm-upgrade-dialog');
+  if (!overlay) return;
+  const msg = document.getElementById('hm-upgrade-msg');
+  if (msg) {
+    msg.textContent = `You've already unlocked ${rev.limit} successful connection${rev.limit === 1 ? '' : 's'}. Upgrade to Zenter Plus to unlock additional contact details.`;
+  }
+  overlay.classList.add('is-open');
+  document.getElementById('hm-upgrade-close')?.addEventListener('click', () => {
+    overlay.classList.remove('is-open');
+  }, { once: true });
+}
+
 // ─── Safety consent dialog ────────────────────────────────────────────────────
 // Shown after phone reveal AND after accepting a connection request.
 function showSafetyConsent() {
@@ -447,8 +461,22 @@ function showSafetyConsent() {
   }, { once: true });
 }
 
-function doReveal() {
+async function doReveal() {
   if (!modalUser?.phone) return;
+
+  // ── Zenter Plus gate ────────────────────────────────────────────────────────
+  // Attempt to increment the reveal counter. The RPC returns can_reveal=false
+  // when a free user has exhausted their limit. Already-revealed contacts are
+  // tracked by the caller (revealEl already has content) — we only call this
+  // on the first tap, not on repeated opens of the same modal.
+  if (myUserId) {
+    const { data: rev } = await attemptReveal(myUserId);
+    if (rev && !rev.can_reveal) {
+      showUpgradePrompt(rev);
+      return;
+    }
+  }
+
   const phone  = modalUser.phone;
   const waNum  = phone.replace(/\D/g, '');
 

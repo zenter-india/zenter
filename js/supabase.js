@@ -495,3 +495,24 @@ export function adminSetUserRole(targetId, role, requesterPhone) {
 
 // adminDeleteAllSeeded and adminHideSeededUser removed — seeded users now live
 // in the seeded_users table. Use deleteAllSeededUsers / toggleSeededUserPause instead.
+
+// ─── Zenter Plus — Monetization ───────────────────────────────────────────────
+
+/**
+ * Attempt to reveal a contact. Atomically increments the counter and returns:
+ *   { can_reveal, reveals_used, limit, is_plus, incremented }
+ * Never re-locks a previously revealed contact — caller must gate on can_reveal
+ * only for NEW reveals (contacts already shown remain shown).
+ */
+export function attemptReveal(userId) {
+  return query(supabase.rpc('increment_reveal_count', { p_user_id: userId }));
+}
+
+/** Grant or revoke Plus membership (admin). */
+export function adminSetPlusMember(targetId, isPlus, requesterPhone) {
+  return query(supabase.rpc('admin_set_user_role', {
+    // Reuse existing admin RPC pattern via direct update (needs new RPC in future)
+    // For now, update directly — add a dedicated RPC when payments land.
+    p_target_id: targetId, p_role: isPlus ? 'plus' : 'user', p_requester_phone: requesterPhone,
+  }));
+}

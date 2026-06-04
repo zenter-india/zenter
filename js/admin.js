@@ -347,6 +347,28 @@ async function loadSettings() {
         </div>
       </div>
 
+      <div class="adm-card adm-settings-card">
+        <div class="adm-card__header" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>⭐ Zenter Plus</span>
+          <label class="adm-switch">
+            <input type="checkbox" data-config="plus_enabled" ${platformConfig.plus_enabled !== false ? 'checked' : ''}>
+            <span class="adm-switch__track"></span>
+          </label>
+        </div>
+        <div class="adm-card__body" style="padding:16px 20px;">
+          <p style="font-size:13px;color:var(--adm-text-muted);margin:0 0 12px;">
+            When enabled, free users are limited to the number of contact reveals below. Plus members get unlimited reveals.
+          </p>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <label style="font-size:13px;font-weight:600;">Free contact reveals:</label>
+            <input type="number" id="adm-free-reveal-limit" min="1" max="20"
+              value="${platformConfig.free_reveal_limit ?? 2}"
+              style="width:64px;padding:6px 8px;border:1px solid var(--adm-border);border-radius:6px;background:var(--adm-surface);color:var(--adm-text);font-size:13px;" />
+            <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-save-reveal-limit">Save</button>
+          </div>
+        </div>
+      </div>
+
       <div class="adm-card adm-settings-card" style="grid-column:1/-1;">
         <div class="adm-card__header">📋 Recent Audit Log</div>
         <div class="adm-card__body" id="adm-audit-log"><div class="adm-empty" style="padding:24px;">Loading…</div></div>
@@ -360,10 +382,12 @@ async function loadSettings() {
       const cfg   = input.dataset.config;
       const isGlobal = cfg === 'global_maintenance';
       const isFt  = cfg.startsWith('feature_toggles.');
+      const isDirect = ['plus_enabled'].includes(cfg); // direct top-level config keys
       const ftKey = isFt ? cfg.split('.')[1] : null;
       const { adminUpdateConfig } = await import('./supabase.js');
       let key, value;
-      if (isGlobal) { key = 'global_maintenance'; value = input.checked; }
+      if (isGlobal)  { key = 'global_maintenance'; value = input.checked; }
+      else if (isDirect) { key = cfg; value = input.checked; }
       else if (isFt) {
         const ft = { ...(platformConfig.feature_toggles || {}) };
         ft[ftKey] = input.checked;
@@ -375,6 +399,20 @@ async function loadSettings() {
       toast(`${capitalize(key)} updated ✓`, 'success');
     });
   });
+
+  // Wire reveal limit save button
+  document.getElementById('adm-save-reveal-limit')?.addEventListener('click', async () => {
+    const val = parseInt(document.getElementById('adm-free-reveal-limit')?.value, 10);
+    if (!val || val < 1) { toast('Enter a valid number (min 1)', 'error'); return; }
+    const { adminUpdateConfig } = await import('./supabase.js');
+    const { error } = await adminUpdateConfig('free_reveal_limit', val, adminPhone);
+    if (error) { toast('Save failed: ' + error.message, 'error'); return; }
+    platformConfig.free_reveal_limit = val;
+    toast(`Free reveal limit set to ${val} ✓`, 'success');
+  });
+
+  // Wire plus_enabled toggle (handled by data-config="plus_enabled" above)
+  // The generic [data-config] handler below also covers it — ensure config key is passed directly.
 
   // Load announcements list
   await refreshAnnouncementsList();
