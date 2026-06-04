@@ -7,5 +7,6 @@ Disallow: /connections.html
 Disallow: /blocked-users.html
 Disallow: /admin.html
 Disallow: /admin/
+Disallow: /components/
 
 Sitemap: https://zenter.in/sitemap.xml
