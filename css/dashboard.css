@@ -201,34 +201,18 @@
 .hm-mate__badges  { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; line-height: 1; }
 .hm-badge--female { background: #f3e8ff; color: #7c3aed; border: 1px solid #ddd6fe; }
 .hm-badge--male   { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
-/* Verified icon — circular, compact */
-.hm-badge--verified,
-.hm-badge--verified-full {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  font-size: 11px;
-  font-weight: 900;
-  flex-shrink: 0;
-  padding: 0;
-  line-height: 1;
-  border: 2px solid #15803d;
-  font-family: inherit;
-}
-
-/* Phone verified — half dark green (left), half white (right) */
+/* Phone verified — pill shape, diagonal / split (bottom-left green, top-right white) */
 .hm-badge--verified {
-  background: linear-gradient(to right, #15803d 50%, #ffffff 50%);
-  color: #fff; /* checkmark visible on green half only */
+  background: linear-gradient(45deg, #15803d 50%, #ffffff 50%);
+  border: 1.5px solid #15803d;
+  color: #fff;
 }
 
-/* Fully verified (admit card) — solid dark green */
+/* Fully verified (admit card) — solid dark green pill */
 .hm-badge--verified-full {
   background: #15803d;
   color: #fff;
+  border: 1.5px solid #15803d;
 }
 
 /* Gender symbol (♀ ♂) sit below text baseline on iOS Safari due to the

@@ -644,7 +644,7 @@ function requestCard(user, connectionId) {
           <p class="hm-mate__name">${esc(user.full_name)}</p>
           <div class="hm-mate__badges">
             ${user.gender ? `<span class="hm-badge ${genderCls}">${esc(user.gender)}</span>` : ''}
-            <span class="hm-badge ${user.is_verified_aspirant ? 'hm-badge--verified-full' : 'hm-badge--verified'}" title="${user.is_verified_aspirant ? 'Admit card verified' : 'Phone verified'}">✓</span>
+            <span class="hm-badge ${user.is_verified_aspirant ? 'hm-badge--verified-full' : 'hm-badge--verified'}" title="${user.is_verified_aspirant ? 'Admit card verified' : 'Phone verified'}">✓ Verified</span>
             ${user.plus_member ? `<span class="hm-badge hm-badge--plus">⭐ Plus</span>` : ''}
           </div>
         </div>
@@ -894,7 +894,7 @@ function mateCard(user, idx) {
             ${user.gender
               ? `<span class="hm-badge ${genderCls}">${esc(user.gender)}</span>`
               : ''}
-            <span class="hm-badge ${user.is_verified_aspirant ? 'hm-badge--verified-full' : 'hm-badge--verified'}" title="${user.is_verified_aspirant ? 'Admit card verified' : 'Phone verified'}">✓</span>
+            <span class="hm-badge ${user.is_verified_aspirant ? 'hm-badge--verified-full' : 'hm-badge--verified'}" title="${user.is_verified_aspirant ? 'Admit card verified' : 'Phone verified'}">✓ Verified</span>
             ${user.plus_member ? `<span class="hm-badge hm-badge--plus">⭐ Plus</span>` : ''}
           </div>
         </div>
