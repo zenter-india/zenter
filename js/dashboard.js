@@ -203,6 +203,14 @@ async function loadData() {
     return true;
   });
 
+  // Sort Plus members to top — featured profile benefit
+  // Within each group (Plus / Free) keep the original created_at order
+  allUsers.sort((a, b) => {
+    if (a.plus_member && !b.plus_member) return -1;
+    if (!a.plus_member && b.plus_member) return  1;
+    return 0;
+  });
+
   dataLoaded = true; // gate empty states until real data is present
   renderRequests();
   updateNavBadge();
