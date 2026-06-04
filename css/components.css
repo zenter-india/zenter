@@ -487,6 +487,7 @@
   background: var(--hm-surface-2); color: var(--hm-text-muted);
 }
 .hm-badge--success { background: var(--hm-accent-100); color: #047857; }
+.hm-badge--plus    { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; font-weight: 700; }
 .hm-badge--info    { background: var(--hm-secondary-100); color: var(--hm-secondary-600); }
 .hm-badge--warning { background: #FEF3C7; color: #92400E; }
 .hm-badge--danger  { background: #FEE2E2; color: #991B1B; }

@@ -173,6 +173,17 @@ function hydrateAll() {
   // Cache initials for the navbar avatar across all pages
   cacheInitials(name);
 
+  // Gap 5: show Plus badge or upgrade link
+  const plusStatus  = document.getElementById('hm-plus-status');
+  const plusUpgrade = document.getElementById('hm-plus-upgrade-link');
+  if (profileData.plus_member) {
+    if (plusStatus)  plusStatus.hidden  = false;
+    if (plusUpgrade) plusUpgrade.hidden = true;
+  } else {
+    if (plusStatus)  plusStatus.hidden  = true;
+    if (plusUpgrade) plusUpgrade.hidden = false;
+  }
+
   // All section fields
   Object.values(SECTIONS).forEach(sec => hydrateSection(sec));
 }

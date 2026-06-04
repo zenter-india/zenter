@@ -81,7 +81,7 @@ export async function getAdminStats() {
 /** Recent users list for the admin Users section — includes moderation fields. */
 export function getRecentUsers(limit = 50, { seededOnly = false, excludeSeeded = false } = {}) {
   let q = from('users')
-    .select('id, full_name, gender, phone, exam_type, state, district, exam_centre_state, exam_centre_district, exam_center, profile_completed, is_profile_paused, account_status, role, is_seeded_user, created_at')
+    .select('id, full_name, gender, phone, exam_type, state, district, exam_centre_state, exam_centre_district, exam_center, profile_completed, is_profile_paused, account_status, role, is_seeded_user, plus_member, contact_reveals_used, created_at')
     .order('created_at', { ascending: false })
     .limit(limit);
   if (seededOnly)    q = q.eq('is_seeded_user', true);
@@ -159,7 +159,7 @@ export function getProfileByPhone(phone) {
         'id, phone, full_name, gender, state, district, ' +
         'exam_centre_state, exam_centre_district, exam_center, exam_type, ' +
         'college, travel_mode, stay_plan, bio, ' +
-        'profile_completed, is_profile_paused, created_at'
+        'profile_completed, is_profile_paused, plus_member, contact_reveals_used, created_at'
       )
       .eq('phone', phone)
       .maybeSingle()
@@ -508,11 +508,7 @@ export function attemptReveal(userId) {
   return query(supabase.rpc('increment_reveal_count', { p_user_id: userId }));
 }
 
-/** Grant or revoke Plus membership (admin). */
-export function adminSetPlusMember(targetId, isPlus, requesterPhone) {
-  return query(supabase.rpc('admin_set_user_role', {
-    // Reuse existing admin RPC pattern via direct update (needs new RPC in future)
-    // For now, update directly — add a dedicated RPC when payments land.
-    p_target_id: targetId, p_role: isPlus ? 'plus' : 'user', p_requester_phone: requesterPhone,
-  }));
+/** Grant or revoke Plus membership (admin). Direct update — plus_member is not role-protected. */
+export function adminSetPlusMember(targetId, isPlus) {
+  return query(from('users').update({ plus_member: isPlus }).eq('id', targetId).select('id').single());
 }

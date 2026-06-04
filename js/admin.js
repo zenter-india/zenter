@@ -578,6 +578,26 @@ document.addEventListener('click', async (e) => {
     }); return;
   }
 
+  // ── Grant / Revoke Plus membership ───────────────────────────────────────
+  if (action === 'grant-plus' || action === 'revoke-plus') {
+    const granting = action === 'grant-plus';
+    const userName = btn.dataset.name || 'this user';
+    confirm_({
+      title: granting ? `Grant Plus to ${esc(userName)}?` : `Revoke Plus from ${esc(userName)}?`,
+      msg:   granting ? 'Gives unlimited contact reveals and Plus badge.' : 'Removes Plus benefits. Existing revealed contacts remain visible.',
+      danger: !granting,
+    }, async () => {
+      btn.disabled = true;
+      const { adminSetPlusMember } = await import('./supabase.js');
+      const { error } = await adminSetPlusMember(id, granting);
+      if (error) { toast('Error: ' + error.message, 'error'); btn.disabled = false; return; }
+      const u = allUsers.find(u => u.id === id);
+      if (u) u.plus_member = granting;
+      renderFilteredUsers();
+      toast(granting ? `⭐ Plus granted to ${esc(userName)} ✓` : `Plus revoked from ${esc(userName)} ✓`, 'success');
+    }); return;
+  }
+
   // ── Delete user ───────────────────────────────────────────────────────────
   // ── Seeded user actions ───────────────────────────────────────────────────
   if (action === 'delete-all-seeded') {
@@ -727,6 +747,10 @@ function renderUsersTable(users, withActions = false) {
               data-action="set-role" data-id="${esc(u.id)}" data-role="${isAdmin ? 'user' : 'admin'}">
               ${isAdmin ? 'Revoke admin' : 'Make admin'}
             </button>`}
+        <button class="adm-btn adm-btn--sm ${u.plus_member ? 'adm-btn--warn' : 'adm-btn--ok'}"
+          data-action="${u.plus_member ? 'revoke-plus' : 'grant-plus'}" data-id="${esc(u.id)}" data-name="${esc(u.full_name||'User')}">
+          ${u.plus_member ? 'Revoke Plus' : 'Grant Plus'}
+        </button>
         ${!isPrivileged
           ? `<button class="adm-btn adm-btn--sm adm-btn--danger"
                data-action="delete-user" data-id="${esc(u.id)}" data-name="${esc(u.full_name||'User')}">
@@ -748,6 +772,11 @@ function renderUsersTable(users, withActions = false) {
         <div style="color:var(--adm-text-dim);font-size:10px;">${esc(examCentreName)}</div>
       </td>
       <td><span class="adm-pill adm-pill--${esc(u.role||'user')}">${esc(u.role||'user')}</span></td>
+      <td>
+        ${u.plus_member
+          ? '<span class="adm-pill" style="background:#fef9c3;color:#854d0e;border:1px solid #fef08a;">⭐ Plus</span>'
+          : '<span style="font-size:11px;color:var(--adm-text-dim);">Free</span>'}
+      </td>
       <td><span class="adm-pill adm-pill--${esc(display)}">${esc(display)}</span></td>
       <td style="font-size:11px">${esc(fmtDate(u.created_at))}</td>
       ${actions}
@@ -757,7 +786,7 @@ function renderUsersTable(users, withActions = false) {
   return `<table class="adm-table"><thead><tr>
     <th>Name</th><th>Phone</th><th>Gender</th><th>Exam</th>
     <th>Home Location</th><th>Exam Centre</th>
-    <th>Role</th><th>Status</th><th>Joined</th>${ah}
+    <th>Role</th><th>Plus</th><th>Status</th><th>Joined</th>${ah}
   </tr></thead><tbody>${rows}</tbody></table>`;
 }
 

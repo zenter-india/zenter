@@ -24,6 +24,8 @@ let myExamCentreState     = null;   // state-level matching boundary
 let myPlusMember          = false;  // Zenter Plus membership
 let myRevealsUsed         = 0;      // contact reveals used so far
 let myFreeLimit           = 2;      // from platform_config
+let myPlusEnabled         = true;   // whether Plus gating is active
+let revealedUserIds       = new Set(); // Gap 1: client-side revealed set prevents re-incrementing
 let firebaseUser    = null;   // stored for lazy connections load
 let connectionsLoaded = false;
 let blockedUserIds  = new Set(); // users the current user has blocked
@@ -93,6 +95,10 @@ async function init() {
   const adminNavItem = document.getElementById('hm-admin-nav-item');
   if (adminNavItem) adminNavItem.hidden = !isAdmin;
 
+  // Gap 3: hide "Get Zenter Plus" from navbar for Plus members
+  const plusNavItem = document.getElementById('hm-plus-nav-item');
+  if (plusNavItem) plusNavItem.hidden = myPlusMember;
+
   // Non-NEET UG exam types → maintenance page (product focus is NEET UG).
   if (myExamType !== 'NEET UG') {
     window.location.replace('/maintenance.html');
@@ -156,13 +162,16 @@ async function loadData() {
 
   if (usersRes.error) { renderError(usersRes.error.message); return; }
 
-  // Read free reveal limit from config
+  // Read free reveal limit + plus_enabled from config
   const cfgRows = cfgRes.data || [];
-  myFreeLimit = cfgRows.find(r => r.key === 'free_reveal_limit')?.value ?? 2;
-  const plusEnabled = cfgRows.find(r => r.key === 'plus_enabled')?.value !== false;
+  myFreeLimit   = cfgRows.find(r => r.key === 'free_reveal_limit')?.value ?? 2;
+  myPlusEnabled = cfgRows.find(r => r.key === 'plus_enabled')?.value !== false;
+
+  // Clear revealed set on data reload so new sessions are clean
+  revealedUserIds = new Set();
 
   // Show reveal usage banner for non-plus free users when Plus is enabled
-  renderRevealBanner(plusEnabled);
+  renderRevealBanner(myPlusEnabled);
 
   // Check if exam centre should be shown on seeded user cards
   const showSeededExamCentre = cfgRows.find(r => r.key === 'seeded_exam_centre_visible')?.value !== false;
@@ -475,7 +484,7 @@ function showUpgradePrompt(rev) {
   if (!overlay) return;
   const msg = document.getElementById('hm-upgrade-msg');
   if (msg) {
-    msg.textContent = `You've already unlocked ${rev.limit} successful connection${rev.limit === 1 ? '' : 's'}. Upgrade to Zenter Plus to unlock additional contact details.`;
+    msg.textContent = `You've used all ${rev.limit} of your free contact reveals. Upgrade to Zenter Plus to reveal unlimited contacts.`;
   }
   overlay.classList.add('is-open');
   document.getElementById('hm-upgrade-close')?.addEventListener('click', () => {
@@ -498,17 +507,26 @@ async function doReveal() {
   if (!modalUser?.phone) return;
 
   // ── Zenter Plus gate ────────────────────────────────────────────────────────
-  // Attempt to increment the reveal counter. The RPC returns can_reveal=false
-  // when a free user has exhausted their limit. Already-revealed contacts are
-  // tracked by the caller (revealEl already has content) — we only call this
-  // on the first tap, not on repeated opens of the same modal.
-  if (myUserId) {
+  // Gap 1: if this user was already revealed this session, skip the RPC entirely
+  // so we never double-count the same contact.
+  const alreadyRevealed = revealedUserIds.has(modalUser.id);
+
+  if (myUserId && myPlusEnabled && !myPlusMember && !alreadyRevealed) {
+    // Gap 10: only gate when Plus is actually enabled
     const { data: rev } = await attemptReveal(myUserId);
     if (rev && !rev.can_reveal) {
       showUpgradePrompt(rev);
       return;
     }
+    if (rev?.incremented) {
+      // Gap 7: keep local count in sync so banner stays accurate
+      myRevealsUsed++;
+      renderRevealBanner(myPlusEnabled);
+    }
   }
+
+  // Mark as revealed so re-opens don't re-increment
+  revealedUserIds.add(modalUser.id);
 
   const phone  = modalUser.phone;
   const waNum  = phone.replace(/\D/g, '');
@@ -619,6 +637,7 @@ function requestCard(user, connectionId) {
           <div class="hm-mate__badges">
             ${user.gender ? `<span class="hm-badge ${genderCls}">${esc(user.gender)}</span>` : ''}
             <span class="hm-badge hm-badge--verified">✓ Verified</span>
+            ${user.plus_member ? `<span class="hm-badge hm-badge--plus">⭐ Plus</span>` : ''}
           </div>
         </div>
       </div>
@@ -699,6 +718,10 @@ function populateModal(user) {
   badge.textContent = user.gender || '';
   badge.className   = `hm-badge ${cls}`.trim();
   badge.hidden      = !user.gender;
+
+  // Gap 4: Plus badge in modal
+  const plusBadgeEl = document.getElementById('hm-modal-plus-badge');
+  if (plusBadgeEl) plusBadgeEl.hidden = !user.plus_member;
 
   // Reset phone + reveal section
   const phoneEl  = document.getElementById('hm-modal-phone');
@@ -857,6 +880,7 @@ function mateCard(user, idx) {
               ? `<span class="hm-badge ${genderCls}">${esc(user.gender)}</span>`
               : ''}
             <span class="hm-badge hm-badge--verified">✓ Verified</span>
+            ${user.plus_member ? `<span class="hm-badge hm-badge--plus">⭐ Plus</span>` : ''}
           </div>
         </div>
       </div>
