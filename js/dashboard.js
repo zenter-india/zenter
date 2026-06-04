@@ -626,7 +626,7 @@ function requestCard(user, connectionId) {
   const cid = esc(connectionId);
 
   return `
-    <article class="hm-card hm-mate" aria-label="Connection request from ${esc(user.full_name)}">
+    <article class="hm-card hm-mate${user.plus_member ? ' hm-mate--plus' : ''}" aria-label="Connection request from ${esc(user.full_name)}">
 
       <div class="hm-mate__head">
         <div class="hm-avatar hm-avatar--card"
@@ -864,7 +864,7 @@ function mateCard(user, idx) {
   const hasBadges   = !!(travelLabel || stayLabel);
 
   return `
-    <article class="hm-card hm-mate hm-card--interactive"
+    <article class="hm-card hm-mate hm-card--interactive${user.plus_member ? ' hm-mate--plus' : ''}"
       data-idx="${idx}" tabindex="0" role="button"
       aria-label="View ${esc(user.full_name)}'s profile">
 

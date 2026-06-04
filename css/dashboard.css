@@ -162,6 +162,17 @@
   gap: var(--hm-space-3);
 }
 
+/* Zenter Plus — highlighted card */
+.hm-mate--plus {
+  border: 1.5px solid #fde68a;
+  background: linear-gradient(135deg, #fffbeb 0%, #ffffff 60%);
+  box-shadow: 0 2px 12px rgba(251, 191, 36, 0.15);
+}
+.hm-mate--plus:hover {
+  border-color: #fbbf24;
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.25);
+}
+
 /* Header: avatar + name + badges, bottom rule */
 .hm-mate__head {
   display: flex; align-items: center; gap: 10px;
