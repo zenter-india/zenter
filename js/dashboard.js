@@ -473,7 +473,9 @@ function doReveal() {
 function updateCount(n) {
   const el = document.getElementById('hm-results-count');
   if (!el) return;
-  el.textContent = allUsers.length === 0 ? '' : `${n} centre ${n === 1 ? 'mate' : 'mates'} found`;
+  if (allUsers.length === 0) { el.textContent = ''; return; }
+  const stateSuffix = myExamCentreState ? ` in ${myExamCentreState}` : '';
+  el.textContent = `${n} centre ${n === 1 ? 'mate' : 'mates'} found${stateSuffix}`;
 }
 
 function updateNavBadge() {
