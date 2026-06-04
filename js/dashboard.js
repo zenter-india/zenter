@@ -55,6 +55,8 @@ async function init() {
   const { data: me } = await getUserByPhone(firebaseUser.phoneNumber);
   myUserId             = me?.id        || null;
   myExamType           = me?.exam_type || 'NEET UG';
+  // Admins see all exam types — pass null to getAllUsers to fetch everyone
+  const myExamTypeForFeed = (myRole === 'admin' || myRole === 'superadmin') ? null : myExamType;
   // Match only on exam_centre_state — where the exam is held.
   // Home location (state/district) is irrelevant for matching.
   // Admins/superadmins bypass the filter so they can see all users.
@@ -141,8 +143,8 @@ async function loadData() {
   } catch {}
 
   const [usersRes, seededRes, connsRes, cfgRes] = await Promise.all([
-    getAllUsers(myExamType),
-    getSeededUsers(myExamType),   // separate table — merged into feed below
+    getAllUsers(myExamTypeForFeed),
+    getSeededUsers(myExamTypeForFeed),   // separate table — merged into feed below
     myUserId ? getMyConnections(myUserId) : Promise.resolve({ data: [], error: null }),
     getPlatformConfig(),
   ]);
