@@ -88,6 +88,16 @@ html, body { overflow-x: hidden; max-width: 100%; }
   .hm-dashboard { grid-template-columns: 1fr; }
   .hm-sidebar   { position: static; top: auto; }
 
+  /* Filter sidebar: hidden on mobile by default, toggled via button */
+  #hm-filter-aside {
+    display: none;
+    margin-bottom: var(--hm-space-4);
+  }
+  #hm-filter-aside.is-open { display: block; }
+
+  /* Show filter toggle button only on mobile */
+  .hm-filter-toggle { display: inline-flex !important; }
+
   .hm-sidebar__fields {
     display: grid !important;
     grid-template-columns: 1fr 1fr;

@@ -59,7 +59,9 @@
           </p>
         </div>
         <div class="d-flex gap-2 flex-shrink-0">
-          <button class="hm-btn hm-btn--ghost hm-btn--sm" type="button" id="hm-filter-clear">Clear filters</button>
+          <button class="hm-btn hm-btn--ghost hm-btn--sm hm-filter-toggle" type="button" id="hm-filter-toggle" aria-expanded="false">
+            ⚙ Filters
+          </button>
           <button class="hm-btn hm-btn--primary hm-btn--sm" type="button" id="hm-refresh">Refresh</button>
         </div>
       </header>
@@ -67,7 +69,7 @@
       <section class="hm-dashboard">
 
         <!-- FILTER SIDEBAR -->
-        <aside aria-label="Filter mates">
+        <aside aria-label="Filter mates" id="hm-filter-aside">
           <div class="hm-sidebar">
             <p class="hm-sidebar__title">Filter by</p>
 
@@ -117,6 +119,10 @@
                   <option value="Other">Yet to Decide</option>
                 </select>
               </div>
+            </div>
+
+            <div style="text-align:center;margin-top:var(--hm-space-4);">
+              <button class="hm-btn hm-btn--ghost hm-btn--sm" type="button" id="hm-filter-clear">Clear filters</button>
             </div>
           </div>
         </aside>
@@ -245,7 +251,7 @@
         with a random person, kindly verify the other mate with their Hall ticket and
         ID proof.
         <br><br>
-        All the best for your exams. You will do good too 💐
+        All the very best for your exam 💐 ! You have got this !
       </p>
       <button type="button" class="hm-btn hm-btn--primary" id="hm-safety-agree"
               style="width:100%;">

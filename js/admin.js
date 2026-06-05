@@ -137,16 +137,34 @@ async function loadSeeded() {
     districts.forEach(d => { const o = document.createElement('option'); o.value = o.textContent = d; distEl.appendChild(o); });
   }
 
-  // Toggle: show or hide exam centre name on seeded user cards in Find Mates
+  const { getPlatformConfig, adminUpdateConfig } = await import('./supabase.js');
+  const { data: cfgRows } = await getPlatformConfig();
+
+  // Toggle 1: show/hide ALL seeded users in Find Mates feed
+  const globalToggle = document.getElementById('adm-seeded-global-toggle');
+  const globalLabel  = document.getElementById('adm-seeded-global-label');
+  if (globalToggle) {
+    const seededVisible = (cfgRows || []).find(r => r.key === 'seeded_users_visible')?.value !== false;
+    globalToggle.checked = seededVisible;
+    globalLabel.textContent = seededVisible ? 'Seeded users visible in feed' : 'Seeded users hidden from feed';
+    globalToggle.addEventListener('change', async () => {
+      globalToggle.disabled = true;
+      globalLabel.textContent = 'Saving…';
+      const { error } = await adminUpdateConfig('seeded_users_visible', globalToggle.checked, adminPhone);
+      globalToggle.disabled = false;
+      if (error) { toast('Error: ' + error.message, 'error'); globalToggle.checked = !globalToggle.checked; return; }
+      globalLabel.textContent = globalToggle.checked ? 'Seeded users visible in feed' : 'Seeded users hidden from feed';
+      toast(globalToggle.checked ? 'Seeded users shown in feed ✓' : 'Seeded users hidden from feed ✓', 'success');
+    });
+  }
+
+  // Toggle 2: show or hide exam centre name on seeded user cards
   const toggle = document.getElementById('adm-seeded-visibility-toggle');
   const label  = document.getElementById('adm-seeded-visibility-label');
   if (toggle) {
-    const { getPlatformConfig, adminUpdateConfig } = await import('./supabase.js');
-    const { data: cfgRows } = await getPlatformConfig();
     const showExamCentre = (cfgRows || []).find(r => r.key === 'seeded_exam_centre_visible')?.value !== false;
     toggle.checked = showExamCentre;
     label.textContent = showExamCentre ? 'Exam centre visible on cards' : 'Exam centre hidden on cards';
-
     toggle.addEventListener('change', async () => {
       toggle.disabled = true;
       label.textContent = 'Saving…';
@@ -295,6 +313,28 @@ async function loadAnalytics() {
   const s = statsRes.data || {};
   const a = analyticsRes.data || {};
   el.innerHTML = `
+    <!-- Key metrics row -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px;">
+      <div class="adm-card" style="text-align:center;padding:20px 16px;">
+        <div style="font-size:28px;font-weight:700;color:var(--adm-primary);">${s.totalUsers ?? '—'}</div>
+        <div style="font-size:12px;color:var(--adm-text-muted);margin-top:4px;">Total Registrations</div>
+      </div>
+      <div class="adm-card" style="text-align:center;padding:20px 16px;">
+        <div style="font-size:28px;font-weight:700;color:#16a34a;">${a.matchRatePct ?? '—'}%</div>
+        <div style="font-size:12px;color:var(--adm-text-muted);margin-top:4px;">Found a Centre-Mate</div>
+        <div style="font-size:11px;color:var(--adm-text-dim);margin-top:2px;">${a.matchedUsers ?? 0} of ${a.totalUsers ?? 0} users</div>
+      </div>
+      <div class="adm-card" style="text-align:center;padding:20px 16px;">
+        <div style="font-size:28px;font-weight:700;color:#0ea5e9;">${a.totalConversations ?? '—'}</div>
+        <div style="font-size:12px;color:var(--adm-text-muted);margin-top:4px;">Conversations Initiated</div>
+        <div style="font-size:11px;color:var(--adm-text-dim);margin-top:2px;">Total contact reveals</div>
+      </div>
+      <div class="adm-card" style="text-align:center;padding:20px 16px;">
+        <div style="font-size:28px;font-weight:700;color:#f59e0b;">${a.acceptedConnections ?? '—'}</div>
+        <div style="font-size:12px;color:var(--adm-text-muted);margin-top:4px;">Accepted Connections</div>
+      </div>
+    </div>
+    <!-- Breakdowns -->
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">
       ${renderBreakdown('Exam Type Distribution',   a.byExam)}
       ${renderBreakdown('Gender Distribution',      a.byGender)}
@@ -682,6 +722,17 @@ document.addEventListener('click', async (e) => {
     return;
   }
 
+  if (action === 'clear-suspicious') {
+    const { adminClearSuspiciousFlags } = await import('./supabase.js');
+    const { error } = await adminClearSuspiciousFlags(id, adminPhone);
+    if (error) { toast('Error: ' + error.message, 'error'); return; }
+    const u = allUsers.find(u => u.id === id);
+    if (u) u.suspicious_flags = {};
+    renderFilteredUsers();
+    toast('Suspicious flags cleared ✓', 'success');
+    return;
+  }
+
   if (action === 'delete-user') {
     const userName = btn.dataset.name || 'this user';
     confirm_({
@@ -766,6 +817,10 @@ document.addEventListener('click', async (e) => {
 // ─── Render helpers ───────────────────────────────────────────────────────────
 
 function renderUsersTable(users, withActions = false) {
+  // Build device fingerprint → [user] map for multi-account detection
+  const fpMap = {};
+  users.forEach(u => { if (u.device_fingerprint) { (fpMap[u.device_fingerprint] = fpMap[u.device_fingerprint] || []).push(u); } });
+
   const rows = users.map(u => {
     const status  = u.account_status || 'active';
     const display = u.is_profile_paused ? 'paused' : status;
@@ -773,10 +828,26 @@ function renderUsersTable(users, withActions = false) {
     const isSuperAdmin = u.role === 'superadmin';
     const isPrivileged = isAdmin || isSuperAdmin;
 
-    // Exam centre: state → district → centre name
     const examCentreState    = u.exam_centre_state    || '—';
     const examCentreDistrict = u.exam_centre_district || '—';
     const examCentreName     = u.exam_center          || '—';
+
+    // Suspicious flags
+    const flags     = u.suspicious_flags || {};
+    const rapidFlag = flags.rapid_reveal;
+    const multiAcct = u.device_fingerprint && (fpMap[u.device_fingerprint]?.length || 0) > 1;
+    const suspCell  = `<td style="font-size:11px;">
+      ${rapidFlag
+        ? `<span class="adm-pill" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;" title="Revealed 2 contacts under 60s">⚡ Rapid reveal</span>`
+        : ''}
+      ${multiAcct
+        ? `<span class="adm-pill" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;margin-top:3px;display:block;" title="${(fpMap[u.device_fingerprint]?.length||0)} accounts same device">📱 Multi-account</span>`
+        : ''}
+      ${!rapidFlag && !multiAcct ? '<span style="color:var(--adm-text-dim);">—</span>' : ''}
+      ${(rapidFlag || multiAcct) && withActions
+        ? `<button class="adm-btn adm-btn--sm" style="margin-top:4px;font-size:10px;" data-action="clear-suspicious" data-id="${esc(u.id)}">Clear</button>`
+        : ''}
+    </td>`;
 
     const actions = withActions ? `<td>
       <div class="adm-actions" style="gap:4px;flex-wrap:wrap;">
@@ -835,6 +906,7 @@ function renderUsersTable(users, withActions = false) {
               : '<span style="color:var(--adm-text-dim);">Phone only</span>'}
       </td>
       <td><span class="adm-pill adm-pill--${esc(display)}">${esc(display)}</span></td>
+      ${suspCell}
       <td style="font-size:11px">${esc(fmtDate(u.created_at))}</td>
       ${actions}
     </tr>`;
@@ -843,7 +915,7 @@ function renderUsersTable(users, withActions = false) {
   return `<table class="adm-table"><thead><tr>
     <th>Name</th><th>Phone</th><th>Gender</th><th>Exam</th>
     <th>Home Location</th><th>Exam Centre</th>
-    <th>Role</th><th>Plus</th><th>Verified</th><th>Status</th><th>Joined</th>${ah}
+    <th>Role</th><th>Plus</th><th>Verified</th><th>Status</th><th>⚠️ Flags</th><th>Joined</th>${ah}
   </tr></thead><tbody>${rows}</tbody></table>`;
 }
 

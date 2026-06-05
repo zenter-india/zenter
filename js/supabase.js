@@ -81,7 +81,7 @@ export async function getAdminStats() {
 /** Recent users list for the admin Users section — includes moderation fields. */
 export function getRecentUsers(limit = 50, { seededOnly = false, excludeSeeded = false } = {}) {
   let q = from('users')
-    .select('id, full_name, gender, phone, exam_type, state, district, exam_centre_state, exam_centre_district, exam_center, profile_completed, is_profile_paused, account_status, role, is_seeded_user, plus_member, contact_reveals_used, is_verified_aspirant, verification_requested, verification_rejected, nta_application_number, created_at')
+    .select('id, full_name, gender, phone, exam_type, state, district, exam_centre_state, exam_centre_district, exam_center, profile_completed, is_profile_paused, account_status, role, is_seeded_user, plus_member, contact_reveals_used, is_verified_aspirant, verification_requested, verification_rejected, nta_application_number, suspicious_flags, device_fingerprint, created_at')
     .order('created_at', { ascending: false })
     .limit(limit);
   if (seededOnly)    q = q.eq('is_seeded_user', true);
@@ -438,16 +438,25 @@ export function getAuditLog(limit = 100) {
 /** Admin analytics: richer breakdown queries. */
 export async function getAnalyticsData() {
   // seeded_users is a separate table — users table is real users only
-  const [examR, genderR, districtR, pendingR, connR] = await Promise.all([
+  const [examR, genderR, districtR, pendingR, connR, matchR, revealsR] = await Promise.all([
     query(from('users').select('exam_type').eq('profile_completed', true)),
     query(from('users').select('gender').eq('profile_completed', true)),
     query(from('users').select('district').eq('profile_completed', true).not('district', 'is', null)),
     query(from('connections').select('id').eq('status', 'pending')),
     query(from('connections').select('id').eq('status', 'accepted')),
+    query(supabase.rpc('get_match_rate')),
+    query(from('users').select('contact_reveals_used').or('is_seeded_user.is.null,is_seeded_user.eq.false')),
   ]);
   const countBy = (arr, key) => (arr || []).reduce((acc, r) => {
     const v = r[key] || 'Unknown'; acc[v] = (acc[v] || 0) + 1; return acc;
   }, {});
+
+  const matchData      = matchR.data?.[0] || {};
+  const matchedUsers   = Number(matchData.matched_users  || 0);
+  const totalUsers     = Number(matchData.total_users    || 0);
+  const matchRatePct   = totalUsers > 0 ? Math.round((matchedUsers / totalUsers) * 100) : 0;
+  const totalConversations = (revealsR.data || []).reduce((s, r) => s + (r.contact_reveals_used || 0), 0);
+
   return {
     data: {
       byExam:     countBy(examR.data,     'exam_type'),
@@ -455,6 +464,10 @@ export async function getAnalyticsData() {
       byDistrict: countBy(districtR.data, 'district'),
       pendingConnections:  pendingR.data?.length || 0,
       acceptedConnections: connR.data?.length    || 0,
+      matchedUsers,
+      totalUsers,
+      matchRatePct,
+      totalConversations,
     },
     error: examR.error || genderR.error || null,
   };
@@ -496,19 +509,20 @@ export function adminSetUserRole(targetId, role, requesterPhone) {
 // adminDeleteAllSeeded and adminHideSeededUser removed — seeded users now live
 // in the seeded_users table. Use deleteAllSeededUsers / toggleSeededUserPause instead.
 
+<<<<<<< HEAD
 // ─── Zenter Plus — Monetization ───────────────────────────────────────────────
+
+// ─── Contact reveal ───────────────────────────────────────────────────────────
 
 /**
  * Attempt to reveal a contact. Atomically increments the counter and returns:
  *   { can_reveal, reveals_used, limit, is_plus, incremented }
- * Never re-locks a previously revealed contact — caller must gate on can_reveal
- * only for NEW reveals (contacts already shown remain shown).
  */
 export function attemptReveal(userId) {
   return query(supabase.rpc('increment_reveal_count', { p_user_id: userId }));
 }
 
-/** Grant or revoke Plus membership (admin). Direct update — plus_member is not role-protected. */
+/** Grant or revoke Plus membership (admin). */
 export function adminSetPlusMember(targetId, isPlus) {
   return query(from('users').update({ plus_member: isPlus }).eq('id', targetId).select('id').single());
 }
@@ -547,6 +561,8 @@ export async function verifyRazorpayPayment(orderId, paymentId, signature, userI
   return data;
 }
 
+// ─── Analytics ────────────────────────────────────────────────────────────────
+
 /** Log an analytics event (fire-and-forget). */
 export function trackEvent(eventName, userId, properties = {}) {
   return query(
@@ -554,6 +570,7 @@ export function trackEvent(eventName, userId, properties = {}) {
   );
 }
 
+<<<<<<< HEAD
 /** Grant or revoke Verified Aspirant status (admit card verified by admin). */
 export function adminSetVerifiedAspirant(targetId, isVerified) {
   const updates = isVerified
@@ -570,4 +587,28 @@ export function requestAdmitCardVerification(phone, ntaNumber) {
       .eq('phone', phone)
       .select('id').single()
   );
+}
+
+// ─── Suspicious activity ──────────────────────────────────────────────────────
+
+/** Flag a user as rapidly revealing contacts (called from dashboard after detection). */
+export function flagRapidReveal(userId) {
+  return query(supabase.rpc('flag_rapid_reveal', { p_user_id: userId }));
+}
+
+/** Admin: clear all suspicious flags on a user. */
+export function adminClearSuspiciousFlags(targetId, requesterPhone) {
+  return query(supabase.rpc('admin_clear_suspicious_flags', {
+    p_target_id: targetId, p_requester_phone: requesterPhone,
+  }));
+}
+
+/** Save device fingerprint on user row (called once during onboarding). */
+export function saveDeviceFingerprint(userId, fingerprint) {
+  return query(from('users').update({ device_fingerprint: fingerprint }).eq('id', userId));
+}
+
+/** Get all users sharing the same device fingerprint (admin: detect multi-account). */
+export function getUsersByFingerprint(fingerprint) {
+  return query(from('users').select('id, full_name, phone, created_at').eq('device_fingerprint', fingerprint));
 }

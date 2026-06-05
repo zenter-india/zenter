@@ -2,7 +2,22 @@
 // Loaded only from onboarding.html.
 
 import { requireAuth } from './auth.js';
-import { upsertUser } from './supabase.js';
+import { upsertUser, saveDeviceFingerprint } from './supabase.js';
+
+function getDeviceFingerprint() {
+  try {
+    const parts = [
+      navigator.userAgent,
+      `${screen.width}x${screen.height}`,
+      screen.colorDepth,
+      Intl.DateTimeFormat().resolvedOptions().timeZone,
+      navigator.language,
+    ].join('|');
+    let h = 0;
+    for (let i = 0; i < parts.length; i++) { h = Math.imul(31, h) + parts.charCodeAt(i) | 0; }
+    return Math.abs(h).toString(36);
+  } catch { return null; }
+}
 import { setButtonBusy } from './ui.js';
 import { ROUTES, STORAGE_KEYS } from './config.js';
 import { populateStateSelect, wireDistrictCascade } from './location-data.js';
@@ -111,6 +126,13 @@ async function saveProfile() {
     setButtonBusy(btn, false);
     return;
   }
+
+  // Save device fingerprint for multi-account detection (fire-and-forget)
+  try {
+    const { data: me } = await (await import('./supabase.js')).getUserByPhone(firebaseUser.phoneNumber);
+    const fp = getDeviceFingerprint();
+    if (me?.id && fp) saveDeviceFingerprint(me.id, fp);
+  } catch {/* non-critical */}
 
   // Mark onboarding complete so guards + navbar update immediately on redirect.
   try { sessionStorage.setItem(STORAGE_KEYS.profileCompleted, 'true'); } catch {}

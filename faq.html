@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#FF6B35" />
+  <title>FAQ - Zenter</title>
+  <meta name="description" content="Frequently asked questions about Zenter — exam centre mates, OTP verification, safety, and more." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://zenter.in/faq.html" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="/css/style.css" rel="stylesheet" />
+  <link href="/css/components.css" rel="stylesheet" />
+  <link href="/css/responsive.css" rel="stylesheet" />
+
+  <link rel="icon" href="/assets/logos/favicon.svg" type="image/svg+xml" />
+
+  <style>
+    .faq-item {
+      border: 1px solid var(--hm-border);
+      border-radius: var(--hm-radius-lg);
+      margin-bottom: var(--hm-space-3);
+      overflow: hidden;
+      background: var(--hm-surface);
+    }
+    .faq-question {
+      width: 100%;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--hm-space-3);
+      padding: var(--hm-space-4) var(--hm-space-5);
+      background: none;
+      border: none;
+      text-align: left;
+      font-size: var(--hm-text-base);
+      font-weight: 600;
+      color: var(--hm-text);
+      cursor: pointer;
+      line-height: 1.5;
+    }
+    .faq-question:hover { background: var(--hm-surface-2); }
+    .faq-question .num {
+      color: var(--hm-primary);
+      font-weight: 700;
+      flex-shrink: 0;
+      min-width: 28px;
+    }
+    .faq-question .chevron {
+      flex-shrink: 0;
+      font-size: 18px;
+      color: var(--hm-text-muted);
+      transition: transform 200ms ease;
+      margin-top: 2px;
+    }
+    .faq-item.is-open .faq-question .chevron { transform: rotate(180deg); }
+    .faq-answer {
+      display: none;
+      padding: 0 var(--hm-space-5) var(--hm-space-4);
+      padding-left: calc(var(--hm-space-5) + 28px);
+      font-size: var(--hm-text-sm);
+      color: var(--hm-text-muted);
+      line-height: 1.75;
+    }
+    .faq-item.is-open .faq-answer { display: block; }
+    .faq-answer ul { padding-left: var(--hm-space-4); margin: var(--hm-space-2) 0; }
+    .faq-answer li { margin-bottom: 4px; }
+    .faq-answer .check { color: #16a34a; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div data-include="navbar"></div>
+
+  <main class="hm-page" id="hm-main">
+    <div class="hm-container" style="max-width: 720px; padding-top: var(--hm-space-7); padding-bottom: var(--hm-space-7);">
+
+      <h1 style="font-size: var(--hm-text-3xl); font-weight: 700; margin-bottom: var(--hm-space-2);">Frequently Asked Questions</h1>
+      <p style="color: var(--hm-text-muted); margin-bottom: var(--hm-space-6);">Everything you need to know about Zenter.</p>
+
+      <div id="faq-list">
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">1.</span><span style="flex:1;">What is Zenter?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">Zenter is a platform that helps examination aspirants connect with other candidates attending the same examination so they can voluntarily coordinate and share travel and accommodation expenses.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">2.</span><span style="flex:1;">Does Zenter arrange travel or accommodation?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">No. We do not arrange, book, manage, supervise, or guarantee any travel, transportation, accommodation, or expense-sharing arrangements. We only provide a platform that helps users connect with one another.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">3.</span><span style="flex:1;">How does OTP verification work?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">Users must verify their Indian mobile number using a One-Time Password (OTP) during registration. OTP verification confirms that the user has access to the submitted mobile number at the time of registration. However, OTP verification is <strong>not identity verification</strong>.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">4.</span><span style="flex:1;">Does OTP verification guarantee that a user is genuine?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">
+            No. OTP verification does not guarantee:
+            <ul>
+              <li>Identity authenticity</li>
+              <li>Character</li>
+              <li>Trustworthiness</li>
+              <li>Examination registration</li>
+              <li>Examination attendance</li>
+            </ul>
+            Users must independently verify the identity and credentials of other users.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">5.</span><span style="flex:1;">Is my phone number visible to everyone?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">No. Your phone number is not publicly displayed on the platform. Your number will only be shared according to the platform's approved connection process and privacy settings.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">6.</span><span style="flex:1;">Who can view my phone number?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">Only users who have completed the platform's mutual connection process and permitted by your consent may gain access to your contact details.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">7.</span><span style="flex:1;">What should I verify before traveling with another user?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">
+            Before making any travel or accommodation arrangement, you should verify:
+            <ul>
+              <li>Government-issued Photo ID</li>
+              <li>Examination Hall Ticket / Admit Card</li>
+              <li>Examination Registration Details</li>
+              <li>Basic personal information</li>
+            </ul>
+            Never rely solely on profile information.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">8.</span><span style="flex:1;">Does the platform verify hall tickets or examination registrations?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">
+            No. The platform does not verify:
+            <ul>
+              <li>Hall tickets</li>
+              <li>Admit cards</li>
+              <li>Examination registrations</li>
+              <li>Candidate eligibility</li>
+            </ul>
+            Users must perform their own verification.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">9.</span><span style="flex:1;">What if someone provides false information?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">You should immediately report the account through our support channels. While we may investigate and take appropriate action, users remain responsible for conducting their own due diligence before entering into any arrangement.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">10.</span><span style="flex:1;">What if I become a victim of fraud?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">
+            If you suspect fraud:
+            <ul>
+              <li>Stop communication immediately.</li>
+              <li>Preserve all relevant evidence.</li>
+              <li>Report the user to us.</li>
+              <li>Contact local law enforcement authorities if necessary.</li>
+            </ul>
+            The platform acts only as an intermediary and cannot recover losses arising from private arrangements between users.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">11.</span><span style="flex:1;">Is Zenter responsible for disputes between users?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">No. Any travel, accommodation, payment, or expense-sharing arrangement is a private agreement between users. Zenter is not responsible for disputes, losses, damages, or misconduct arising from such arrangements.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">12.</span><span style="flex:1;">Does the platform charge users?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">Currently, registration and usage of the platform are free.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">13.</span><span style="flex:1;">Can I delete my account?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">Yes. You may request account deletion through your account settings or by contacting support. Certain records may be retained where required by law or for security and fraud-prevention purposes.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">14.</span><span style="flex:1;">How is my personal information protected?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">We use reasonable technical and organizational security measures to protect user information. However, no online platform can guarantee absolute security. Please refer to our <a href="/privacy.html" style="color:var(--hm-primary);">Privacy Policy</a> for details.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">15.</span><span style="flex:1;">Can I use the platform for commercial purposes?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">No. The platform is intended solely for examination-related travel and accommodation coordination. Commercial solicitation, advertising, marketing, recruitment, and promotional activities are prohibited.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">16.</span><span style="flex:1;">Can I report suspicious users?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">
+            Yes. We encourage users to report:
+            <ul>
+              <li>Fake profiles</li>
+              <li>Fraud</li>
+              <li>Harassment</li>
+              <li>Spam</li>
+              <li>Misleading information</li>
+              <li>Suspicious behavior</li>
+            </ul>
+            Reports help us maintain platform integrity.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">17.</span><span style="flex:1;">Does Zenter conduct background checks?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">
+            No. Zenter does not conduct:
+            <ul>
+              <li>Police verification</li>
+              <li>Criminal background checks</li>
+              <li>Identity verification beyond OTP authentication</li>
+              <li>Character verification</li>
+            </ul>
+            Users should independently verify identities before meeting.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">18.</span><span style="flex:1;">Is the platform responsible if something happens during travel?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">No. Zenter does not supervise or control any travel arrangement made between users. All travel and accommodation decisions are made voluntarily and at the users' own risk.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">19.</span><span style="flex:1;">What examinations are supported?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">
+            The platform may be used for any legitimate examination, including:
+            <ul>
+              <li>All Medical Exams</li>
+              <li>Government Recruitment Exams</li>
+              <li>Banking Exams</li>
+              <li>Railway Exams</li>
+              <li>SSC Exams</li>
+              <li>UPSC Exams</li>
+              <li>State PSC Exams</li>
+              <li>University Entrance Exams</li>
+              <li>Other recognized examinations</li>
+            </ul>
+            Subject to platform policies and applicable law.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question"><span class="num">20.</span><span style="flex:1;">Why should I trust another user?</span><span class="chevron">▾</span></button>
+          <div class="faq-answer">
+            You should never rely solely on trust. Always:
+            <ul>
+              <li><span class="check">✅</span> Verify Government ID</li>
+              <li><span class="check">✅</span> Verify Hall Ticket / Admit Card</li>
+              <li><span class="check">✅</span> Confirm examination details</li>
+              <li><span class="check">✅</span> Inform family or friends of your plans</li>
+              <li><span class="check">✅</span> Meet in safe public locations before travel</li>
+            </ul>
+            The platform facilitates connections, but users are responsible for their own safety and verification.
+          </div>
+        </div>
+
+      </div>
+
+      <p style="text-align:center;margin-top:var(--hm-space-6);font-size:var(--hm-text-sm);color:var(--hm-text-muted);">
+        Still have questions? <a href="/contact.html" style="color:var(--hm-primary);font-weight:600;">Contact us →</a>
+      </p>
+
+    </div>
+  </main>
+
+  <div data-include="footer"></div>
+  <script type="module" src="/js/app.js"></script>
+  <script>
+    document.getElementById('faq-list').addEventListener('click', (e) => {
+      const btn = e.target.closest('.faq-question');
+      if (!btn) return;
+      const item = btn.closest('.faq-item');
+      const isOpen = item.classList.contains('is-open');
+      // Close all
+      document.querySelectorAll('.faq-item.is-open').forEach(i => i.classList.remove('is-open'));
+      // Open clicked (if it wasn't open)
+      if (!isOpen) item.classList.add('is-open');
+    });
+  </script>
+</body>
+</html>

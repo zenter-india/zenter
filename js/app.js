@@ -28,6 +28,7 @@ async function bootstrap() {
   highlightActiveNav(route);
   wireGlobalNav();
   wireBrandNavigation();
+  wireBackButton(route);
   loadAnnouncementBar(route);
 
   // Reflect auth state into the navbar (login button <-> avatar/logout).
@@ -37,6 +38,18 @@ async function bootstrap() {
   if (init) {
     try { await init(); }
     catch (err) { console.error(`[app] init error on ${route}`, err); }
+  }
+}
+
+// ─── Back button ─────────────────────────────────────────────────────────────
+// Pages where ← Back is hidden (no meaningful "back" concept).
+const NO_BACK_PAGES = ['login', 'onboarding', 'dashboard', 'index'];
+
+function wireBackButton(route) {
+  const btn = document.getElementById('hm-nav-back');
+  if (!btn) return;
+  if (!NO_BACK_PAGES.includes(route)) {
+    btn.hidden = false;
   }
 }
 

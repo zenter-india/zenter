@@ -91,6 +91,7 @@ html, body { height: 100%; }
 
 body {
   margin: 0;
+  padding-top: var(--hm-navbar-h); /* offset for fixed navbar */
   font-family: var(--hm-font-body);
   font-size: var(--hm-text-base);
   line-height: 1.55;

@@ -4,7 +4,7 @@ import { requireOnboarded } from './auth.js';
 import { getAllUsers, getUserByPhone, getMyConnections,
          sendConnectionRequest, respondToRequest, deleteRequest,
          getBlockedUserIds, getBlockedByIds, getSeededUsers,
-         getPlatformConfig, attemptReveal, trackEvent, blockUser,
+         getPlatformConfig, attemptReveal, trackEvent, flagRapidReveal, blockUser,
          deleteConnectionsBetween } from './supabase.js';
 import { debounce } from './utils.js';
 import { toast, setButtonBusy } from './ui.js';
@@ -20,6 +20,7 @@ let lastFocusedCard = null;
 let modalUser       = null;
 let myUserId              = null;
 let myExamType            = null;   // permanent — set during onboarding
+let myExamTypeForFeed     = null;   // null for admins (all exams), else same as myExamType
 let myExamCentreState     = null;   // state-level matching boundary
 let myPlusMember          = false;  // Zenter Plus membership
 let myRevealsUsed         = 0;      // contact reveals used so far
@@ -64,6 +65,8 @@ async function init() {
   // Home location (state/district) is irrelevant for matching.
   // Admins/superadmins bypass the filter so they can see all users.
   const myRole = me?.role || 'user';
+  // Admins see all exam types — pass null to getAllUsers to fetch everyone
+  myExamTypeForFeed    = (myRole === 'admin' || myRole === 'superadmin') ? null : myExamType;
   myExamCentreState = (myRole === 'admin' || myRole === 'superadmin')
     ? null
     : (me?.exam_centre_state || null);
@@ -154,15 +157,15 @@ async function loadData() {
   } catch {}
 
   const [usersRes, seededRes, connsRes, cfgRes] = await Promise.all([
-    getAllUsers(myExamType),
-    getSeededUsers(myExamType),   // separate table — merged into feed below
+    getAllUsers(myExamTypeForFeed),
+    getSeededUsers(myExamTypeForFeed),   // separate table — merged into feed below
     myUserId ? getMyConnections(myUserId) : Promise.resolve({ data: [], error: null }),
     getPlatformConfig(),
   ]);
 
   if (usersRes.error) { renderError(usersRes.error.message); return; }
 
-  // Read free reveal limit + plus_enabled from config
+  // Read config
   const cfgRows = cfgRes.data || [];
   myFreeLimit   = cfgRows.find(r => r.key === 'free_reveal_limit')?.value ?? 2;
   myPlusEnabled = cfgRows.find(r => r.key === 'plus_enabled')?.value !== false;
@@ -173,13 +176,16 @@ async function loadData() {
   // Show reveal usage banner for non-plus free users when Plus is enabled
   renderRevealBanner(myPlusEnabled);
 
+  // Global seeded visibility toggle — admin can turn all seeded users off
+  const seededUsersVisible = cfgRows.find(r => r.key === 'seeded_users_visible')?.value !== false;
+
   // Check if exam centre should be shown on seeded user cards
   const showSeededExamCentre = cfgRows.find(r => r.key === 'seeded_exam_centre_visible')?.value !== false;
 
-  // Strip exam_center from seeded users if admin toggled it off
-  const seededUsers = (seededRes.data || []).map(u =>
-    showSeededExamCentre ? u : { ...u, exam_center: null }
-  );
+  // Apply both toggles
+  const seededUsers = seededUsersVisible
+    ? (seededRes.data || []).map(u => showSeededExamCentre ? u : { ...u, exam_center: null })
+    : [];
 
   // Merge real + seeded users into one combined list for the feed
   const combined = [...(usersRes.data || []), ...seededUsers];
@@ -334,6 +340,17 @@ const debouncedApply = debounce(applyFilters, 240);
 // ─── Event wiring ─────────────────────────────────────────────────────────────
 
 function wireFilters() {
+  // Mobile filter toggle
+  const toggleBtn = document.getElementById('hm-filter-toggle');
+  const filterAside = document.getElementById('hm-filter-aside');
+  if (toggleBtn && filterAside) {
+    toggleBtn.addEventListener('click', () => {
+      const open = filterAside.classList.toggle('is-open');
+      toggleBtn.setAttribute('aria-expanded', open);
+      toggleBtn.textContent = open ? '✕ Filters' : '⚙ Filters';
+    });
+  }
+
   FILTERS.forEach(({ id, type }) => {
     document.getElementById(id)
       ?.addEventListener(type === 'text' ? 'input' : 'change', debouncedApply);
@@ -545,6 +562,16 @@ async function doReveal() {
   const phone  = modalUser.phone;
   const waNum  = phone.replace(/\D/g, '');
 
+  // Rapid reveal detection — flag if 2 reveals happen within 60 seconds
+  const RAPID_WINDOW_MS = 60_000;
+  const now = Date.now();
+  const lastReveal = parseInt(sessionStorage.getItem('ztr_last_reveal') || '0', 10);
+  if (lastReveal && (now - lastReveal) < RAPID_WINDOW_MS && myUserId) {
+    flagRapidReveal(myUserId); // fire-and-forget
+    trackEvent('suspicious_rapid_reveal', myUserId, { gap_ms: now - lastReveal });
+  }
+  sessionStorage.setItem('ztr_last_reveal', String(now));
+
   const phoneEl   = document.getElementById('hm-modal-phone');
   const revealEl  = document.getElementById('hm-modal-contact-reveal');
   const actionsEl = document.getElementById('hm-modal-actions');
@@ -566,7 +593,9 @@ async function doReveal() {
 function updateCount(n) {
   const el = document.getElementById('hm-results-count');
   if (!el) return;
-  el.textContent = allUsers.length === 0 ? '' : `${n} centre ${n === 1 ? 'mate' : 'mates'} found`;
+  if (allUsers.length === 0) { el.textContent = ''; return; }
+  const stateSuffix = myExamCentreState ? ` in ${myExamCentreState}` : '';
+  el.textContent = `${n} centre ${n === 1 ? 'mate' : 'mates'} found${stateSuffix}`;
 }
 
 function updateNavBadge() {
