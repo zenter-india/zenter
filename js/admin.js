@@ -367,12 +367,15 @@ async function loadSettings() {
             <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-save-reveal-limit">Save</button>
           </div>
           <div style="display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap;">
-            <label style="font-size:13px;font-weight:600;">Price (paise):</label>
+            <label style="font-size:13px;font-weight:600;">Base price (paise):</label>
             <input type="number" id="adm-plus-price" min="100" step="100"
-              value="${platformConfig.plus_price_paise ?? 900}"
+              value="${platformConfig.plus_price_paise ?? 4900}"
               style="width:80px;padding:6px 8px;border:1px solid var(--adm-border);border-radius:6px;background:var(--adm-surface);color:var(--adm-text);font-size:13px;" />
-            <span style="font-size:12px;color:var(--adm-text-dim);">900 = ₹9</span>
+            <span style="font-size:12px;color:var(--adm-text-dim);">4900 = ₹49 &nbsp;|&nbsp; 900 = ₹9</span>
             <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-save-plus-price">Save</button>
+          </div>
+          <div style="margin-top:10px;padding:10px 14px;background:var(--adm-surface-2);border-radius:6px;font-size:12px;color:var(--adm-text-dim);">
+            🎟️ <strong style="color:var(--adm-text);">Active coupon:</strong> <code>ZENTERNEW</code> → ₹9 (early bird). Coupons are managed in the Edge Function.
           </div>
         </div>
       </div>

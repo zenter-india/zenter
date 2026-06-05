@@ -517,12 +517,13 @@ export function adminSetPlusMember(targetId, isPlus) {
 
 const EDGE_BASE = 'https://wppuzqaigtffcpuvjolt.supabase.co/functions/v1';
 
-/** Create a Razorpay order server-side. Returns { order_id, amount, currency, key_id }. */
-export async function createRazorpayOrder(userId) {
+/** Create a Razorpay order server-side. Pass couponCode to apply discount server-side.
+ *  dryRun=true validates the coupon and returns pricing without creating a real order. */
+export async function createRazorpayOrder(userId, couponCode = null, dryRun = false) {
   const resp = await fetch(`${EDGE_BASE}/create-razorpay-order`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE.anonKey },
-    body: JSON.stringify({ user_id: userId }),
+    body: JSON.stringify({ user_id: userId, coupon_code: couponCode || null, dry_run: dryRun }),
   });
   const data = await resp.json();
   if (!resp.ok) throw new Error(data.error || 'Could not create order');

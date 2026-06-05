@@ -259,10 +259,28 @@
         </table>
       </div>
 
+      <!-- Coupon code -->
+      <div style="margin-bottom:var(--hm-space-4);">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="hm-coupon-input" placeholder="Coupon code (optional)"
+            style="flex:1;padding:10px 14px;border:1px solid var(--hm-border);border-radius:var(--hm-radius-md);
+                   font-size:14px;background:var(--hm-surface);color:var(--hm-text);text-transform:uppercase;
+                   letter-spacing:1px;" maxlength="20" autocomplete="off" />
+          <button type="button" id="hm-coupon-apply" class="hm-btn hm-btn--ghost hm-btn--sm">Apply</button>
+        </div>
+        <p id="hm-coupon-status" style="font-size:12px;margin-top:6px;min-height:18px;"></p>
+      </div>
+
       <!-- CTA -->
       <div class="plus-cta">
+        <!-- Price display -->
+        <div style="text-align:center;margin-bottom:var(--hm-space-3);">
+          <span id="hm-price-original" style="font-size:15px;color:var(--hm-text-muted);text-decoration:line-through;margin-right:8px;display:none;">₹49</span>
+          <span id="hm-price-final" style="font-size:22px;font-weight:700;color:var(--hm-text);">₹49</span>
+          <span style="font-size:13px;color:var(--hm-text-muted);margin-left:4px;">/ exam season</span>
+        </div>
         <button class="hm-btn hm-btn--primary hm-btn--lg" id="hm-buy-plus" style="width:100%;font-size:17px;">
-          Get Zenter Plus — ₹9
+          Get Zenter Plus — ₹49
         </button>
         <p id="hm-plus-pay-status" style="text-align:center;font-size:13px;color:var(--hm-text-muted);margin-top:var(--hm-space-2);min-height:20px;"></p>
         <p style="text-align:center;margin-top:var(--hm-space-3);">
@@ -282,8 +300,51 @@
     import { getUserByPhone }   from '/js/supabase.js';
     import { createRazorpayOrder, verifyRazorpayPayment, trackEvent } from '/js/supabase.js';
 
-    const btn    = document.getElementById('hm-buy-plus');
-    const status = document.getElementById('hm-plus-pay-status');
+    const btn           = document.getElementById('hm-buy-plus');
+    const status        = document.getElementById('hm-plus-pay-status');
+    const couponInput   = document.getElementById('hm-coupon-input');
+    const couponApplyBtn= document.getElementById('hm-coupon-apply');
+    const couponStatus  = document.getElementById('hm-coupon-status');
+    const priceOriginal = document.getElementById('hm-price-original');
+    const priceFinal    = document.getElementById('hm-price-final');
+
+    let appliedCoupon = null; // set after server validates
+
+    // Coupon apply button
+    couponApplyBtn?.addEventListener('click', async () => {
+      const code = couponInput.value.trim().toUpperCase();
+      if (!code) { couponStatus.textContent = ''; return; }
+      couponApplyBtn.disabled = true;
+      couponStatus.style.color = 'var(--hm-text-muted)';
+      couponStatus.textContent = 'Checking…';
+      // Dry-run: create a test probe by passing coupon — server returns final price
+      try {
+        const probe = await createRazorpayOrder(window.__zenterUserId, code, true); // dry_run=true
+        if (probe.coupon_applied) {
+          appliedCoupon = code;
+          const discounted = probe.final_paise / 100;
+          const original   = probe.original_paise / 100;
+          priceFinal.textContent    = `₹${discounted}`;
+          priceOriginal.textContent = `₹${original}`;
+          priceOriginal.style.display = 'inline';
+          btn.textContent = `Get Zenter Plus — ₹${discounted}`;
+          couponStatus.style.color = '#16a34a';
+          couponStatus.textContent = `✓ Coupon applied! ${probe.coupon_label || ''}`;
+          couponInput.disabled = true;
+          couponApplyBtn.textContent = '✓';
+          couponApplyBtn.disabled = true;
+        } else {
+          appliedCoupon = null;
+          couponStatus.style.color = '#dc2626';
+          couponStatus.textContent = '✗ Invalid coupon code.';
+          couponApplyBtn.disabled = false;
+        }
+      } catch {
+        couponStatus.style.color = '#dc2626';
+        couponStatus.textContent = '✗ Could not verify coupon. Try again.';
+        couponApplyBtn.disabled = false;
+      }
+    });
 
     async function init() {
       const firebaseUser = await requireOnboarded();
@@ -292,11 +353,15 @@
       const { data: me } = await getUserByPhone(firebaseUser.phoneNumber);
       if (!me) return;
 
+      window.__zenterUserId = me.id; // needed by coupon probe above
+
       // Already Plus — update button
       if (me.plus_member) {
         btn.disabled = true;
         btn.textContent = '⭐ You are already Zenter Plus!';
         btn.style.background = '#16a34a';
+        couponInput && (couponInput.disabled = true);
+        couponApplyBtn && (couponApplyBtn.disabled = true);
         return;
       }
 
@@ -309,7 +374,7 @@
         trackEvent('upgrade_cta_click', me.id);
 
         try {
-          const order = await createRazorpayOrder(me.id);
+          const order = await createRazorpayOrder(me.id, appliedCoupon);
 
           const options = {
             key:         order.key_id,
