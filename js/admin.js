@@ -137,16 +137,34 @@ async function loadSeeded() {
     districts.forEach(d => { const o = document.createElement('option'); o.value = o.textContent = d; distEl.appendChild(o); });
   }
 
-  // Toggle: show or hide exam centre name on seeded user cards in Find Mates
+  const { getPlatformConfig, adminUpdateConfig } = await import('./supabase.js');
+  const { data: cfgRows } = await getPlatformConfig();
+
+  // Toggle 1: show/hide ALL seeded users in Find Mates feed
+  const globalToggle = document.getElementById('adm-seeded-global-toggle');
+  const globalLabel  = document.getElementById('adm-seeded-global-label');
+  if (globalToggle) {
+    const seededVisible = (cfgRows || []).find(r => r.key === 'seeded_users_visible')?.value !== false;
+    globalToggle.checked = seededVisible;
+    globalLabel.textContent = seededVisible ? 'Seeded users visible in feed' : 'Seeded users hidden from feed';
+    globalToggle.addEventListener('change', async () => {
+      globalToggle.disabled = true;
+      globalLabel.textContent = 'Saving…';
+      const { error } = await adminUpdateConfig('seeded_users_visible', globalToggle.checked, adminPhone);
+      globalToggle.disabled = false;
+      if (error) { toast('Error: ' + error.message, 'error'); globalToggle.checked = !globalToggle.checked; return; }
+      globalLabel.textContent = globalToggle.checked ? 'Seeded users visible in feed' : 'Seeded users hidden from feed';
+      toast(globalToggle.checked ? 'Seeded users shown in feed ✓' : 'Seeded users hidden from feed ✓', 'success');
+    });
+  }
+
+  // Toggle 2: show or hide exam centre name on seeded user cards
   const toggle = document.getElementById('adm-seeded-visibility-toggle');
   const label  = document.getElementById('adm-seeded-visibility-label');
   if (toggle) {
-    const { getPlatformConfig, adminUpdateConfig } = await import('./supabase.js');
-    const { data: cfgRows } = await getPlatformConfig();
     const showExamCentre = (cfgRows || []).find(r => r.key === 'seeded_exam_centre_visible')?.value !== false;
     toggle.checked = showExamCentre;
     label.textContent = showExamCentre ? 'Exam centre visible on cards' : 'Exam centre hidden on cards';
-
     toggle.addEventListener('change', async () => {
       toggle.disabled = true;
       label.textContent = 'Saving…';

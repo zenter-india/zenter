@@ -107,15 +107,24 @@
         <section class="adm-panel" id="adm-panel-seeded" data-route="seeded">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:4px;">
             <h1 class="adm-h1" style="margin:0;">Seeded Users</h1>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:13px;color:var(--adm-text-dim);" id="adm-seeded-visibility-label">Exam centre visibility</span>
-              <label class="adm-toggle" title="Show or hide all seeded users from Find Mates">
-                <input type="checkbox" id="adm-seeded-visibility-toggle" checked />
-                <span class="adm-toggle__track"></span>
-              </label>
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:13px;color:var(--adm-text-dim);" id="adm-seeded-global-label">Seeded users visible in feed</span>
+                <label class="adm-toggle" title="Show or hide ALL seeded users from the Find Mates feed">
+                  <input type="checkbox" id="adm-seeded-global-toggle" checked />
+                  <span class="adm-toggle__track"></span>
+                </label>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:13px;color:var(--adm-text-dim);" id="adm-seeded-visibility-label">Exam centre on cards</span>
+                <label class="adm-toggle" title="Show or hide exam centre name on seeded user cards">
+                  <input type="checkbox" id="adm-seeded-visibility-toggle" checked />
+                  <span class="adm-toggle__track"></span>
+                </label>
+              </div>
             </div>
           </div>
-          <p class="adm-sub">Demo accounts for district discovery. Toggle shows/hides all from Find Mates.</p>
+          <p class="adm-sub">Demo accounts for district discovery.</p>
           <div class="adm-toolbar">
             <input type="search" id="adm-seeded-search" class="adm-search" placeholder="Search by name or district…" />
             <select id="adm-seeded-filter-district" class="adm-filter">

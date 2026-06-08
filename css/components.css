@@ -46,8 +46,11 @@
    NAVBAR
 ============================================================ */
 .hm-navbar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
   z-index: 1030;
   background: rgba(255, 255, 255, 0.78);
   /* backdrop-filter is on ::before, NOT here.
@@ -79,6 +82,21 @@
   width: 100%;
   gap: var(--hm-space-4);
 }
+
+/* ← Back button — sits next to profile icon, hidden by default */
+#hm-nav-back {
+  background: none;
+  border: 1px solid var(--hm-border);
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--hm-text-muted);
+  cursor: pointer;
+  border-radius: 6px;
+  white-space: nowrap;
+  transition: background 120ms, color 120ms;
+}
+#hm-nav-back:hover { background: var(--hm-surface-2); color: var(--hm-text); }
 .hm-brand {
   display: inline-flex;
   align-items: center;
