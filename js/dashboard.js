@@ -452,7 +452,7 @@ function wireConnectionActions() {
     const connId = btn.dataset.connId || null;
 
     if (action === 'open-chat') { closeModal(); openChatWithUser(userId); return; }
-    if (action === 'call-exchange') { showCallExchangePrompt(userId); return; }
+    // call-exchange is handled by connections.js directly
     if (action === 'block')  { openBlockModal(userId); return; }
 
     setButtonBusy(btn, true);

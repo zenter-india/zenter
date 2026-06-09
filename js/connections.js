@@ -20,8 +20,16 @@ import {
   getMyConnections,
   getUsersByIds,
   getBlockedUserIds,
+  getMyConversations,
+  getContactExchangeStatus,
+  requestContactExchange,
+  trackEvent,
 }                                from './supabase.js';
 import { formatPhonePretty }     from './utils.js';
+
+let _myUserId = null;
+let _exchangeMap = new Map(); // conversationId → exchange status
+let _convByOtherUser = new Map(); // otherUserId → conversationId
 
 // ─── Bootstrap (standalone /connections.html path) ─────────────────────────
 
@@ -75,6 +83,8 @@ export async function runConnections(root, firebaseUser) {
   const accepted = allConns.filter(c => c.status === 'accepted');
   // Sent requests section removed — users manage outgoing requests from Find Mates.
 
+  _myUserId = me.id;
+
   // Only fetch profiles for accepted connections — received requests use a count link.
   const otherIds = [...new Set(
     accepted.map(c => c.sender_id === me.id ? c.receiver_id : c.sender_id)
@@ -84,6 +94,19 @@ export async function runConnections(root, firebaseUser) {
   if (otherIds.length > 0) {
     const { data: users } = await getUsersByIds(otherIds);
     byId = Object.fromEntries((users || []).map(u => [u.id, u]));
+  }
+
+  // Fetch conversations and exchange status for accepted connections
+  _exchangeMap.clear();
+  _convByOtherUser.clear();
+  const { data: convs } = await getMyConversations(me.id);
+  if (convs?.length) {
+    for (const conv of convs) {
+      const otherId = conv.user_a === me.id ? conv.user_b : conv.user_a;
+      _convByOtherUser.set(otherId, conv.id);
+      const { data: exStatus } = await getContactExchangeStatus(conv.id);
+      if (exStatus) _exchangeMap.set(conv.id, exStatus);
+    }
   }
 
   root.innerHTML = `
@@ -98,6 +121,9 @@ export async function runConnections(root, firebaseUser) {
       }),
     })}
   `;
+
+  // Wire call-exchange buttons
+  wireExchangeButtons(root);
 }
 
 // ─── Event wiring (idempotent) ─────────────────────────────────────────────
@@ -257,28 +283,64 @@ function receivedCard(user, conn) {
     </article>`;
 }
 
-// 2. CONNECTED — masked phone (last 3 digits) + Chat button + Block action.
-// Full phone is NEVER shown here — only via Exchange Contact inside chat.
+// 2. CONNECTED — shows full phone if exchanged, masked otherwise.
 function connectedCard(user, conn) {
   if (!user) return '';
-  const name        = user.full_name || 'Unknown';
-  const phone       = user.phone     || '';
-  const maskedPhone = maskPhone(phone);
+  const name  = user.full_name || 'Unknown';
+  const phone = user.phone || '';
+  const convId = _convByOtherUser.get(user.id);
+  const exchange = convId ? _exchangeMap.get(convId) : null;
+  const isExchanged = exchange?.status === 'accepted';
+  const isPending = exchange?.status === 'pending';
+
+  let phoneSection;
+  if (isExchanged) {
+    // Full phone revealed — show Call + WhatsApp
+    const phonePretty = formatPhonePretty(phone);
+    const digits = phone.replace(/\D/g, '');
+    const waHref = digits ? `https://wa.me/${digits}` : '';
+    const telHref = phone ? `tel:${phone}` : '';
+    phoneSection = `
+      <p style="font-size:var(--hm-text-sm);color:var(--hm-text);font-weight:600;margin:0 0 var(--hm-space-2);">📱 ${esc(phonePretty)}</p>
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="hm-btn hm-btn--primary hm-btn--sm"
+                data-conn-action="open-chat" data-user-id="${esc(user.id)}">💬 Chat</button>
+        ${telHref ? `<a href="${esc(telHref)}" class="hm-btn hm-btn--soft hm-btn--sm">📞 Call</a>` : ''}
+        ${waHref ? `<a href="${esc(waHref)}" target="_blank" rel="noopener noreferrer"
+                       class="hm-btn hm-btn--soft hm-btn--sm">💬 WhatsApp</a>` : ''}
+        <button class="hm-modal__block-btn hm-btn hm-btn--ghost hm-btn--sm" type="button"
+                data-conn-action="block" data-user-id="${esc(user.id)}"
+                aria-label="Block ${esc(name)}">🚫 Block</button>
+      </div>`;
+  } else {
+    // Masked phone — Call triggers exchange request
+    const maskedPhone = maskPhone(phone);
+    const callLabel = isPending
+      ? (exchange.requester_id === _myUserId ? '⏳ Exchange Pending' : '📞 Accept Exchange')
+      : '📞 Call';
+    const callDisabled = isPending && exchange.requester_id === _myUserId;
+    phoneSection = `
+      <p style="font-size:var(--hm-text-sm);color:var(--hm-text-muted);margin:0 0 var(--hm-space-2);">📱 ${esc(maskedPhone)}</p>
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="hm-btn hm-btn--primary hm-btn--sm"
+                data-conn-action="open-chat" data-user-id="${esc(user.id)}">💬 Chat</button>
+        <button class="hm-btn hm-btn--soft hm-btn--sm"
+                data-conn-action="call-exchange" data-user-id="${esc(user.id)}"
+                data-conv-id="${esc(convId || '')}"
+                data-exchange-id="${esc(exchange?.id || '')}"
+                ${callDisabled ? 'disabled' : ''}>${callLabel}</button>
+        <button class="hm-modal__block-btn hm-btn hm-btn--ghost hm-btn--sm" type="button"
+                data-conn-action="block" data-user-id="${esc(user.id)}"
+                aria-label="Block ${esc(name)}">🚫 Block</button>
+      </div>`;
+  }
+
   return `
     <article class="hm-card hm-mate" data-conn-card-id="${esc(user.id)}">
       ${cardHead(user)}
       ${cardBody(user)}
       <div style="padding-top:var(--hm-space-3);border-top:1px solid var(--hm-border);">
-        <p style="font-size:var(--hm-text-sm);color:var(--hm-text-muted);margin:0 0 var(--hm-space-2);">📱 ${esc(maskedPhone)}</p>
-        <div class="d-flex gap-2 flex-wrap">
-          <button class="hm-btn hm-btn--primary hm-btn--sm"
-                  data-conn-action="open-chat" data-user-id="${esc(user.id)}">💬 Chat</button>
-          <button class="hm-btn hm-btn--soft hm-btn--sm"
-                  data-conn-action="call-exchange" data-user-id="${esc(user.id)}">📞 Call</button>
-          <button class="hm-modal__block-btn hm-btn hm-btn--ghost hm-btn--sm" type="button"
-                  data-conn-action="block" data-user-id="${esc(user.id)}"
-                  aria-label="Block ${esc(name)}">🚫 Block</button>
-        </div>
+        ${phoneSection}
       </div>
     </article>`;
 }
@@ -287,6 +349,62 @@ function maskPhone(phone) {
   if (!phone) return '—';
   const s = String(phone);
   return `${s.startsWith('+91') ? '+91 ' : ''}XXXXXXX${s.slice(-3)}`;
+}
+
+// Wire 📞 Call buttons to send/accept exchange requests
+function wireExchangeButtons(root) {
+  root.addEventListener('click', async (e) => {
+    const btn = e.target.closest('[data-conn-action="call-exchange"]');
+    if (!btn || btn.disabled) return;
+
+    const userId = btn.dataset.userId;
+    const convId = btn.dataset.convId;
+    const exchangeId = btn.dataset.exchangeId;
+
+    if (!convId) {
+      // No conversation yet — shouldn't happen for accepted connections
+      return;
+    }
+
+    btn.disabled = true;
+    const origText = btn.textContent;
+    btn.textContent = 'Sending…';
+
+    // Check if there's a pending exchange where WE are the responder → accept it
+    const exchange = convId ? _exchangeMap.get(convId) : null;
+    if (exchange?.status === 'pending' && exchange.responder_id === _myUserId) {
+      const { respondContactExchange } = await import('./supabase.js');
+      const { data, error } = await respondContactExchange(exchange.id, _myUserId, true);
+      if (error) {
+        btn.textContent = origText;
+        btn.disabled = false;
+        return;
+      }
+      trackEvent('contact_exchange_accepted', _myUserId, { conversation_id: convId, source: 'connections' });
+      // Trigger re-render
+      window.dispatchEvent(new CustomEvent('hm:connections-changed'));
+      return;
+    }
+
+    // Otherwise send a new exchange request
+    const { error } = await requestContactExchange(convId, _myUserId);
+    if (error) {
+      btn.textContent = origText;
+      btn.disabled = false;
+      // If already pending or already exchanged, show appropriate message
+      if (error.message?.includes('already pending')) {
+        btn.textContent = '⏳ Exchange Pending';
+      } else if (error.message?.includes('already been exchanged')) {
+        window.dispatchEvent(new CustomEvent('hm:connections-changed'));
+      }
+      return;
+    }
+
+    trackEvent('contact_exchange_requested', _myUserId, { conversation_id: convId, source: 'connections' });
+    btn.textContent = '⏳ Exchange Pending';
+    // Update local state
+    _exchangeMap.set(convId, { status: 'pending', requester_id: _myUserId });
+  });
 }
 
 // ─── Small helpers ─────────────────────────────────────────────────────────
