@@ -303,11 +303,9 @@ function connectedCard(user, conn) {
     phoneSection = `
       <p style="font-size:var(--hm-text-sm);color:var(--hm-text);font-weight:600;margin:0 0 var(--hm-space-2);">📱 ${esc(phonePretty)}</p>
       <div class="d-flex gap-2 flex-wrap">
-        <button class="hm-btn hm-btn--primary hm-btn--sm"
-                data-conn-action="open-chat" data-user-id="${esc(user.id)}">💬 Chat</button>
-        ${telHref ? `<a href="${esc(telHref)}" class="hm-btn hm-btn--soft hm-btn--sm">📞 Call</a>` : ''}
-        ${waHref ? `<a href="${esc(waHref)}" target="_blank" rel="noopener noreferrer"
-                       class="hm-btn hm-btn--soft hm-btn--sm">💬 WhatsApp</a>` : ''}
+        ${telHref ? `<a href="${esc(telHref)}" class="hm-btn hm-btn--primary hm-btn--sm">📞 Call</a>` : ''}
+        <button class="hm-btn hm-btn--soft hm-btn--sm"
+                data-conn-action="open-chat" data-user-id="${esc(user.id)}">Chat</button>
         <button class="hm-modal__block-btn hm-btn hm-btn--ghost hm-btn--sm" type="button"
                 data-conn-action="block" data-user-id="${esc(user.id)}"
                 aria-label="Block ${esc(name)}">🚫 Block</button>
@@ -323,12 +321,12 @@ function connectedCard(user, conn) {
       <p style="font-size:var(--hm-text-sm);color:var(--hm-text-muted);margin:0 0 var(--hm-space-2);">📱 ${esc(maskedPhone)}</p>
       <div class="d-flex gap-2 flex-wrap">
         <button class="hm-btn hm-btn--primary hm-btn--sm"
-                data-conn-action="open-chat" data-user-id="${esc(user.id)}">💬 Chat</button>
-        <button class="hm-btn hm-btn--soft hm-btn--sm"
                 data-conn-action="call-exchange" data-user-id="${esc(user.id)}"
                 data-conv-id="${esc(convId || '')}"
                 data-exchange-id="${esc(exchange?.id || '')}"
                 ${callDisabled ? 'disabled' : ''}>${callLabel}</button>
+        <button class="hm-btn hm-btn--soft hm-btn--sm"
+                data-conn-action="open-chat" data-user-id="${esc(user.id)}">Chat</button>
         <button class="hm-modal__block-btn hm-btn hm-btn--ghost hm-btn--sm" type="button"
                 data-conn-action="block" data-user-id="${esc(user.id)}"
                 aria-label="Block ${esc(name)}">🚫 Block</button>
