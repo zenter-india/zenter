@@ -552,21 +552,20 @@ async function doWithdraw(userId, connId) {
   toast('Request cancelled.', { variant: 'info' });
 }
 
-// ─── Zenter Plus reveal usage banner ─────────────────────────────────────────
+// ─── Zenter Plus chat usage banner ───────────────────────────────────────────
 function renderRevealBanner(plusEnabled) {
   const banner = document.getElementById('hm-reveal-banner');
   if (!banner) return;
-  // Hide for Plus members, admins, or when Plus feature is off
   if (myPlusMember || !plusEnabled) { banner.hidden = true; return; }
   const remaining = Math.max(0, myFreeLimit - myRevealsUsed);
   banner.hidden = false;
   banner.innerHTML = remaining > 0
     ? `<span class="hm-reveal-banner__text">
-         You have <strong>${remaining} free contact reveal${remaining === 1 ? '' : 's'}</strong> remaining.
-         <a href="/plus.html" class="hm-reveal-banner__link">Get Zenter Plus for unlimited →</a>
+         You have <strong>${remaining} free chat${remaining === 1 ? '' : 's'}</strong> remaining.
+         <a href="/plus.html" class="hm-reveal-banner__link">Get Zenter Plus for unlimited chats →</a>
        </span>`
     : `<span class="hm-reveal-banner__text hm-reveal-banner__text--limit">
-         You've used all your free reveals.
+         You've used all your free chats.
          <a href="/plus.html" class="hm-reveal-banner__link">Upgrade to Zenter Plus →</a>
        </span>`;
 }
@@ -577,7 +576,7 @@ function showUpgradePrompt(rev) {
   if (!overlay) return;
   const msg = document.getElementById('hm-upgrade-msg');
   if (msg) {
-    msg.textContent = `You've used all ${rev.limit} of your free contact reveals. Upgrade to Zenter Plus to reveal unlimited contacts.`;
+    msg.textContent = `You've used all ${rev.limit} of your free chats. Upgrade to Zenter Plus for unlimited chats and contact exchange.`;
   }
   overlay.classList.add('is-open');
   trackEvent('upgrade_modal_view', myUserId, { source: 'reveal_limit', reveals_used: rev.reveals_used });
