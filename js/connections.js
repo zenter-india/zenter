@@ -94,6 +94,16 @@ export async function runConnections(root, firebaseUser) {
   if (otherIds.length > 0) {
     const { data: users } = await getUsersByIds(otherIds);
     byId = Object.fromEntries((users || []).map(u => [u.id, u]));
+
+    // Fetch any missing from seeded_users table
+    const missingIds = otherIds.filter(id => !byId[id]);
+    if (missingIds.length) {
+      const { query: q, from: f } = await import('./supabase.js');
+      const { data: seeded } = await q(
+        f('seeded_users').select('id, full_name, gender, phone, exam_centre_district, exam_centre_state, exam_center, state, district, travel_mode, stay_plan').in('id', missingIds)
+      );
+      (seeded || []).forEach(u => { byId[u.id] = { ...u, __seeded: true }; });
+    }
   }
 
   // Fetch conversations and exchange status for accepted connections
