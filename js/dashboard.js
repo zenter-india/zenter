@@ -316,10 +316,6 @@ async function activateTab(name) {
   };
   Object.entries(panels).forEach(([key, el]) => { if (el) el.hidden = key !== tab; });
 
-  // Also hide reveal banner when not on find-mates
-  const revealBanner = document.getElementById('hm-reveal-banner');
-  if (revealBanner) revealBanner.hidden = tab !== 'find-mates';
-
   // Render Requests tab content (derived from in-memory data — no extra fetch)
   if (tab === 'requests') renderRequests();
 
