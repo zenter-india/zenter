@@ -250,7 +250,7 @@ async function loadSeededRequests() {
       btn.disabled = true;
       btn.textContent = 'Accepting…';
 
-      const { adminAcceptSeededRequest, createConversation } = await import('./supabase.js');
+      const { adminAcceptSeededRequest, createConversation, sendMessage } = await import('./supabase.js');
       const { data, error } = await adminAcceptSeededRequest(connId);
       if (error) {
         toast('Failed: ' + error.message, 'error');
@@ -260,9 +260,27 @@ async function loadSeededRequests() {
       }
 
       // Create conversation for this connection
-      await createConversation(connId, senderId, receiverId);
+      const { data: convId } = await createConversation(connId, senderId, receiverId);
 
-      toast('Request accepted! Chat enabled.', 'success');
+      // Send a random greeting from the seeded user
+      if (convId) {
+        const greetings = [
+          'Hi! Are you also going to this centre? 😊',
+          'Hey! Nice to connect. Which city are you travelling from?',
+          'Hi there! Have you booked your travel yet?',
+          'Hello! Glad we matched. Are you looking for a room share?',
+          'Hey! When are you planning to reach the exam city?',
+          'Hi! Do you know anyone else going to our centre?',
+          'Hello! Are you travelling by train or flight?',
+          'Hey! Have you started packing yet? 😄',
+          'Hi! First time at this centre? I\'m a bit nervous honestly.',
+          'Hello! Let\'s coordinate travel — it\'ll be cheaper together!',
+        ];
+        const msg = greetings[Math.floor(Math.random() * greetings.length)];
+        await sendMessage(convId, receiverId, msg);
+      }
+
+      toast('Request accepted! Chat enabled with greeting.', 'success');
       btn.textContent = '✓ Accepted';
       btn.classList.remove('adm-btn--ok');
       btn.style.color = '#16a34a';
