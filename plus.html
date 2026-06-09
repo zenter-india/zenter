@@ -124,55 +124,113 @@
           Chat with every centre mate.
         </h1>
         <p style="color: var(--hm-text-muted); font-size: var(--hm-text-lg); margin-bottom: var(--hm-space-4);">
-          Free users get 2 active chats. Plus gives you unlimited chats,
-          verified badge, and puts your profile where it gets noticed.
+          Free users get 2 active chats. Plus gives you unlimited chats
+          and puts your profile where it gets noticed.
         </p>
         <div class="plus-price">₹9 <span>/ exam season</span></div>
         <p class="plus-season">One-time for NEET UG 2026</p>
       </div>
 
-      <!-- Gold card preview -->
+      <!-- Interactive card preview -->
       <div style="margin-bottom: var(--hm-space-5); text-align:center;">
-        <p style="font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--hm-text-muted);margin-bottom:var(--hm-space-3);">How your card looks</p>
-        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <p style="font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--hm-text-muted);margin-bottom:var(--hm-space-2);">See the difference</p>
+        <!-- Toggle switch -->
+        <div style="display:inline-flex;background:var(--hm-surface-2);border-radius:20px;padding:3px;margin-bottom:var(--hm-space-4);gap:2px;">
+          <button id="plus-toggle-free" type="button" style="padding:6px 18px;border-radius:18px;border:none;font-size:12px;font-weight:600;cursor:pointer;transition:all 200ms;background:transparent;color:var(--hm-text-muted);">Free</button>
+          <button id="plus-toggle-plus" type="button" style="padding:6px 18px;border-radius:18px;border:none;font-size:12px;font-weight:600;cursor:pointer;transition:all 200ms;background:var(--hm-primary);color:#fff;">Plus ⭐</button>
+        </div>
+        <!-- Card container -->
+        <div style="max-width:320px;margin:0 auto;perspective:600px;">
           <!-- Free card -->
-          <div style="flex:1;min-width:140px;max-width:180px;">
-            <p style="font-size:11px;color:var(--hm-text-muted);margin-bottom:6px;">Free</p>
-            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px;text-align:left;box-shadow:0 1px 4px rgba(0,0,0,.06);">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                <div style="width:32px;height:32px;border-radius:50%;background:#4f46e5;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">AR</div>
+          <div id="plus-card-free" style="display:none;animation:plusCardIn 400ms ease-out both;">
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px;text-align:left;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:transform 200ms,box-shadow 200ms;" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.1)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 8px rgba(0,0,0,.06)'">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                <div style="width:44px;height:44px;border-radius:50%;background:#4f46e5;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;">AR</div>
                 <div>
-                  <p style="margin:0;font-size:12px;font-weight:700;">Arun R.</p>
-                  <div style="display:flex;gap:4px;margin-top:2px;">
-                    <span style="font-size:10px;background:#eff6ff;color:#2563eb;padding:1px 6px;border-radius:8px;">Male</span>
+                  <p style="margin:0;font-size:15px;font-weight:700;">Arun R.</p>
+                  <div style="display:flex;gap:4px;margin-top:3px;">
+                    <span style="font-size:11px;background:#eff6ff;color:#2563eb;padding:2px 8px;border-radius:8px;">Male</span>
                   </div>
                 </div>
               </div>
-              <div style="font-size:10px;color:#64748b;">📋 Sion Hospital, Mumbai</div>
-              <div style="font-size:10px;color:#94a3b8;margin-top:4px;">2 chats max</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                <span style="font-size:13px;">🏠</span>
+                <span style="font-size:12px;color:#64748b;"><strong>Pune</strong>, Maharashtra</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="font-size:13px;">📋</span>
+                <span style="font-size:12px;color:#64748b;">Sion Hospital, Mumbai</span>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <span style="font-size:11px;background:#f1f5f9;padding:4px 10px;border-radius:8px;color:#475569;">🚆 Train</span>
+                <span style="font-size:11px;background:#f1f5f9;padding:4px 10px;border-radius:8px;color:#475569;">🏨 Needs stay</span>
+              </div>
+              <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:11px;color:#94a3b8;">2 chats max</span>
+                <button style="font-size:12px;padding:5px 14px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;color:var(--hm-primary);font-weight:600;cursor:default;">Request to Connect</button>
+              </div>
             </div>
           </div>
           <!-- Plus card -->
-          <div style="flex:1;min-width:140px;max-width:180px;">
-            <p style="font-size:11px;color:#92400e;font-weight:700;margin-bottom:6px;">✨ Plus</p>
-            <div style="background:linear-gradient(135deg,#fffbeb 0%,#ffffff 60%);border:1.5px solid #fde68a;border-radius:12px;padding:14px;text-align:left;box-shadow:0 2px 12px rgba(251,191,36,.2);">
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                <div style="width:32px;height:32px;border-radius:50%;background:#db2777;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">PR</div>
+          <div id="plus-card-plus" style="animation:plusCardIn 400ms ease-out both;">
+            <div style="background:linear-gradient(135deg,#fffbeb 0%,#ffffff 60%);border:1.5px solid #fde68a;border-radius:16px;padding:20px;text-align:left;box-shadow:0 4px 20px rgba(251,191,36,.25);transition:transform 200ms,box-shadow 200ms;" onmouseover="this.style.transform='translateY(-6px) scale(1.01)';this.style.boxShadow='0 12px 32px rgba(251,191,36,.35)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 20px rgba(251,191,36,.25)'">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                <div style="width:44px;height:44px;border-radius:50%;background:#db2777;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;box-shadow:0 2px 8px rgba(219,39,119,.3);">PR</div>
                 <div>
-                  <p style="margin:0;font-size:12px;font-weight:700;">Priya R.</p>
-                  <div style="display:flex;gap:4px;margin-top:2px;flex-wrap:wrap;">
-                    <span style="font-size:10px;background:#fdf2f8;color:#db2777;padding:1px 6px;border-radius:8px;">Female</span>
-                    <span style="font-size:10px;background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;padding:1px 6px;border-radius:8px;">✓ Verified</span>
-                    <span style="font-size:10px;background:#fef9c3;color:#854d0e;border:1px solid #fef08a;padding:1px 6px;border-radius:8px;font-weight:700;">⭐ Plus</span>
+                  <p style="margin:0;font-size:15px;font-weight:700;">Priya R.</p>
+                  <div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap;">
+                    <span style="font-size:11px;background:#fdf2f8;color:#db2777;padding:2px 8px;border-radius:8px;">Female</span>
+                    <span style="font-size:11px;background:#fef9c3;color:#854d0e;border:1px solid #fef08a;padding:2px 8px;border-radius:8px;font-weight:700;">⭐ Plus</span>
                   </div>
                 </div>
               </div>
-              <div style="font-size:10px;color:#64748b;">📋 Sion Hospital, Mumbai</div>
-              <div style="font-size:10px;color:#16a34a;margin-top:4px;font-weight:600;">Unlimited chats</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                <span style="font-size:13px;">🏠</span>
+                <span style="font-size:12px;color:#64748b;"><strong>Mumbai</strong>, Maharashtra</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="font-size:13px;">📋</span>
+                <span style="font-size:12px;color:#64748b;">Sion Hospital, Mumbai</span>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <span style="font-size:11px;background:#fef9c3;padding:4px 10px;border-radius:8px;color:#854d0e;">🏠 Has stay</span>
+                <span style="font-size:11px;background:#fef9c3;padding:4px 10px;border-radius:8px;color:#854d0e;">🚗 Self Drive</span>
+              </div>
+              <div style="margin-top:12px;padding-top:10px;border-top:1px solid #fde68a;display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:11px;color:#16a34a;font-weight:600;">✨ Unlimited chats</span>
+                <button style="font-size:12px;padding:5px 14px;border-radius:8px;border:none;background:var(--hm-primary);color:#fff;font-weight:600;cursor:default;box-shadow:0 2px 8px rgba(255,107,53,.3);">Request to Connect</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <style>
+        @keyframes plusCardIn {
+          from { opacity: 0; transform: translateY(12px) scale(0.97); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+      </style>
+      <script>
+        document.getElementById('plus-toggle-free').addEventListener('click', function() {
+          document.getElementById('plus-card-free').style.display = 'block';
+          document.getElementById('plus-card-plus').style.display = 'none';
+          this.style.background = '#334155'; this.style.color = '#fff';
+          document.getElementById('plus-toggle-plus').style.background = 'transparent';
+          document.getElementById('plus-toggle-plus').style.color = 'var(--hm-text-muted)';
+          document.getElementById('plus-card-free').style.animation = 'none';
+          requestAnimationFrame(() => { document.getElementById('plus-card-free').style.animation = 'plusCardIn 400ms ease-out both'; });
+        });
+        document.getElementById('plus-toggle-plus').addEventListener('click', function() {
+          document.getElementById('plus-card-plus').style.display = 'block';
+          document.getElementById('plus-card-free').style.display = 'none';
+          this.style.background = 'var(--hm-primary)'; this.style.color = '#fff';
+          document.getElementById('plus-toggle-free').style.background = 'transparent';
+          document.getElementById('plus-toggle-free').style.color = 'var(--hm-text-muted)';
+          document.getElementById('plus-card-plus').style.animation = 'none';
+          requestAnimationFrame(() => { document.getElementById('plus-card-plus').style.animation = 'plusCardIn 400ms ease-out both'; });
+        });
+      </script>
 
       <!-- Features -->
       <div class="hm-card" style="padding: var(--hm-space-5); margin-bottom: var(--hm-space-5);">
@@ -182,13 +240,6 @@
             <div>
               <strong>Unlimited active chats</strong>
               <p style="margin:2px 0 0;font-size:13px;color:var(--hm-text-muted);">Free users get 2 active chats. Plus removes the limit — chat with every centre mate you connect with.</p>
-            </div>
-          </li>
-          <li>
-            <span class="icon">✅</span>
-            <div>
-              <strong>Verified Aspirant Badge</strong>
-              <p style="margin:2px 0 0;font-size:13px;color:var(--hm-text-muted);">Stand out with a verified badge on your card — signals trust instantly to other aspirants.</p>
             </div>
           </li>
           <li>
@@ -203,13 +254,6 @@
             <div>
               <strong>Priority Visibility</strong>
               <p style="margin:2px 0 0;font-size:13px;color:var(--hm-text-muted);">Your profile appears above all free users in your district's find mates feed.</p>
-            </div>
-          </li>
-          <li>
-            <span class="icon">🏅</span>
-            <div>
-              <strong>Early Supporter Badge</strong>
-              <p style="margin:2px 0 0;font-size:13px;color:var(--hm-text-muted);">A permanent badge marking you as one of Zenter's earliest supporters.</p>
             </div>
           </li>
         </ul>
@@ -248,11 +292,6 @@
               <td><span class="check">✓</span></td>
             </tr>
             <tr>
-              <td>Verified Aspirant Badge</td>
-              <td><span class="cross">✗</span></td>
-              <td><span class="check">✓</span></td>
-            </tr>
-            <tr>
               <td>Featured profile (gold card)</td>
               <td><span class="cross">✗</span></td>
               <td><span class="check">✓</span></td>
@@ -264,11 +303,6 @@
             </tr>
             <tr>
               <td>Priority position in feed</td>
-              <td><span class="cross">✗</span></td>
-              <td><span class="check">✓</span></td>
-            </tr>
-            <tr>
-              <td>Early Supporter Badge</td>
               <td><span class="cross">✗</span></td>
               <td><span class="check">✓</span></td>
             </tr>
