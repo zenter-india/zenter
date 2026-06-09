@@ -397,14 +397,14 @@ async function loadSettings() {
         </div>
         <div class="adm-card__body" style="padding:16px 20px;">
           <p style="font-size:13px;color:var(--adm-text-muted);margin:0 0 12px;">
-            When enabled, free users are limited to the number of contact reveals below. Plus members get unlimited reveals.
+            When enabled, free users are limited to the number of active chats below. Plus members get unlimited chats and premium features.
           </p>
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-            <label style="font-size:13px;font-weight:600;">Free contact reveals:</label>
-            <input type="number" id="adm-free-reveal-limit" min="1" max="20"
-              value="${platformConfig.free_reveal_limit ?? 2}"
+            <label style="font-size:13px;font-weight:600;">Free active chats:</label>
+            <input type="number" id="adm-free-chat-limit" min="1" max="20"
+              value="${platformConfig.free_active_chats ?? 2}"
               style="width:64px;padding:6px 8px;border:1px solid var(--adm-border);border-radius:6px;background:var(--adm-surface);color:var(--adm-text);font-size:13px;" />
-            <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-save-reveal-limit">Save</button>
+            <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-save-chat-limit">Save</button>
           </div>
           <div style="display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap;">
             <label style="font-size:13px;font-weight:600;">Base price (paise):</label>
@@ -415,8 +415,23 @@ async function loadSettings() {
             <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-save-plus-price">Save</button>
           </div>
           <div style="margin-top:10px;padding:10px 14px;background:var(--adm-surface-2);border-radius:6px;font-size:12px;color:var(--adm-text-dim);">
-            🎟️ <strong style="color:var(--adm-text);">Active coupon:</strong> <code>ZENTERNEW</code> → ₹9 (early bird). Coupons are managed in the Edge Function.
+            💬 <strong style="color:var(--adm-text);">Plus benefits:</strong> Unlimited chats · Verified badge · Featured profile · Priority visibility · Early supporter badge
           </div>
+        </div>
+      </div>
+
+      <div class="adm-card adm-settings-card">
+        <div class="adm-card__header" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>📞 Contact Exchange</span>
+          <label class="adm-switch">
+            <input type="checkbox" data-config="contact_exchange_enabled" ${platformConfig.contact_exchange_enabled !== false ? 'checked' : ''}>
+            <span class="adm-switch__track"></span>
+          </label>
+        </div>
+        <div class="adm-card__body" style="padding:16px 20px;">
+          <p style="font-size:13px;color:var(--adm-text-muted);margin:0;">
+            When enabled, connected users can request to exchange phone numbers inside chat. Both parties must accept before any contact info is shown.
+          </p>
         </div>
       </div>
 
@@ -433,7 +448,7 @@ async function loadSettings() {
       const cfg   = input.dataset.config;
       const isGlobal = cfg === 'global_maintenance';
       const isFt  = cfg.startsWith('feature_toggles.');
-      const isDirect = ['plus_enabled'].includes(cfg); // direct top-level config keys
+      const isDirect = ['plus_enabled', 'contact_exchange_enabled'].includes(cfg); // direct top-level config keys
       const ftKey = isFt ? cfg.split('.')[1] : null;
       const { adminUpdateConfig } = await import('./supabase.js');
       let key, value;
@@ -451,15 +466,15 @@ async function loadSettings() {
     });
   });
 
-  // Wire reveal limit save button
-  document.getElementById('adm-save-reveal-limit')?.addEventListener('click', async () => {
-    const val = parseInt(document.getElementById('adm-free-reveal-limit')?.value, 10);
+  // Wire free chat limit save button
+  document.getElementById('adm-save-chat-limit')?.addEventListener('click', async () => {
+    const val = parseInt(document.getElementById('adm-free-chat-limit')?.value, 10);
     if (!val || val < 1) { toast('Enter a valid number (min 1)', 'error'); return; }
     const { adminUpdateConfig } = await import('./supabase.js');
-    const { error } = await adminUpdateConfig('free_reveal_limit', val, adminPhone);
+    const { error } = await adminUpdateConfig('free_active_chats', val, adminPhone);
     if (error) { toast('Save failed: ' + error.message, 'error'); return; }
-    platformConfig.free_reveal_limit = val;
-    toast(`Free reveal limit set to ${val} ✓`, 'success');
+    platformConfig.free_active_chats = val;
+    toast(`Free active chats set to ${val} ✓`, 'success');
   });
 
   // Wire Plus price save button

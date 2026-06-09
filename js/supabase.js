@@ -612,3 +612,140 @@ export function saveDeviceFingerprint(userId, fingerprint) {
 export function getUsersByFingerprint(fingerprint) {
   return query(from('users').select('id, full_name, phone, created_at').eq('device_fingerprint', fingerprint));
 }
+
+// ─── Chat System ─────────────────────────────────────────────────────────────
+
+/** Create a conversation when a connection is accepted. Idempotent. */
+export function createConversation(connectionId, userA, userB) {
+  return query(supabase.rpc('create_conversation_for_connection', {
+    p_connection_id: connectionId, p_user_a: userA, p_user_b: userB,
+  }));
+}
+
+/** Get all active conversations for a user, with the other user's info. */
+export async function getMyConversations(userId) {
+  const { data, error } = await query(
+    from('conversations')
+      .select('id, connection_id, user_a, user_b, is_active, updated_at, created_at')
+      .or(`user_a.eq.${userId},user_b.eq.${userId}`)
+      .eq('is_active', true)
+      .order('updated_at', { ascending: false })
+  );
+  return { data, error };
+}
+
+/** Get messages for a conversation (paginated, newest last). */
+export function getMessages(conversationId, limit = 50, before = null) {
+  let q = from('messages')
+    .select('id, conversation_id, sender_id, body, message_type, created_at')
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: true })
+    .limit(limit);
+  if (before) q = q.lt('created_at', before);
+  return query(q);
+}
+
+/** Send a text message. Returns message id. */
+export function sendMessage(conversationId, senderId, body) {
+  return query(supabase.rpc('send_message', {
+    p_conversation_id: conversationId,
+    p_sender_id: senderId,
+    p_body: body,
+    p_message_type: 'text',
+  }));
+}
+
+/** Check if user can start a new chat (free limit check). */
+export function canStartChat(userId) {
+  return query(supabase.rpc('can_start_chat', { p_user_id: userId }));
+}
+
+/** Get active chat count for a user. */
+export function getActiveChatCount(userId) {
+  return query(supabase.rpc('get_active_chat_count', { p_user_id: userId }));
+}
+
+/** Get unread message count across all conversations for a user. */
+export async function getUnreadCount(userId, lastReadMap = {}) {
+  // lastReadMap: { conversationId: lastReadTimestamp }
+  // For V1, count messages where sender != userId and created_at > last visit
+  const { data: convs } = await getMyConversations(userId);
+  if (!convs?.length) return 0;
+
+  let total = 0;
+  for (const conv of convs) {
+    const lastRead = lastReadMap[conv.id] || conv.created_at;
+    const { data } = await query(
+      from('messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('conversation_id', conv.id)
+        .neq('sender_id', userId)
+        .gt('created_at', lastRead)
+    );
+    total += data ?? 0;
+  }
+  return total;
+}
+
+// ─── Contact Exchange ────────────────────────────────────────────────────────
+
+/** Request to exchange contact details inside a chat. */
+export function requestContactExchange(conversationId, requesterId) {
+  return query(supabase.rpc('request_contact_exchange', {
+    p_conversation_id: conversationId,
+    p_requester_id: requesterId,
+  }));
+}
+
+/** Respond to a contact exchange request (accept/decline). */
+export function respondContactExchange(requestId, responderId, accept) {
+  return query(supabase.rpc('respond_contact_exchange', {
+    p_request_id: requestId,
+    p_responder_id: responderId,
+    p_accept: accept,
+  }));
+}
+
+/** Get the contact exchange status for a conversation. */
+export function getContactExchangeStatus(conversationId) {
+  return query(
+    from('contact_exchange_requests')
+      .select('id, requester_id, responder_id, status, responded_at, created_at')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+  );
+}
+
+// ─── Realtime subscription ──────────────────────────────────────────────────
+
+/** Subscribe to new messages in a conversation. Returns the channel (call .unsubscribe() to stop). */
+export function subscribeToMessages(conversationId, onMessage) {
+  return supabase
+    .channel(`messages:${conversationId}`)
+    .on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'messages',
+      filter: `conversation_id=eq.${conversationId}`,
+    }, (payload) => onMessage(payload.new))
+    .subscribe();
+}
+
+/** Subscribe to all new messages across all user's conversations. */
+export function subscribeToAllMessages(userId, conversationIds, onMessage) {
+  // Subscribe to each conversation's messages
+  const channels = conversationIds.map(cid =>
+    supabase
+      .channel(`messages:${cid}`)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `conversation_id=eq.${cid}`,
+      }, (payload) => onMessage(payload.new))
+      .subscribe()
+  );
+  return channels; // caller can .unsubscribe() each
+}

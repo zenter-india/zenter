@@ -5,7 +5,7 @@ import { getAllUsers, getUserByPhone, getMyConnections,
          sendConnectionRequest, respondToRequest, deleteRequest,
          getBlockedUserIds, getBlockedByIds, getSeededUsers,
          getPlatformConfig, attemptReveal, trackEvent, flagRapidReveal, blockUser,
-         deleteConnectionsBetween } from './supabase.js';
+         deleteConnectionsBetween, createConversation, canStartChat } from './supabase.js';
 import { debounce } from './utils.js';
 import { toast, setButtonBusy } from './ui.js';
 import * as Relationships from './relationships.js';
@@ -29,6 +29,7 @@ let myPlusEnabled         = true;   // whether Plus gating is active
 let revealedUserIds       = new Set(); // Gap 1: client-side revealed set prevents re-incrementing
 let firebaseUser    = null;   // stored for lazy connections load
 let connectionsLoaded = false;
+let chatsLoaded       = false;
 let blockedUserIds  = new Set(); // users the current user has blocked
 let blockedByIds    = new Set(); // users who have blocked the current user
 let dataLoaded      = false;     // true once loadData() has hydrated — gates empty states
@@ -225,11 +226,12 @@ async function loadData() {
 
 // ─── Tab switching ────────────────────────────────────────────────────────────
 
-const VALID_TABS = ['requests', 'find-mates', 'connections'];
+const VALID_TABS = ['requests', 'find-mates', 'chats', 'connections'];
 
 const TAB_PANELS = () => ({
   'requests':    document.getElementById('hm-panel-requests'),
   'find-mates':  document.getElementById('hm-panel-find-mates'),
+  'chats':       document.getElementById('hm-panel-chats'),
   'connections': document.getElementById('hm-panel-connections'),
 });
 
@@ -284,12 +286,38 @@ async function activateTab(name) {
   const panels = {
     'requests':    document.getElementById('hm-panel-requests'),
     'find-mates':  document.getElementById('hm-panel-find-mates'),
+    'chats':       document.getElementById('hm-panel-chats'),
     'connections': document.getElementById('hm-panel-connections'),
   };
   Object.entries(panels).forEach(([key, el]) => { if (el) el.hidden = key !== tab; });
 
+  // Also hide reveal banner when not on find-mates
+  const revealBanner = document.getElementById('hm-reveal-banner');
+  if (revealBanner) revealBanner.hidden = tab !== 'find-mates';
+
   // Render Requests tab content (derived from in-memory data — no extra fetch)
   if (tab === 'requests') renderRequests();
+
+  // Lazy-load Chats on first activation
+  if (tab === 'chats' && !chatsLoaded && myUserId) {
+    chatsLoaded = true;
+    const root = document.getElementById('hm-chats-root');
+    if (root) {
+      // Build a Map of all known users for the chat module
+      const usersMap = new Map();
+      allUsers.forEach(u => usersMap.set(u.id, u));
+      rawUserMap.forEach((u, id) => { if (!usersMap.has(id)) usersMap.set(id, u); });
+
+      const { mountChat } = await import('./chat.js');
+      await mountChat(root, myUserId, usersMap, (unread) => {
+        const badge = document.getElementById('hm-chats-tab-badge');
+        if (badge) {
+          badge.textContent = unread;
+          badge.hidden = unread === 0;
+        }
+      });
+    }
+  }
 
   // Lazy-load Connections on first activation
   if (tab === 'connections' && !connectionsLoaded && firebaseUser) {
@@ -407,7 +435,7 @@ function wireConnectionActions() {
     const userId = btn.dataset.userId;
     const connId = btn.dataset.connId || null;
 
-    if (action === 'reveal') { doReveal(); return; }
+    if (action === 'open-chat') { closeModal(); activateTab('chats'); return; }
     if (action === 'block')  { openBlockModal(userId); return; }
 
     setButtonBusy(btn, true);
@@ -462,19 +490,32 @@ async function doConnect(userId) {
 }
 
 async function doAccept(userId, connId) {
+  // Check chat limit before accepting (free users: 2 active chats)
+  const { data: chatCheck } = await canStartChat(myUserId);
+  if (chatCheck && !chatCheck.can_chat) {
+    toast(`You've reached your free chat limit (${chatCheck.limit}). Upgrade to Zenter Plus for unlimited chats!`, { variant: 'warning' });
+    closeModal();
+    return;
+  }
+
   const { error } = await respondToRequest(connId, 'accepted');
   if (error) { toast(error.message || 'Could not accept.', { variant: 'danger' }); return; }
   Relationships.set(userId, { status: REL.CONNECTED, role: 'receiver', connectionId: connId });
   connectionsLoaded = false; // Connections tab re-fetches to include new contact
+  chatsLoaded = false;       // Chats tab re-fetches to include new conversation
   notifyConnectionsChanged();
-  toast('Connected! You can now reveal their contact.', { variant: 'success' });
+
+  // Create a conversation for this accepted connection
+  createConversation(connId, myUserId, userId).catch(err =>
+    console.warn('[chat] conversation creation error (may already exist)', err)
+  );
+
+  toast('Connected! You can now chat.', { variant: 'success' });
   showSafetyConsent();
 
-  // Auto-navigate to the Connections tab so the user immediately sees the
-  // new contact. Works whether the accept came from a Requests card or
-  // from the profile modal (modal is closed first if open).
+  // Auto-navigate to the Chats tab so the user can start chatting
   closeModal();
-  activateTab('connections');
+  activateTab('chats');
 }
 
 async function doDecline(userId, connId) {
@@ -829,8 +870,8 @@ function renderModalActions() {
 
     case REL.CONNECTED:
       actionsEl.innerHTML = `
-        <button class="hm-btn hm-btn--soft hm-btn--block"
-          data-conn-action="reveal">📞 Reveal Contact</button>`;
+        <button class="hm-btn hm-btn--primary hm-btn--block"
+          data-conn-action="open-chat" data-user-id="${uid}">💬 Open Chat</button>`;
       if (privacyEl) privacyEl.hidden = true;
       break;
 
