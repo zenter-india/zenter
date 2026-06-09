@@ -301,7 +301,7 @@
         <button class="hm-btn hm-btn--primary hm-btn--lg" id="hm-buy-plus" style="width:100%;font-size:17px;">
           Get Zenter Plus — ₹49
         </button>
-        <p id="hm-plus-pay-status" style="text-align:center;font-size:13px;color:var(--hm-text-muted);margin-top:var(--hm-space-2);min-height:20px;">Payment integration coming soon</p>
+        <p id="hm-plus-pay-status" style="text-align:center;font-size:13px;color:var(--hm-text-muted);margin-top:var(--hm-space-2);min-height:20px;"></p>
         <p style="text-align:center;margin-top:var(--hm-space-3);">
           <a href="/dashboard.html" style="color:var(--hm-primary);font-size:14px;font-weight:600;">← Back to Find Mates</a>
         </p>
@@ -312,12 +312,13 @@
 
   <div data-include="footer"></div>
   <script type="module" src="/js/app.js"></script>
+  <!-- Razorpay checkout SDK -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script type="module">
     import { requireOnboarded } from '/js/auth.js';
-    import { getUserByPhone, trackEvent } from '/js/supabase.js';
+    import { getUserByPhone, trackEvent, createRazorpayOrder, verifyRazorpayPayment } from '/js/supabase.js';
 
-    // Valid coupons (client-side display only — server validates on payment)
-    const COUPONS = { ZENTERNEW: { price: 9, label: 'Early bird discount!' } };
+    let appliedCoupon = null;
 
     async function init() {
       const firebaseUser = await requireOnboarded();
@@ -347,37 +348,102 @@
 
       trackEvent('plus_page_view', me.id, { source: 'plus_page' });
 
-      // Coupon apply
-      couponApply?.addEventListener('click', () => {
+      // Coupon apply — server-side validation via dry_run
+      couponApply?.addEventListener('click', async () => {
         const code = (couponInput.value || '').trim().toUpperCase();
         if (!code) { couponStatus.textContent = ''; return; }
-
-        const coupon = COUPONS[code];
-        if (coupon) {
-          priceFinal.textContent = `₹${coupon.price}`;
-          priceOriginal.textContent = '₹49';
-          priceOriginal.style.display = 'inline';
-          btn.textContent = `Get Zenter Plus — ₹${coupon.price}`;
-          couponStatus.style.color = '#16a34a';
-          couponStatus.textContent = `✓ Coupon applied! ${coupon.label}`;
-          couponInput.disabled = true;
-          couponApply.textContent = '✓';
-          couponApply.disabled = true;
-          trackEvent('coupon_applied', me.id, { coupon: code, price: coupon.price });
-        } else {
+        couponApply.disabled = true;
+        couponStatus.style.color = 'var(--hm-text-muted)';
+        couponStatus.textContent = 'Checking…';
+        try {
+          const probe = await createRazorpayOrder(me.id, code, true);
+          if (probe.coupon_applied) {
+            appliedCoupon = code;
+            const discounted = probe.final_paise / 100;
+            const original   = probe.original_paise / 100;
+            priceFinal.textContent    = `₹${discounted}`;
+            priceOriginal.textContent = `₹${original}`;
+            priceOriginal.style.display = 'inline';
+            btn.textContent = `Get Zenter Plus — ₹${discounted}`;
+            couponStatus.style.color = '#16a34a';
+            couponStatus.textContent = `✓ Coupon applied! ${probe.coupon_label || ''}`;
+            couponInput.disabled = true;
+            couponApply.textContent = '✓';
+            trackEvent('coupon_applied', me.id, { coupon: code, price: discounted });
+          } else {
+            appliedCoupon = null;
+            couponStatus.style.color = '#dc2626';
+            couponStatus.textContent = '✗ Invalid coupon code.';
+            couponApply.disabled = false;
+          }
+        } catch {
           couponStatus.style.color = '#dc2626';
-          couponStatus.textContent = '✗ Invalid coupon code.';
+          couponStatus.textContent = '✗ Could not verify coupon. Try again.';
+          couponApply.disabled = false;
         }
       });
 
-      // Enter key on coupon input
       couponInput?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') couponApply?.click();
       });
 
-      btn.addEventListener('click', () => {
-        trackEvent('plus_interest_click', me.id, { source: 'plus_page' });
-        status.textContent = 'Payment integration coming soon. Stay tuned!';
+      // Buy button — Razorpay checkout
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        status.textContent = 'Creating order…';
+        trackEvent('upgrade_cta_click', me.id, { source: 'plus_page', coupon: appliedCoupon });
+
+        try {
+          const order = await createRazorpayOrder(me.id, appliedCoupon);
+
+          const options = {
+            key:         order.key_id,
+            amount:      order.amount,
+            currency:    order.currency,
+            name:        'Zenter',
+            description: 'Zenter Plus — Unlimited Chats',
+            order_id:    order.order_id,
+            prefill:     { contact: firebaseUser.phoneNumber },
+            theme:       { color: '#FF6B35' },
+            modal: {
+              ondismiss: () => {
+                btn.disabled = false;
+                status.textContent = '';
+                trackEvent('payment_dismissed', me.id);
+              }
+            },
+            handler: async (response) => {
+              status.textContent = 'Verifying payment…';
+              try {
+                await verifyRazorpayPayment(
+                  response.razorpay_order_id,
+                  response.razorpay_payment_id,
+                  response.razorpay_signature,
+                  me.id
+                );
+                btn.textContent = '⭐ Welcome to Zenter Plus!';
+                btn.style.background = '#16a34a';
+                status.style.color = '#16a34a';
+                status.textContent = 'Payment successful! Redirecting…';
+                trackEvent('payment_success', me.id, { order_id: response.razorpay_order_id });
+                setTimeout(() => { window.location.href = '/dashboard.html'; }, 2000);
+              } catch (err) {
+                status.style.color = '#dc2626';
+                status.textContent = '⚠️ Verification failed. Contact support@zenter.in';
+                btn.disabled = false;
+                trackEvent('payment_verification_failed', me.id, { error: err.message });
+              }
+            },
+          };
+
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+          status.textContent = '';
+        } catch (err) {
+          status.style.color = '#dc2626';
+          status.textContent = '⚠️ ' + (err.message || 'Something went wrong. Please try again.');
+          btn.disabled = false;
+        }
       });
     }
 
