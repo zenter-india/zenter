@@ -201,45 +201,85 @@ async function loadSeededRequests() {
   const el = document.getElementById('adm-seeded-requests');
   if (!el) return;
 
-  const { getSeededPendingRequests, getRecentUsers, getAllSeededUsers } = await import('./supabase.js');
-  const { data: requests, error } = await getSeededPendingRequests();
+  const { query: q, from: f, getSeededPendingRequests, getMyConversations, sendMessage, adminAcceptSeededRequest, createConversation } = await import('./supabase.js');
 
-  if (error || !requests?.length) {
-    el.innerHTML = emptyState('✅', 'No pending requests to seeded users.');
+  // Get ALL connections involving seeded users (pending + accepted)
+  const { data: allSeededIds } = await q(f('seeded_users').select('id'));
+  const seededIdSet = new Set((allSeededIds || []).map(s => s.id));
+
+  const { data: allConns } = await q(
+    f('connections')
+      .select('id, sender_id, receiver_id, status, created_at')
+      .in('receiver_id', [...seededIdSet])
+      .order('created_at', { ascending: false })
+  );
+
+  if (!allConns?.length) {
+    el.innerHTML = emptyState('✅', 'No requests to seeded users yet.');
     return;
   }
 
-  // Fetch sender names (real users) and seeded user names
-  const senderIds = [...new Set(requests.map(r => r.sender_id))];
-  const seededIds = [...new Set(requests.map(r => r.receiver_id))];
+  const pending  = allConns.filter(c => c.status === 'pending');
+  const accepted = allConns.filter(c => c.status === 'accepted');
 
-  const { getRecentUsers: _, ...rest } = await import('./supabase.js');
-  const { data: senders } = await import('./supabase.js').then(m => m.query(
-    m.from('users').select('id, full_name, phone').in('id', senderIds)
-  ));
-  const { data: seededUsers } = await import('./supabase.js').then(m => m.query(
-    m.from('seeded_users').select('id, full_name').in('id', seededIds)
-  ));
+  // Fetch user + seeded names
+  const allSenderIds = [...new Set(allConns.map(r => r.sender_id))];
+  const allSeededConnIds = [...new Set(allConns.map(r => r.receiver_id))];
+
+  const { data: senders } = await q(f('users').select('id, full_name, phone').in('id', allSenderIds));
+  const { data: seededUsers } = await q(f('seeded_users').select('id, full_name').in('id', allSeededConnIds));
 
   const senderMap = Object.fromEntries((senders || []).map(u => [u.id, u]));
   const seededMap = Object.fromEntries((seededUsers || []).map(u => [u.id, u]));
 
-  const rows = requests.map(r => {
+  // Fetch conversations for accepted connections
+  const { data: convs } = await q(
+    f('conversations')
+      .select('id, connection_id')
+      .in('connection_id', accepted.map(c => c.id))
+  );
+  const convByConn = Object.fromEntries((convs || []).map(c => [c.connection_id, c.id]));
+
+  // Build pending rows
+  const pendingRows = pending.map(r => {
     const sender = senderMap[r.sender_id] || {};
     const seeded = seededMap[r.receiver_id] || {};
     const date = new Date(r.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short' });
     return `<tr>
       <td><strong>${esc(sender.full_name || '—')}</strong><br><span style="font-size:11px;color:var(--adm-text-dim);">${esc(sender.phone || '')}</span></td>
-      <td>→</td>
-      <td>${esc(seeded.full_name || '—')} <span style="font-size:10px;color:var(--adm-text-dim);">(seeded)</span></td>
+      <td>${esc(seeded.full_name || '—')}</td>
+      <td><span style="color:#f59e0b;font-weight:600;">Pending</span></td>
       <td>${date}</td>
       <td><button class="adm-btn adm-btn--ok adm-btn--sm" data-accept-seeded="${r.id}" data-sender="${r.sender_id}" data-receiver="${r.receiver_id}">Accept</button></td>
+      <td></td>
+    </tr>`;
+  }).join('');
+
+  // Build accepted rows with message input
+  const acceptedRows = accepted.map(r => {
+    const sender = senderMap[r.sender_id] || {};
+    const seeded = seededMap[r.receiver_id] || {};
+    const convId = convByConn[r.id] || '';
+    const date = new Date(r.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+    return `<tr>
+      <td><strong>${esc(sender.full_name || '—')}</strong><br><span style="font-size:11px;color:var(--adm-text-dim);">${esc(sender.phone || '')}</span></td>
+      <td>${esc(seeded.full_name || '—')}</td>
+      <td><span style="color:#16a34a;font-weight:600;">Active</span></td>
+      <td>${date}</td>
+      <td colspan="2">
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="text" class="adm-search" placeholder="Type as ${esc(seeded.full_name || 'seeded')}…"
+                 data-msg-input="${convId}" data-seeded-id="${r.receiver_id}"
+                 style="flex:1;padding:6px 10px;font-size:12px;min-width:120px;" maxlength="500" />
+          <button class="adm-btn adm-btn--ok adm-btn--sm" data-msg-send="${convId}" data-seeded-id="${r.receiver_id}">Send</button>
+        </div>
+      </td>
     </tr>`;
   }).join('');
 
   el.innerHTML = `<table class="adm-table"><thead><tr>
-    <th>From (Real User)</th><th></th><th>To (Seeded)</th><th>Date</th><th>Action</th>
-  </tr></thead><tbody>${rows}</tbody></table>`;
+    <th>Real User</th><th>Seeded User</th><th>Status</th><th>Date</th><th colspan="2">Action / Message</th>
+  </tr></thead><tbody>${pendingRows}${acceptedRows}</tbody></table>`;
 
   // Wire accept buttons
   el.querySelectorAll('[data-accept-seeded]').forEach(btn => {
@@ -250,7 +290,6 @@ async function loadSeededRequests() {
       btn.disabled = true;
       btn.textContent = 'Accepting…';
 
-      const { adminAcceptSeededRequest, createConversation, sendMessage } = await import('./supabase.js');
       const { data, error } = await adminAcceptSeededRequest(connId);
       if (error) {
         toast('Failed: ' + error.message, 'error');
@@ -259,10 +298,9 @@ async function loadSeededRequests() {
         return;
       }
 
-      // Create conversation for this connection
       const { data: convId } = await createConversation(connId, senderId, receiverId);
 
-      // Send a random greeting from the seeded user
+      // Auto-send a random greeting
       if (convId) {
         const greetings = [
           'Hi! Are you also going to this centre? 😊',
@@ -276,17 +314,44 @@ async function loadSeededRequests() {
           'Hi! First time at this centre? I\'m a bit nervous honestly.',
           'Hello! Let\'s coordinate travel — it\'ll be cheaper together!',
         ];
-        const msg = greetings[Math.floor(Math.random() * greetings.length)];
-        await sendMessage(convId, receiverId, msg);
+        await sendMessage(convId, receiverId, greetings[Math.floor(Math.random() * greetings.length)]);
       }
 
-      toast('Request accepted! Chat enabled with greeting.', 'success');
-      btn.textContent = '✓ Accepted';
-      btn.classList.remove('adm-btn--ok');
-      btn.style.color = '#16a34a';
+      toast('Accepted with greeting!', 'success');
+      // Refresh to show message input
+      loaded.delete('seeded-requests');
+      loadSeededRequests();
+    });
+  });
 
-      // Refresh after a moment
-      setTimeout(() => loadSeededRequests(), 1500);
+  // Wire send message buttons
+  el.querySelectorAll('[data-msg-send]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const convId = btn.dataset.msgSend;
+      const seededId = btn.dataset.seededId;
+      const input = el.querySelector(`[data-msg-input="${convId}"]`);
+      const msg = (input?.value || '').trim();
+      if (!msg || !convId) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      const { error } = await sendMessage(convId, seededId, msg);
+      if (error) {
+        toast('Failed to send: ' + error.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Send';
+        return;
+      }
+      input.value = '';
+      btn.disabled = false;
+      btn.textContent = 'Send';
+      toast('Message sent as seeded user ✓', 'success');
+    });
+
+    // Enter key support
+    const input = el.querySelector(`[data-msg-input="${btn.dataset.msgSend}"]`);
+    input?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') btn.click();
     });
   });
 }
