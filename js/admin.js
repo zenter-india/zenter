@@ -4,7 +4,7 @@
 import { requireAdmin, logout } from './auth.js';
 import { formatPhonePretty }    from './utils.js';
 
-const ROUTES = ['dashboard','users','seeded','feedback','reports','exams','analytics','settings'];
+const ROUTES = ['dashboard','users','seeded','seeded-requests','feedback','reports','exams','analytics','settings'];
 const loaded      = new Set();
 let allUsers      = [];
 let allSeeded     = [];
@@ -76,8 +76,9 @@ function activateRoute(route) {
 const LOADERS = {
   dashboard:  loadDashboard,
   users:      loadUsers,
-  seeded:     loadSeeded,
-  feedback:   loadFeedback,
+  seeded:             loadSeeded,
+  'seeded-requests':  loadSeededRequests,
+  feedback:           loadFeedback,
   reports:    loadReports,
   exams:      loadExams,
   analytics:  loadAnalytics,
@@ -180,9 +181,6 @@ async function loadSeeded() {
   const rerender = debounce(renderFilteredSeeded, 180);
   ['adm-seeded-search','adm-seeded-filter-district']
     .forEach(id => document.getElementById(id)?.addEventListener('input', rerender));
-
-  // Load pending requests to seeded users
-  await loadSeededRequests();
 }
 
 function renderFilteredSeeded() {

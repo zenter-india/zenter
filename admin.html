@@ -37,6 +37,7 @@
         <li><a href="#dashboard" data-route="dashboard"><span class="adm-nav__icon">📊</span><span>Dashboard</span></a></li>
         <li><a href="#users"     data-route="users"    ><span class="adm-nav__icon">👥</span><span>Users</span></a></li>
         <li><a href="#seeded"    data-route="seeded"   ><span class="adm-nav__icon">🌱</span><span>Seeded Users</span></a></li>
+        <li><a href="#seeded-requests" data-route="seeded-requests"><span class="adm-nav__icon">📩</span><span>Seeded Requests</span></a></li>
         <li><a href="#feedback"  data-route="feedback" ><span class="adm-nav__icon">💬</span><span>Feedback</span></a></li>
         <li><a href="#reports"   data-route="reports"  ><span class="adm-nav__icon">🚩</span><span>Reports</span></a></li>
         <li><a href="#exams"     data-route="exams"    ><span class="adm-nav__icon">🎓</span><span>Exams</span></a></li>
@@ -135,8 +136,11 @@
             <div class="adm-card__body" id="adm-seeded-list"><div class="adm-empty">Loading…</div></div>
           </div>
 
-          <!-- Pending requests to seeded users -->
-          <h2 class="adm-h1" style="margin-top:var(--hm-space-5);font-size:18px;">Pending Requests to Seeded Users</h2>
+        </section>
+
+        <!-- Seeded Requests -->
+        <section class="adm-panel" id="adm-panel-seeded-requests" data-route="seeded-requests">
+          <h1 class="adm-h1">Seeded Requests</h1>
           <p class="adm-sub">Real users who sent connection requests to seeded profiles. Accept to enable chat.</p>
           <div class="adm-card">
             <div class="adm-card__body" id="adm-seeded-requests"><div class="adm-empty">Loading…</div></div>
