@@ -257,34 +257,34 @@ function receivedCard(user, conn) {
     </article>`;
 }
 
-// 2. CONNECTED — phone + WhatsApp/Call revealed + Block action.
+// 2. CONNECTED — masked phone (last 3 digits) + Chat button + Block action.
+// Full phone is NEVER shown here — only via Exchange Contact inside chat.
 function connectedCard(user, conn) {
   if (!user) return '';
   const name        = user.full_name || 'Unknown';
   const phone       = user.phone     || '';
-  const phonePretty = phone ? formatPhonePretty(phone) : '—';
-  const digits      = phone.replace(/\D/g, '');
-  const waHref      = digits ? `https://wa.me/${digits}` : '';
-  const telHref     = phone  ? `tel:${phone}` : '';
+  const maskedPhone = maskPhone(phone);
   return `
     <article class="hm-card hm-mate" data-conn-card-id="${esc(user.id)}">
       ${cardHead(user)}
       ${cardBody(user)}
-      <div class="hm-contact-revealed" style="padding-top:var(--hm-space-3);border-top:1px solid var(--hm-border);">
-        <p class="hm-contact-revealed__number">${esc(phonePretty)}</p>
-        <div class="hm-contact-revealed__links">
-          ${waHref  ? `<a href="${esc(waHref)}" target="_blank" rel="noopener noreferrer"
-                          class="hm-btn hm-btn--soft hm-btn--sm">💬 WhatsApp</a>` : ''}
-          ${telHref ? `<a href="${esc(telHref)}"
-                          class="hm-btn hm-btn--ghost hm-btn--sm">📞 Call</a>` : ''}
+      <div style="padding-top:var(--hm-space-3);border-top:1px solid var(--hm-border);">
+        <p style="font-size:var(--hm-text-sm);color:var(--hm-text-muted);margin:0 0 var(--hm-space-2);">📱 ${esc(maskedPhone)}</p>
+        <div class="d-flex gap-2">
+          <a href="/dashboard.html#chats"
+             class="hm-btn hm-btn--primary hm-btn--sm">💬 Chat</a>
+          <button class="hm-modal__block-btn hm-btn hm-btn--ghost hm-btn--sm" type="button"
+                  data-conn-action="block" data-user-id="${esc(user.id)}"
+                  aria-label="Block ${esc(name)}">🚫 Block</button>
         </div>
       </div>
-      <div style="margin-top:var(--hm-space-2);text-align:right;">
-        <button class="hm-modal__block-btn" type="button"
-                data-conn-action="block" data-user-id="${esc(user.id)}"
-                aria-label="Block ${esc(name)}">🚫 Block user</button>
-      </div>
     </article>`;
+}
+
+function maskPhone(phone) {
+  if (!phone) return '—';
+  const s = String(phone);
+  return `${s.startsWith('+91') ? '+91 ' : ''}XXXXXXX${s.slice(-3)}`;
 }
 
 // ─── Small helpers ─────────────────────────────────────────────────────────

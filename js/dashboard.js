@@ -585,59 +585,7 @@ function showSafetyConsent() {
   }, { once: true });
 }
 
-async function doReveal() {
-  if (!modalUser?.phone) return;
-
-  // ── Zenter Plus gate ────────────────────────────────────────────────────────
-  // Gap 1: if this user was already revealed this session, skip the RPC entirely
-  // so we never double-count the same contact.
-  const alreadyRevealed = revealedUserIds.has(modalUser.id);
-
-  if (myUserId && myPlusEnabled && !myPlusMember && !alreadyRevealed) {
-    // Gap 10: only gate when Plus is actually enabled
-    const { data: rev } = await attemptReveal(myUserId);
-    if (rev && !rev.can_reveal) {
-      showUpgradePrompt(rev);
-      return;
-    }
-    if (rev?.incremented) {
-      // Gap 7: keep local count in sync so banner stays accurate
-      myRevealsUsed++;
-      renderRevealBanner(myPlusEnabled);
-    }
-  }
-
-  // Mark as revealed so re-opens don't re-increment
-  revealedUserIds.add(modalUser.id);
-
-  const phone  = modalUser.phone;
-  const waNum  = phone.replace(/\D/g, '');
-
-  // Rapid reveal detection — flag if 2 reveals happen within 60 seconds
-  const RAPID_WINDOW_MS = 60_000;
-  const now = Date.now();
-  const lastReveal = parseInt(sessionStorage.getItem('ztr_last_reveal') || '0', 10);
-  if (lastReveal && (now - lastReveal) < RAPID_WINDOW_MS && myUserId) {
-    flagRapidReveal(myUserId); // fire-and-forget
-    trackEvent('suspicious_rapid_reveal', myUserId, { gap_ms: now - lastReveal });
-  }
-  sessionStorage.setItem('ztr_last_reveal', String(now));
-
-  const phoneEl   = document.getElementById('hm-modal-phone');
-  const revealEl  = document.getElementById('hm-modal-contact-reveal');
-  const actionsEl = document.getElementById('hm-modal-actions');
-
-  if (phoneEl)  phoneEl.hidden = true;
-  if (revealEl) revealEl.innerHTML = `
-    <div class="hm-contact-revealed">
-      <span class="hm-contact-revealed__number">${esc(phone)}</span>
-      <div class="hm-contact-revealed__links">
-        <a href="tel:${esc(phone)}" class="hm-btn hm-btn--primary hm-btn--sm">📞 Call</a>
-        <a href="https://wa.me/${esc(waNum)}" target="_blank" rel="noopener noreferrer" class="hm-btn hm-btn--soft hm-btn--sm">💬 WhatsApp</a>
-      </div>
-    </div>`;
-  if (actionsEl) actionsEl.innerHTML = '';
-}
+// doReveal removed — contact exchange happens inside chat only.
 
 // ─── Count ────────────────────────────────────────────────────────────────────
 
