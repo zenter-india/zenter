@@ -611,6 +611,37 @@ export function getUsersByFingerprint(fingerprint) {
   return query(from('users').select('id, full_name, phone, created_at').eq('device_fingerprint', fingerprint));
 }
 
+// ─── Seeded user connection requests ─────────────────────────────────────────
+
+/** Get pending connection requests where receiver is a seeded user. */
+export async function getSeededPendingRequests() {
+  // Get all seeded user IDs
+  const { data: seeded } = await query(from('seeded_users').select('id'));
+  if (!seeded?.length) return { data: [], error: null };
+  const seededIds = seeded.map(s => s.id);
+
+  // Get pending connections where receiver_id is a seeded user
+  const { data, error } = await query(
+    from('connections')
+      .select('id, sender_id, receiver_id, status, created_at')
+      .eq('status', 'pending')
+      .in('receiver_id', seededIds)
+      .order('created_at', { ascending: false })
+  );
+  return { data, error };
+}
+
+/** Admin: accept a connection request on behalf of a seeded user. */
+export function adminAcceptSeededRequest(connectionId) {
+  return query(
+    from('connections')
+      .update({ status: 'accepted' })
+      .eq('id', connectionId)
+      .select('id, sender_id, receiver_id')
+      .single()
+  );
+}
+
 // ─── Chat System ─────────────────────────────────────────────────────────────
 
 /** Create a conversation when a connection is accepted. Idempotent. */

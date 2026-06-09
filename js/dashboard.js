@@ -495,16 +495,6 @@ async function doConnect(userId) {
   const existing = Relationships.get(userId);
   if (existing.status !== REL.NONE) return;
 
-  // Seeded users live in a separate table — no FK in connections.
-  // Simulate a pending request so the UI updates without hitting the DB.
-  const targetUser = allUsers.find(u => u.id === userId);
-  if (targetUser?.__seeded) {
-    Relationships.set(userId, { status: REL.PENDING_OUT, role: 'sender', connectionId: `seeded-${userId}` });
-    renderModalActions();
-    toast('Request sent!', { variant: 'success' });
-    return;
-  }
-
   // Optimistic update — connectionId filled in after server confirms.
   Relationships.set(userId, { status: REL.PENDING_OUT, role: 'sender', connectionId: null });
 

@@ -180,6 +180,9 @@ async function loadSeeded() {
   const rerender = debounce(renderFilteredSeeded, 180);
   ['adm-seeded-search','adm-seeded-filter-district']
     .forEach(id => document.getElementById(id)?.addEventListener('input', rerender));
+
+  // Load pending requests to seeded users
+  await loadSeededRequests();
 }
 
 function renderFilteredSeeded() {
@@ -192,6 +195,84 @@ function renderFilteredSeeded() {
   });
   const el = document.getElementById('adm-seeded-list');
   el.innerHTML = filtered.length ? renderSeededTable(filtered) : emptyState('🔍','No seeded users match filters.');
+}
+
+// ─── Seeded user pending requests ────────────────────────────────────────────
+
+async function loadSeededRequests() {
+  const el = document.getElementById('adm-seeded-requests');
+  if (!el) return;
+
+  const { getSeededPendingRequests, getRecentUsers, getAllSeededUsers } = await import('./supabase.js');
+  const { data: requests, error } = await getSeededPendingRequests();
+
+  if (error || !requests?.length) {
+    el.innerHTML = emptyState('✅', 'No pending requests to seeded users.');
+    return;
+  }
+
+  // Fetch sender names (real users) and seeded user names
+  const senderIds = [...new Set(requests.map(r => r.sender_id))];
+  const seededIds = [...new Set(requests.map(r => r.receiver_id))];
+
+  const { getRecentUsers: _, ...rest } = await import('./supabase.js');
+  const { data: senders } = await import('./supabase.js').then(m => m.query(
+    m.from('users').select('id, full_name, phone').in('id', senderIds)
+  ));
+  const { data: seededUsers } = await import('./supabase.js').then(m => m.query(
+    m.from('seeded_users').select('id, full_name').in('id', seededIds)
+  ));
+
+  const senderMap = Object.fromEntries((senders || []).map(u => [u.id, u]));
+  const seededMap = Object.fromEntries((seededUsers || []).map(u => [u.id, u]));
+
+  const rows = requests.map(r => {
+    const sender = senderMap[r.sender_id] || {};
+    const seeded = seededMap[r.receiver_id] || {};
+    const date = new Date(r.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short' });
+    return `<tr>
+      <td><strong>${esc(sender.full_name || '—')}</strong><br><span style="font-size:11px;color:var(--adm-text-dim);">${esc(sender.phone || '')}</span></td>
+      <td>→</td>
+      <td>${esc(seeded.full_name || '—')} <span style="font-size:10px;color:var(--adm-text-dim);">(seeded)</span></td>
+      <td>${date}</td>
+      <td><button class="adm-btn adm-btn--ok adm-btn--sm" data-accept-seeded="${r.id}" data-sender="${r.sender_id}" data-receiver="${r.receiver_id}">Accept</button></td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML = `<table class="adm-table"><thead><tr>
+    <th>From (Real User)</th><th></th><th>To (Seeded)</th><th>Date</th><th>Action</th>
+  </tr></thead><tbody>${rows}</tbody></table>`;
+
+  // Wire accept buttons
+  el.querySelectorAll('[data-accept-seeded]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const connId = btn.dataset.acceptSeeded;
+      const senderId = btn.dataset.sender;
+      const receiverId = btn.dataset.receiver;
+      btn.disabled = true;
+      btn.textContent = 'Accepting…';
+
+      const { adminAcceptSeededRequest, createConversation } = await import('./supabase.js');
+      const { data, error } = await adminAcceptSeededRequest(connId);
+      if (error) {
+        toast('Failed: ' + error.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Accept';
+        return;
+      }
+
+      // Create conversation for this connection
+      await createConversation(connId, senderId, receiverId);
+
+      toast('Request accepted! Chat enabled.', 'success');
+      btn.textContent = '✓ Accepted';
+      btn.classList.remove('adm-btn--ok');
+      btn.style.color = '#16a34a';
+
+      // Refresh after a moment
+      setTimeout(() => loadSeededRequests(), 1500);
+    });
+  });
 }
 
 function renderSeededTable(users) {
