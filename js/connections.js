@@ -213,7 +213,7 @@ function cardHead(user) {
         <p class="hm-mate__name">${esc(name)}</p>
         <div class="hm-mate__badges">
           ${user.gender ? `<span class="hm-badge ${genderCls}">${esc(user.gender)}</span>` : ''}
-          <span class="hm-badge hm-badge--verified">✓ Verified</span>
+          ${user.is_verified_aspirant ? `<span class="hm-badge hm-badge--verified-full" title="Admit card verified">✓ Verified</span>` : ''}
         </div>
       </div>
     </div>`;
