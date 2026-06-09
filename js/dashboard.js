@@ -47,6 +47,24 @@ const FILTERS = [
 
 const AVATAR_COLORS = ['#FF6B35','#4F46E5','#10B981','#F59E0B','#8B5CF6','#06B6D4','#EF4444'];
 
+/** Interleave seeded users evenly among real users so they appear mixed in the feed. */
+function shuffleMerge(real, seeded) {
+  if (!seeded.length) return [...real];
+  if (!real.length) return [...seeded];
+  const result = [];
+  const gap = Math.max(1, Math.floor(real.length / (seeded.length + 1)));
+  let si = 0;
+  for (let i = 0; i < real.length; i++) {
+    result.push(real[i]);
+    if (si < seeded.length && (i + 1) % gap === 0) {
+      result.push(seeded[si++]);
+    }
+  }
+  // Append any remaining seeded users
+  while (si < seeded.length) result.push(seeded[si++]);
+  return result;
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 async function init() {
@@ -189,8 +207,8 @@ async function loadData() {
     ? (seededRes.data || []).map(u => ({ ...(showSeededExamCentre ? u : { ...u, exam_center: null }), __seeded: true }))
     : [];
 
-  // Merge real + seeded users into one combined list for the feed
-  const combined = [...(usersRes.data || []), ...seededUsers];
+  // Merge real + seeded users into one shuffled list for the feed
+  const combined = shuffleMerge(usersRes.data || [], seededUsers);
 
   Relationships.hydrate(connsRes.data || [], myUserId);
 
