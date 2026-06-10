@@ -330,6 +330,14 @@ function appendMessage(msg) {
     const text = msg.message_type === 'system' ? '📋 ' + msg.body : msg.body;
     preview.textContent = text.length > 40 ? text.slice(0, 40) + '…' : text;
   }
+
+  // Move this conversation to top of the list
+  const conv = conversations.find(c => c.id === msg.conversation_id);
+  if (conv) {
+    conv.updated_at = new Date().toISOString();
+    conversations.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
+    renderChatList();
+  }
 }
 
 async function handleSend() {
