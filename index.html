@@ -75,58 +75,23 @@
               <span class="hm-chip">🔒 Phone verified</span>
               <span class="hm-chip">🤝 Mutual consent</span>
               <span class="hm-chip">📍 Centre-matched</span>
+              <span class="hm-chip" style="background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;">✓ Admit card verified</span>
             </div>
           </div>
           <div class="col-lg-5">
             <!-- Two standalone Find Mates cards (exact mateCard structure) -->
             <div class="d-flex flex-column gap-3" aria-hidden="true">
 
-              <article class="hm-card hm-mate">
-                <div class="hm-mate__head">
-                  <div class="hm-avatar hm-avatar--card" style="background:#4F46E5;color:#fff;">AR</div>
-                  <div class="hm-mate__head-info">
-                    <p class="hm-mate__name">Aarav R.</p>
-                    <div class="hm-mate__badges">
-                      <span class="hm-badge hm-badge--male">Male</span>
-                      <span class="hm-badge hm-badge--verified">✓ Verified</span>
-                    </div>
-                  </div>
-                </div>
-                <div class="hm-mate__body">
-                  <div class="hm-mate__route-wrap">
-                    <div class="hm-mate__route-track">
-                      <div class="hm-mate__icon-bubble">🏠</div>
-                      <div class="hm-mate__route-connector">
-                        <div class="hm-mate__route-dot hm-mate__route-dot--top"></div>
-                        <div class="hm-mate__route-dashes"></div>
-                        <div class="hm-mate__route-dot hm-mate__route-dot--bottom"></div>
-                      </div>
-                      <div class="hm-mate__icon-bubble">📋</div>
-                    </div>
-                    <div class="hm-mate__route-info">
-                      <p class="hm-mate__home-loc"><strong>Pune</strong><span class="hm-loc-state">, Maharashtra</span></p>
-                      <div class="hm-mate__exam-info">
-                        <p class="hm-mate__centre-name">Sion Hospital, Mumbai</p>
-                        <p class="hm-mate__centre-loc">📍 Mumbai, Maharashtra</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="hm-mate__v-divider"></div>
-                  <div class="hm-mate__badge-cards">
-                    <div class="hm-mate__badge-card"><span class="hm-mate__badge-icon">🚂</span><span class="hm-mate__badge-label">Train</span></div>
-                    <div class="hm-mate__badge-card"><span class="hm-mate__badge-icon">🏨</span><span class="hm-mate__badge-label">Needs stay</span></div>
-                  </div>
-                </div>
-              </article>
-
-              <article class="hm-card hm-mate">
+              <!-- Card 1: Verified + Plus member -->
+              <article class="hm-card hm-mate hm-mate--plus">
+                <span class="hm-badge hm-badge--plus">⭐ Plus</span>
                 <div class="hm-mate__head">
                   <div class="hm-avatar hm-avatar--card" style="background:#DB2777;color:#fff;">PS</div>
                   <div class="hm-mate__head-info">
                     <p class="hm-mate__name">Priya S.</p>
                     <div class="hm-mate__badges">
                       <span class="hm-badge hm-badge--female">Female</span>
-                      <span class="hm-badge hm-badge--verified">✓ Verified</span>
+                      <span class="hm-badge hm-badge--verified-full" title="Admit card verified">✓ Verified</span>
                     </div>
                   </div>
                 </div>
@@ -153,6 +118,44 @@
                   <div class="hm-mate__badge-cards">
                     <div class="hm-mate__badge-card"><span class="hm-mate__badge-icon">🏠</span><span class="hm-mate__badge-label">Has stay</span></div>
                     <div class="hm-mate__badge-card"><span class="hm-mate__badge-icon">🚗</span><span class="hm-mate__badge-label">Self Drive</span></div>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Card 2: Regular user (no verified, no plus) -->
+              <article class="hm-card hm-mate">
+                <div class="hm-mate__head">
+                  <div class="hm-avatar hm-avatar--card" style="background:#4F46E5;color:#fff;">AR</div>
+                  <div class="hm-mate__head-info">
+                    <p class="hm-mate__name">Aarav R.</p>
+                    <div class="hm-mate__badges">
+                      <span class="hm-badge hm-badge--male">Male</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="hm-mate__body">
+                  <div class="hm-mate__route-wrap">
+                    <div class="hm-mate__route-track">
+                      <div class="hm-mate__icon-bubble">🏠</div>
+                      <div class="hm-mate__route-connector">
+                        <div class="hm-mate__route-dot hm-mate__route-dot--top"></div>
+                        <div class="hm-mate__route-dashes"></div>
+                        <div class="hm-mate__route-dot hm-mate__route-dot--bottom"></div>
+                      </div>
+                      <div class="hm-mate__icon-bubble">📋</div>
+                    </div>
+                    <div class="hm-mate__route-info">
+                      <p class="hm-mate__home-loc"><strong>Pune</strong><span class="hm-loc-state">, Maharashtra</span></p>
+                      <div class="hm-mate__exam-info">
+                        <p class="hm-mate__centre-name">Sion Hospital, Mumbai</p>
+                        <p class="hm-mate__centre-loc">📍 Mumbai, Maharashtra</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="hm-mate__v-divider"></div>
+                  <div class="hm-mate__badge-cards">
+                    <div class="hm-mate__badge-card"><span class="hm-mate__badge-icon">🚂</span><span class="hm-mate__badge-label">Train</span></div>
+                    <div class="hm-mate__badge-card"><span class="hm-mate__badge-icon">🏨</span><span class="hm-mate__badge-label">Needs stay</span></div>
                   </div>
                 </div>
               </article>
@@ -209,6 +212,7 @@
               <li><span class="hm-badge hm-badge--success">✓</span> Phone-OTP verified accounts</li>
               <li><span class="hm-badge hm-badge--success">✓</span> Mutual consent before contact</li>
               <li><span class="hm-badge hm-badge--success">✓</span> Report &amp; block in one tap</li>
+              <li><span class="hm-badge hm-badge--success">✓</span> <strong>Get the Verified badge</strong> — upload your admit card number to earn the green <span class="hm-badge hm-badge--verified-full" style="font-size:11px;padding:1px 6px;">✓ Verified</span> badge. Verified aspirants get more trust and more connection requests from centre mates.</li>
             </ul>
           </div>
           <div class="col-lg-6">
