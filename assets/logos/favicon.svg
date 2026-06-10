@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="HallMate">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Zenter">
   <defs>
     <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#FF6B35"/>
@@ -6,5 +6,5 @@
     </linearGradient>
   </defs>
   <rect width="64" height="64" rx="14" fill="url(#g)"/>
-  <path d="M20 18v28M44 18v28M20 32h24" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+  <text x="32" y="46" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="38" fill="#fff">Z</text>
 </svg>
