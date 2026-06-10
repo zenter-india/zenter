@@ -494,8 +494,10 @@ body.adm-body {
 
 /* ── Small phone (≤479px) ──────────────────────────────────────────────── */
 @media (max-width: 479px) {
-  :root { --adm-sidebar-w: 0px; }
-  .adm-sidebar { display: none; }
+  /* Keep the icon-only sidebar rail (from the ≤768px rules) so the nav stays
+     reachable on phones — don't hide it. Re-assert the 64px rail width because
+     the ≤1024px block above sets 180px and would otherwise win. */
+  :root { --adm-sidebar-w: 64px; }
   .adm-content { padding: 12px; }
   .adm-topbar { padding: 8px 12px; }
   .adm-stats { grid-template-columns: 1fr; }
