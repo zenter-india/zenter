@@ -201,7 +201,8 @@
 }
 
 /* Badges: gender + verified */
-.hm-mate__badges  { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; line-height: 1; }
+.hm-mate__badges  { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; line-height: 1; flex: 1; }
+.hm-badge--plus   { margin-left: auto; }
 .hm-badge--female { background: #f3e8ff; color: #7c3aed; border: 1px solid #ddd6fe; }
 .hm-badge--male   { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
 /* Phone verified — light green pill with dark green text */
