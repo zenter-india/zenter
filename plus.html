@@ -142,7 +142,7 @@
           Free users get 2 active chats. Plus gives you unlimited chats
           and puts your profile where it gets noticed.
         </p>
-        <div class="plus-price">₹49 <span>/ exam season</span></div>
+        <div class="plus-price" style="visibility:hidden;">₹49 <span>/ exam season</span></div>
         <p class="plus-season">One-time for NEET UG 2026</p>
       </div>
 
@@ -310,11 +310,11 @@
       <div class="plus-cta">
         <div style="text-align:center;margin-bottom:var(--hm-space-3);">
           <span id="hm-price-original" style="font-size:15px;color:var(--hm-text-muted);text-decoration:line-through;margin-right:8px;display:none;">₹49</span>
-          <span id="hm-price-final" style="font-size:22px;font-weight:700;color:var(--hm-text);">₹49</span>
+          <span id="hm-price-final" style="font-size:22px;font-weight:700;color:var(--hm-text);visibility:hidden;">₹49</span>
           <span style="font-size:13px;color:var(--hm-text-muted);margin-left:4px;">/ exam season</span>
         </div>
-        <button class="hm-btn hm-btn--primary hm-btn--lg" id="hm-buy-plus" style="width:100%;font-size:17px;">
-          Get Zenter Plus — ₹49
+        <button class="hm-btn hm-btn--primary hm-btn--lg" id="hm-buy-plus" style="width:100%;font-size:17px;visibility:hidden;">
+          Get Zenter Plus
         </button>
         <p id="hm-plus-pay-status" style="text-align:center;font-size:13px;color:var(--hm-text-muted);margin-top:var(--hm-space-2);min-height:20px;"></p>
         <p style="text-align:center;margin-top:var(--hm-space-3);">
@@ -354,14 +354,21 @@
       try {
         const probe = await createRazorpayOrder(me.id, null, true);
         const price = probe.original_paise / 100;
-        // Update all price displays
         document.querySelectorAll('.plus-price').forEach(el => {
           el.innerHTML = `₹${price} <span>/ exam season</span>`;
+          el.style.visibility = 'visible';
         });
-        if (priceFinal) priceFinal.textContent = `₹${price}`;
-        if (priceOriginal) priceOriginal.textContent = `₹${price}`;
+        if (priceFinal)   { priceFinal.textContent = `₹${price}`; priceFinal.style.visibility = 'visible'; }
+        if (priceOriginal)  priceOriginal.textContent = `₹${price}`;
         btn.textContent = `Get Zenter Plus — ₹${price}`;
-      } catch { /* fall back to hardcoded ₹49 in HTML */ }
+        btn.style.visibility = 'visible';
+      } catch {
+        // Fallback: show hardcoded values
+        document.querySelectorAll('.plus-price').forEach(el => { el.style.visibility = 'visible'; });
+        if (priceFinal) priceFinal.style.visibility = 'visible';
+        btn.textContent = 'Get Zenter Plus — ₹49';
+        btn.style.visibility = 'visible';
+      }
 
       // Already Plus
       if (me.plus_member) {
