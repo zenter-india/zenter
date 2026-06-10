@@ -250,12 +250,23 @@ async function loadData() {
       const { getMyConversations } = await import('./supabase.js');
       const { data: convs } = await getMyConversations(myUserId);
       let lastRead = {};
-      try { lastRead = JSON.parse(sessionStorage.getItem('hm.chat.lastRead') || '{}'); } catch {}
+      const storageKey = `hm.chat.lastRead.${myUserId}`;
+      try { lastRead = JSON.parse(localStorage.getItem(storageKey) || '{}'); } catch {}
+
+      // First-time seeding: mark all existing conversations as read so the
+      // user doesn't see a huge unread badge on first login.
+      let mapChanged = false;
+      (convs || []).forEach(c => {
+        if (!lastRead[c.id]) { lastRead[c.id] = c.updated_at; mapChanged = true; }
+      });
+      if (mapChanged) {
+        try { localStorage.setItem(storageKey, JSON.stringify(lastRead)); } catch {}
+      }
+
       let unread = 0;
       (convs || []).forEach(c => {
-        const otherId = c.user_a === myUserId ? c.user_b : c.user_a;
         const lr = lastRead[c.id];
-        if (!lr || new Date(c.updated_at) > new Date(lr)) unread++;
+        if (lr && new Date(c.updated_at) > new Date(lr)) unread++;
       });
       const badge = document.getElementById('hm-chats-tab-badge');
       if (badge) { badge.textContent = unread; badge.hidden = unread === 0; }

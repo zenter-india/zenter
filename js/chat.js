@@ -20,7 +20,8 @@ let lastReadMap = {};          // { convId: ISO timestamp } — persisted to ses
 let allUsersMap = new Map();   // userId → { full_name, phone, ... } — injected by caller
 let onUnreadChange = null;     // callback(totalUnread) — wired by dashboard
 
-const STORAGE_KEY = 'hm.chat.lastRead';
+const STORAGE_KEY_BASE = 'hm.chat.lastRead';
+let STORAGE_KEY = STORAGE_KEY_BASE; // updated to per-user in mountChat
 
 // ─── Init ────────────────────────────────────────────────────────────────────
 
@@ -36,8 +37,11 @@ export async function mountChat(container, userId, usersMap, unreadCb) {
   allUsersMap = usersMap || new Map();
   onUnreadChange = unreadCb || null;
 
-  // Load last-read timestamps
-  try { lastReadMap = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}'); } catch { lastReadMap = {}; }
+  // Per-user storage key — prevents read state leaking across accounts on same device
+  STORAGE_KEY = `${STORAGE_KEY_BASE}.${userId}`;
+
+  // Use localStorage (survives logout/login) instead of sessionStorage
+  try { lastReadMap = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { lastReadMap = {}; }
 
   container.innerHTML = `
     <div class="hm-chat-layout" id="hm-chat-layout">
@@ -94,6 +98,20 @@ async function loadConversations() {
     ...conv,
     otherUser: allUsersMap.get(conv.otherId) || { full_name: 'User', id: conv.otherId },
   }));
+
+  // First-time seeding: if user has no lastRead history, mark all existing
+  // conversations as read up to their current updated_at. This prevents every
+  // chat from appearing "unread" the first time the user logs in on this device.
+  let mapChanged = false;
+  conversations.forEach(c => {
+    if (!lastReadMap[c.id]) {
+      lastReadMap[c.id] = c.updated_at;
+      mapChanged = true;
+    }
+  });
+  if (mapChanged) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(lastReadMap)); } catch {}
+  }
 
   renderChatList();
   updateTotalUnread();
@@ -450,7 +468,7 @@ async function handleExchangeRequest(convId) {
 
 function markAsRead(convId) {
   lastReadMap[convId] = new Date().toISOString();
-  try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(lastReadMap)); } catch {}
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(lastReadMap)); } catch {}
   // Remove unread styling from this chat item without full re-render
   const item = document.querySelector(`.hm-chat-item[data-conv-id="${convId}"]`);
   if (item) {
