@@ -774,7 +774,6 @@ function requestCard(user, connectionId) {
           <div class="hm-mate__badges">
             ${user.gender ? `<span class="hm-badge ${genderCls}">${esc(user.gender)}</span>` : ''}
             ${user.is_verified_aspirant ? `<span class="hm-badge hm-badge--verified-full" title="Admit card verified">✓ Verified</span>` : ''}
-            ${user.plus_member ? `<span class="hm-badge hm-badge--plus">⭐ Plus</span>` : ''}
           </div>
         </div>
       </div>
@@ -815,7 +814,7 @@ function requestCard(user, connectionId) {
             data-conn-action="accept"  data-user-id="${uid}" data-conn-id="${cid}">Accept</button>
         </div>
       </div>
-
+      ${user.plus_member ? `<div class="hm-mate__plus-strip"><span class="hm-badge hm-badge--plus">⭐ Plus</span></div>` : ''}
     </article>`;
 }
 
@@ -1025,7 +1024,6 @@ function mateCard(user, idx) {
               ? `<span class="hm-badge ${genderCls}">${esc(user.gender)}</span>`
               : ''}
             ${user.is_verified_aspirant ? `<span class="hm-badge hm-badge--verified-full" title="Admit card verified">✓ Verified</span>` : ''}
-            ${user.plus_member ? `<span class="hm-badge hm-badge--plus">⭐ Plus</span>` : ''}
           </div>
         </div>
       </div>
@@ -1080,6 +1078,7 @@ function mateCard(user, idx) {
 
       <!-- Footer: join date · connection CTA -->
       <div class="hm-mate__footer">${cardFooterHtml(user)}</div>
+      ${user.plus_member ? `<div class="hm-mate__plus-strip"><span class="hm-badge hm-badge--plus">⭐ Plus</span></div>` : ''}
     </article>`;
 }
 

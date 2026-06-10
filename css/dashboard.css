@@ -249,6 +249,14 @@
 }
 .hm-mate__joined { font-size: var(--hm-text-xs); color: var(--hm-text-subtle); }
 
+/* Plus badge strip — bottom of card, full width, centered */
+.hm-mate__plus-strip {
+  text-align: center;
+  padding-top: var(--hm-space-2);
+  margin-top: var(--hm-space-2);
+  border-top: 1px solid var(--hm-border);
+}
+
 /* ── Route-timeline body (reference design) ─────────────────────────────── */
 
 /* Body: route wrap + optional vertical divider + optional badge cards */
