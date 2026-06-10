@@ -650,18 +650,13 @@ async function loadSettings() {
         </div>
       </div>
 
-      <div class="adm-card adm-settings-card">
+      <div class="adm-card adm-settings-card" style="grid-column:1/-1;">
         <div class="adm-card__header" style="display:flex;align-items:center;justify-content:space-between;">
-          <span>📞 Contact Exchange</span>
-          <label class="adm-switch">
-            <input type="checkbox" data-config="contact_exchange_enabled" ${platformConfig.contact_exchange_enabled !== false ? 'checked' : ''}>
-            <span class="adm-switch__track"></span>
-          </label>
+          <span>🎟️ Promo Codes</span>
+          <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-add-coupon">+ New Coupon</button>
         </div>
-        <div class="adm-card__body" style="padding:16px 20px;">
-          <p style="font-size:13px;color:var(--adm-text-muted);margin:0;">
-            When enabled, connected users can request to exchange phone numbers inside chat. Both parties must accept before any contact info is shown.
-          </p>
+        <div class="adm-card__body" id="adm-coupons-list" style="padding:16px 20px;">
+          <div class="adm-empty" style="padding:24px;">Loading…</div>
         </div>
       </div>
 
@@ -678,7 +673,7 @@ async function loadSettings() {
       const cfg   = input.dataset.config;
       const isGlobal = cfg === 'global_maintenance';
       const isFt  = cfg.startsWith('feature_toggles.');
-      const isDirect = ['plus_enabled', 'contact_exchange_enabled'].includes(cfg); // direct top-level config keys
+      const isDirect = ['plus_enabled'].includes(cfg); // direct top-level config keys
       const ftKey = isFt ? cfg.split('.')[1] : null;
       const { adminUpdateConfig } = await import('./supabase.js');
       let key, value;
@@ -745,6 +740,152 @@ async function loadSettings() {
 
   // New announcement button
   document.getElementById('adm-add-announcement')?.addEventListener('click', () => openAnnouncementForm(null));
+
+  // Load coupons
+  await loadCoupons();
+  document.getElementById('adm-add-coupon')?.addEventListener('click', () => openCouponForm(null));
+}
+
+async function loadCoupons() {
+  const el = document.getElementById('adm-coupons-list');
+  if (!el) return;
+  const { query: q, from: f } = await import('./supabase.js');
+  const { data } = await q(f('coupons').select('*').order('created_at', { ascending: false }));
+  if (!data?.length) { el.innerHTML = '<p style="color:var(--adm-text-muted);font-size:13px;margin:0;">No coupons yet. Click "+ New Coupon" to create one.</p>'; return; }
+
+  el.innerHTML = `<table class="adm-table">
+    <thead><tr>
+      <th>Code</th><th>Price</th><th>Label</th><th>Uses</th><th>Status</th><th>Actions</th>
+    </tr></thead>
+    <tbody>${data.map(c => `
+      <tr ${!c.is_active ? 'style="opacity:0.5;"' : ''}>
+        <td><code style="font-family:monospace;font-weight:700;">${esc(c.code)}</code></td>
+        <td>₹${(c.discounted_paise/100).toFixed(c.discounted_paise % 100 === 0 ? 0 : 2)}</td>
+        <td style="font-size:12px;color:var(--adm-text-muted);">${esc(c.label || '—')}</td>
+        <td>${c.usage_count}${c.max_uses ? ` / ${c.max_uses}` : ''}</td>
+        <td>
+          ${c.is_active
+            ? '<span class="adm-pill" style="background:#16a34a;color:#fff;">Active</span>'
+            : '<span class="adm-pill" style="background:#94a3b8;color:#fff;">Inactive</span>'}
+        </td>
+        <td>
+          <button class="adm-btn adm-btn--sm ${c.is_active ? 'adm-btn--warn' : 'adm-btn--ok'}"
+                  data-coupon-toggle="${esc(c.code)}" data-active="${c.is_active}">
+            ${c.is_active ? 'Disable' : 'Enable'}
+          </button>
+          <button class="adm-btn adm-btn--sm adm-btn--danger" data-coupon-delete="${esc(c.code)}">Delete</button>
+        </td>
+      </tr>`).join('')}
+    </tbody></table>`;
+
+  // Wire toggle
+  el.querySelectorAll('[data-coupon-toggle]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const code = btn.dataset.couponToggle;
+      const isActive = btn.dataset.active === 'true';
+      btn.disabled = true;
+      const { error } = await q(f('coupons').update({ is_active: !isActive }).eq('code', code));
+      if (error) { toast('Error: ' + error.message, 'error'); btn.disabled = false; return; }
+      toast(`Coupon ${!isActive ? 'enabled' : 'disabled'} ✓`, 'success');
+      await loadCoupons();
+    });
+  });
+
+  // Wire delete
+  el.querySelectorAll('[data-coupon-delete]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const code = btn.dataset.couponDelete;
+      confirm_({
+        title: `Delete coupon ${code}?`,
+        msg: 'This action cannot be undone.',
+        danger: true,
+      }, async () => {
+        const { error } = await q(f('coupons').delete().eq('code', code));
+        if (error) { toast('Error: ' + error.message, 'error'); return; }
+        toast('Coupon deleted ✓', 'success');
+        await loadCoupons();
+      });
+    });
+  });
+}
+
+function openCouponForm(existing) {
+  const overlay = document.createElement('div');
+  overlay.className = 'adm-overlay';
+  overlay.innerHTML = `
+    <div class="adm-dialog" style="max-width:480px;">
+      <h4>${existing ? 'Edit' : 'New'} Coupon</h4>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--adm-text-muted);display:block;margin-bottom:4px;">Coupon Code</label>
+          <input type="text" id="cp-code" class="adm-search" placeholder="e.g. SUMMER50"
+                 style="width:100%;padding:10px;text-transform:uppercase;letter-spacing:1px;font-family:monospace;font-weight:700;"
+                 value="${existing ? esc(existing.code) : ''}" ${existing ? 'disabled' : ''} maxlength="20" />
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--adm-text-muted);display:block;margin-bottom:4px;">Discounted Price (₹)</label>
+          <input type="number" id="cp-price" class="adm-search" placeholder="9" min="0" step="1"
+                 style="width:100%;padding:10px;" value="${existing ? (existing.discounted_paise/100) : ''}" />
+          <p style="font-size:11px;color:var(--adm-text-dim);margin:4px 0 0;">User pays this amount when coupon is applied.</p>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--adm-text-muted);display:block;margin-bottom:4px;">Label (optional)</label>
+          <input type="text" id="cp-label" class="adm-search" placeholder="e.g. Summer special — ₹9"
+                 style="width:100%;padding:10px;" value="${existing ? esc(existing.label || '') : ''}" maxlength="100" />
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--adm-text-muted);display:block;margin-bottom:4px;">Max Uses (optional)</label>
+          <input type="number" id="cp-max-uses" class="adm-search" placeholder="Unlimited" min="1" step="1"
+                 style="width:100%;padding:10px;" value="${existing?.max_uses || ''}" />
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--adm-text-muted);display:block;margin-bottom:4px;">Expires At (optional)</label>
+          <input type="date" id="cp-expires" class="adm-search"
+                 style="width:100%;padding:10px;" value="${existing?.expires_at ? new Date(existing.expires_at).toISOString().slice(0,10) : ''}" />
+        </div>
+      </div>
+      <div class="adm-dialog__actions">
+        <button type="button" class="adm-btn adm-btn--ghost" id="cp-cancel">Cancel</button>
+        <button type="button" class="adm-btn adm-btn--ok" id="cp-save">Save</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.hidden = false;
+
+  const close = () => overlay.remove();
+  document.getElementById('cp-cancel').onclick = close;
+  document.getElementById('cp-save').onclick = async () => {
+    const code = (document.getElementById('cp-code').value || '').trim().toUpperCase();
+    const price = parseInt(document.getElementById('cp-price').value, 10);
+    const label = document.getElementById('cp-label').value.trim() || null;
+    const maxUses = parseInt(document.getElementById('cp-max-uses').value, 10) || null;
+    const expires = document.getElementById('cp-expires').value || null;
+
+    if (!code) { toast('Coupon code required', 'error'); return; }
+    if (isNaN(price) || price < 0) { toast('Valid price required', 'error'); return; }
+
+    const payload = {
+      code,
+      discounted_paise: price * 100,
+      label,
+      max_uses: maxUses,
+      expires_at: expires ? new Date(expires).toISOString() : null,
+      is_active: true,
+    };
+
+    const { query: q, from: f } = await import('./supabase.js');
+    const { error } = existing
+      ? await q(f('coupons').update(payload).eq('code', existing.code))
+      : await q(f('coupons').insert(payload));
+
+    if (error) {
+      toast(error.message?.includes('duplicate') ? 'Coupon code already exists' : 'Error: ' + error.message, 'error');
+      return;
+    }
+    toast(`Coupon ${existing ? 'updated' : 'created'} ✓`, 'success');
+    close();
+    await loadCoupons();
+  };
 }
 
 async function refreshAnnouncementsList() {
