@@ -155,7 +155,7 @@ function wireFeedbackModal() {
   });
 }
 
-function renderNavAuthState(user) {
+async function renderNavAuthState(user) {
   // Toggle ALL data-auth elements — the navbar has auth items in multiple
   // locations (hm-nav-cta, hm-nav-actions, hm-nav-profile, nav-link <li>s).
   $$('[data-auth="logged-out"]').forEach((el) => { el.hidden = !!user; });
@@ -186,6 +186,16 @@ function renderNavAuthState(user) {
         const cachedRole = sessionStorage.getItem('hm.user.role');
         adminNavItem.hidden = cachedRole !== 'admin' && cachedRole !== 'superadmin';
       } catch { adminNavItem.hidden = true; }
+    }
+
+    // Hide "Get Zenter Plus" for Plus members (works on every page)
+    const plusNavItem = document.getElementById('hm-plus-nav-item');
+    if (plusNavItem && user.phoneNumber) {
+      try {
+        const { getUserByPhone } = await import('./supabase.js');
+        const { data: me } = await getUserByPhone(user.phoneNumber);
+        if (me?.plus_member) plusNavItem.hidden = true;
+      } catch { /* non-critical */ }
     }
   }
 }
