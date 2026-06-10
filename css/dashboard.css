@@ -163,6 +163,7 @@
 .hm-mate {
   display: flex; flex-direction: column;
   gap: var(--hm-space-3);
+  position: relative;
 }
 
 /* Zenter Plus — highlighted card */
@@ -202,7 +203,7 @@
 
 /* Badges: gender + verified */
 .hm-mate__badges  { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; line-height: 1; flex: 1; }
-.hm-badge--plus   { margin-left: auto; }
+.hm-badge--plus   { position: absolute; top: 12px; right: 12px; }
 .hm-badge--female { background: #f3e8ff; color: #7c3aed; border: 1px solid #ddd6fe; }
 .hm-badge--male   { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
 /* Phone verified — light green pill with dark green text */
