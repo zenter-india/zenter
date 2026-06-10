@@ -31,6 +31,8 @@ let firebaseUser    = null;   // stored for lazy connections load
 let connectionsLoaded = false;
 let chatsLoaded       = false;
 let _pendingChatUserId = null;  // deep-link: open specific user's chat
+let _connectionsDirty  = false; // true when connections data changed but tab not re-rendered yet
+let _chatsDirty        = false; // true when chats data changed but not refreshed yet
 let blockedUserIds  = new Set(); // users the current user has blocked
 let blockedByIds    = new Set(); // users who have blocked the current user
 let dataLoaded      = false;     // true once loadData() has hydrated — gates empty states
@@ -343,7 +345,7 @@ async function activateTab(name) {
   // Render Requests tab content (derived from in-memory data — no extra fetch)
   if (tab === 'requests') renderRequests();
 
-  // Lazy-load Chats on first activation
+  // Lazy-load Chats — mount once, refresh if data changed
   if (tab === 'chats' && myUserId) {
     if (!chatsLoaded) {
       chatsLoaded = true;
@@ -362,6 +364,10 @@ async function activateTab(name) {
           }
         });
       }
+    } else if (_chatsDirty) {
+      _chatsDirty = false;
+      const { refreshConversations } = await import('./chat.js');
+      refreshConversations();
     }
 
     // Deep-link: open a specific user's chat if pending
@@ -373,13 +379,22 @@ async function activateTab(name) {
     }
   }
 
-  // Lazy-load Connections on first activation
-  if (tab === 'connections' && !connectionsLoaded && firebaseUser) {
-    connectionsLoaded = true;
-    const root = document.getElementById('hm-connections-root');
-    if (root) {
-      const { runConnections } = await import('./connections.js');
-      await runConnections(root, firebaseUser);
+  // Lazy-load Connections — mount once, re-render if data changed
+  if (tab === 'connections' && firebaseUser) {
+    if (!connectionsLoaded) {
+      connectionsLoaded = true;
+      const root = document.getElementById('hm-connections-root');
+      if (root) {
+        const { runConnections } = await import('./connections.js');
+        await runConnections(root, firebaseUser);
+      }
+    } else if (_connectionsDirty) {
+      _connectionsDirty = false;
+      const root = document.getElementById('hm-connections-root');
+      if (root) {
+        const { runConnections } = await import('./connections.js');
+        await runConnections(root, firebaseUser);
+      }
     }
   }
 }
@@ -529,7 +544,7 @@ async function doConnect(userId) {
     return;
   }
   Relationships.set(userId, { status: REL.PENDING_OUT, role: 'sender', connectionId: data?.id });
-  connectionsLoaded = false;
+  _connectionsDirty = true;
   notifyConnectionsChanged();
   toast('Request sent!', { variant: 'success' });
 }
@@ -546,8 +561,8 @@ async function doAccept(userId, connId) {
   const { error } = await respondToRequest(connId, 'accepted');
   if (error) { toast(error.message || 'Could not accept.', { variant: 'danger' }); return; }
   Relationships.set(userId, { status: REL.CONNECTED, role: 'receiver', connectionId: connId });
-  connectionsLoaded = false; // Connections tab re-fetches to include new contact
-  chatsLoaded = false;       // Chats tab re-fetches to include new conversation
+  _connectionsDirty = true; // Connections tab re-fetches to include new contact
+  _chatsDirty = true;       // Chats tab re-fetches to include new conversation
   notifyConnectionsChanged();
 
   // Create a conversation for this accepted connection
@@ -567,7 +582,7 @@ async function doDecline(userId, connId) {
   const { error } = await respondToRequest(connId, 'rejected');
   if (error) { toast(error.message || 'Could not decline.', { variant: 'danger' }); return; }
   Relationships.set(userId, { status: REL.REJECTED, role: 'receiver', connectionId: connId });
-  connectionsLoaded = false;
+  _connectionsDirty = true;
   notifyConnectionsChanged();
 }
 
@@ -575,7 +590,7 @@ async function doWithdraw(userId, connId) {
   const { error } = await deleteRequest(connId);
   if (error) { toast(error.message || 'Could not withdraw.', { variant: 'danger' }); return; }
   Relationships.set(userId, { status: REL.NONE });
-  connectionsLoaded = false;
+  _connectionsDirty = true;
   notifyConnectionsChanged();
   toast('Request cancelled.', { variant: 'info' });
 }
