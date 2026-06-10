@@ -173,7 +173,7 @@ async function openChat(convId) {
         <div class="hm-avatar hm-avatar--sm" style="background:${color};color:#fff;">${initials}</div>
         <span class="hm-chat-header__name">${esc(conv.otherUser.full_name)}</span>
         <button class="hm-btn hm-btn--soft hm-btn--sm hm-chat-header__exchange"
-                id="hm-exchange-btn">📞 Exchange Contact</button>
+                id="hm-exchange-btn">📞 Request Contact</button>
         <button class="hm-btn hm-btn--ghost hm-btn--sm" id="hm-chat-block-btn"
                 style="color:var(--hm-danger);font-size:12px;" data-user-id="${esc(conv.otherId)}">🚫 Block</button>
       </div>
@@ -389,7 +389,7 @@ async function loadExchangeStatus(convId) {
       // I need to respond
       const requester = allUsersMap.get(exchange.requester_id);
       banner.innerHTML = `
-        <span class="hm-exchange-banner__text">${esc(requester?.full_name || 'Someone')} wants to exchange contact details.</span>
+        <span class="hm-exchange-banner__text">${esc(requester?.full_name || 'Someone')} wants to share contact details.</span>
         <button class="hm-btn hm-btn--primary hm-btn--sm" data-exchange-action="accept" data-exchange-id="${exchange.id}">Accept</button>
         <button class="hm-btn hm-btn--ghost hm-btn--sm" data-exchange-action="decline" data-exchange-id="${exchange.id}">Decline</button>`;
 
@@ -426,7 +426,7 @@ async function handleExchangeRequest(convId) {
   const { error } = await requestContactExchange(convId, myUserId);
   if (error) {
     console.error('[exchange] request error', error);
-    if (btn) { btn.disabled = false; btn.textContent = '📞 Exchange Contact'; }
+    if (btn) { btn.disabled = false; btn.textContent = '📞 Request Contact'; }
     return;
   }
 
