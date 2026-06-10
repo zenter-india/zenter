@@ -531,16 +531,28 @@ export function adminSetPlusMember(targetId, isPlus) {
 const EDGE_BASE = 'https://wppuzqaigtffcpuvjolt.supabase.co/functions/v1';
 
 /** Create a Razorpay order server-side. Pass couponCode to apply discount server-side.
- *  dryRun=true validates the coupon and returns pricing without creating a real order. */
+ *  dryRun=true validates the coupon and returns pricing without creating a real order.
+ *  Retries up to 2 times on failure (Edge Function cold start can cause intermittent errors). */
 export async function createRazorpayOrder(userId, couponCode = null, dryRun = false) {
-  const resp = await fetch(`${EDGE_BASE}/create-razorpay-order`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE.anonKey },
-    body: JSON.stringify({ user_id: userId, coupon_code: couponCode || null, dry_run: dryRun }),
-  });
-  const data = await resp.json();
-  if (!resp.ok) throw new Error(data.error || 'Could not create order');
-  return data;
+  const MAX_RETRIES = 2;
+  let lastError = null;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      if (attempt > 0) await new Promise(r => setTimeout(r, 1000 * attempt)); // backoff
+      const resp = await fetch(`${EDGE_BASE}/create-razorpay-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE.anonKey },
+        body: JSON.stringify({ user_id: userId, coupon_code: couponCode || null, dry_run: dryRun }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Could not create order');
+      return data;
+    } catch (err) {
+      lastError = err;
+      console.warn(`[razorpay] attempt ${attempt + 1} failed:`, err.message);
+    }
+  }
+  throw lastError;
 }
 
 /** Verify payment server-side and grant Plus. */
