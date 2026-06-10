@@ -95,9 +95,9 @@
 .hm-chat-window {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - var(--hm-navbar-h) - 200px);
-  min-height: 300px;
-  max-height: 500px;
+  height: calc(100vh - var(--hm-navbar-h) - 280px);
+  min-height: 250px;
+  max-height: 400px;
   border: 1px solid var(--hm-border);
   border-radius: var(--hm-radius-lg);
   background: var(--hm-surface);
