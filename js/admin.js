@@ -690,7 +690,7 @@ function wireUpPlusSettings() {
     if (input.dataset.config === 'plus_enabled') {
       input.addEventListener('change', async () => {
         const { adminUpdateConfig } = await import('./supabase.js');
-        const { error } = await adminUpdateConfig('plus_enabled', input.checked, window._adminPhone);
+        const { error } = await adminUpdateConfig('plus_enabled', input.checked, adminPhone);
         if (error) { toast('Save failed: ' + error.message, 'error'); input.checked = !input.checked; return; }
         platformConfig.plus_enabled = input.checked;
         toast(`Plus feature ${input.checked ? 'enabled' : 'disabled'} ✓`, 'success');
@@ -702,7 +702,7 @@ function wireUpPlusSettings() {
     const val = parseInt(document.getElementById('adm-free-chat-limit')?.value, 10);
     if (!val || val < 1) { toast('Enter a valid number (min 1)', 'error'); return; }
     const { adminUpdateConfig } = await import('./supabase.js');
-    const { error } = await adminUpdateConfig('free_active_chats', val, window._adminPhone);
+    const { error } = await adminUpdateConfig('free_active_chats', val, adminPhone);
     if (error) { toast('Save failed: ' + error.message, 'error'); return; }
     platformConfig.free_active_chats = val;
     toast(`Free active chats set to ${val} ✓`, 'success');
@@ -958,7 +958,7 @@ function openPricingForm() {
 
     const pricePaise = priceRupees * 100;
     const { adminUpdateConfig } = await import('./supabase.js');
-    const { error } = await adminUpdateConfig('plus_price_paise', pricePaise, window._adminPhone);
+    const { error } = await adminUpdateConfig('plus_price_paise', pricePaise, adminPhone);
     if (error) { toast('Save failed: ' + error.message, 'error'); return; }
 
     platformConfig.plus_price_paise = pricePaise;
