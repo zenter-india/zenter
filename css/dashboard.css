@@ -87,6 +87,7 @@
   gap: var(--hm-space-2);
   border-bottom: 1px solid var(--hm-border);
   margin-bottom: var(--hm-space-5);
+  margin-top: calc(-1 * var(--hm-space-7));
   position: sticky;
   top: var(--hm-navbar-h);
   background: var(--hm-surface);
