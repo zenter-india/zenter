@@ -13,6 +13,9 @@ import {
 
 let myUserId = null;
 let myIsVerified = false;     // whether current user has verified Roll No
+let myIsPlus = false;         // Zenter Plus member — unlimited chats
+let myFreeLimit = 2;          // free active-chat limit (from platform_config.free_active_chats)
+let unlockedConvIds = new Set(); // conv ids that the free user can open (oldest N by created_at)
 let conversations = [];       // { id, connection_id, user_a, user_b, updated_at, otherUser }
 let activeConvId = null;       // currently open conversation
 let messages = [];             // messages for the active conversation
@@ -40,6 +43,8 @@ let STORAGE_KEY = STORAGE_KEY_BASE; // updated to per-user in mountChat
 export async function mountChat(container, userId, usersMap, unreadCb, opts = {}) {
   myUserId = userId;
   myIsVerified = !!opts.isVerified;
+  myIsPlus = !!opts.isPlus;
+  myFreeLimit = Number.isFinite(opts.freeLimit) && opts.freeLimit > 0 ? opts.freeLimit : 2;
   allUsersMap = usersMap || new Map();
   onUnreadChange = unreadCb || null;
 
@@ -105,6 +110,10 @@ async function loadConversations() {
     otherUser: allUsersMap.get(conv.otherId) || { full_name: 'User', id: conv.otherId },
   }));
 
+  // Compute unlocked set for free users: the oldest `myFreeLimit` conversations
+  // (by created_at ASC) stay unlocked; the rest are locked behind Zenter Plus.
+  recomputeUnlockedConvIds();
+
   // First-time seeding: if user has no lastRead history, mark all existing
   // conversations as read up to their current updated_at. This prevents every
   // chat from appearing "unread" the first time the user logs in on this device.
@@ -121,6 +130,27 @@ async function loadConversations() {
 
   renderChatList();
   updateTotalUnread();
+}
+
+// ─── Chat lock logic (free users: 3rd+ chat locked behind Plus) ─────────────
+
+function recomputeUnlockedConvIds() {
+  unlockedConvIds = new Set();
+  if (myIsPlus) {
+    // Plus members: everything unlocked
+    conversations.forEach(c => unlockedConvIds.add(c.id));
+    return;
+  }
+  // Free users: oldest `myFreeLimit` conversations (by created_at ASC) are unlocked.
+  const oldestFirst = [...conversations].sort(
+    (a, b) => new Date(a.created_at) - new Date(b.created_at)
+  );
+  oldestFirst.slice(0, myFreeLimit).forEach(c => unlockedConvIds.add(c.id));
+}
+
+function isConvLocked(convId) {
+  if (myIsPlus) return false;
+  return !unlockedConvIds.has(convId);
 }
 
 // ─── Render chat list ────────────────────────────────────────────────────────
@@ -143,14 +173,15 @@ function renderChatList() {
     const timeStr = formatRelativeTime(conv.updated_at);
     const lastRead = lastReadMap[conv.id];
     const isUnread = !isActive && (!lastRead || new Date(conv.updated_at) > new Date(lastRead));
+    const locked = isConvLocked(conv.id);
 
     return `
-      <div class="hm-chat-item ${isActive ? 'is-active' : ''} ${isUnread ? 'is-unread' : ''}"
+      <div class="hm-chat-item ${isActive ? 'is-active' : ''} ${isUnread ? 'is-unread' : ''} ${locked ? 'is-locked' : ''}"
            data-conv-id="${esc(conv.id)}" role="button" tabindex="0">
         <div class="hm-avatar hm-avatar--sm" style="background:${color};color:#fff;">${initials}</div>
         <div class="hm-chat-item__info">
-          <p class="hm-chat-item__name">${esc(conv.otherUser.full_name)}${isUnread ? '<span class="hm-chat-unread-dot"></span>' : ''}</p>
-          <p class="hm-chat-item__preview" id="hm-chat-preview-${conv.id}"></p>
+          <p class="hm-chat-item__name">${esc(conv.otherUser.full_name)}${locked ? ' <span class="hm-chat-item__lock" title="Upgrade to Zenter Plus to chat">🔒</span>' : ''}${isUnread && !locked ? '<span class="hm-chat-unread-dot"></span>' : ''}</p>
+          <p class="hm-chat-item__preview" id="hm-chat-preview-${conv.id}">${locked ? '<em>Locked — upgrade to Zenter Plus</em>' : ''}</p>
         </div>
         <span class="hm-chat-item__time">${timeStr}</span>
       </div>`;
@@ -189,6 +220,44 @@ async function openChat(convId) {
   const mainEl = document.getElementById('hm-chat-main');
   const initials = avatarInitials(conv.otherUser.full_name);
   const color = avatarColor(conv.otherUser.full_name);
+
+  // Locked chat (free user beyond chat limit) — show blurred chat with upgrade CTA
+  if (isConvLocked(convId)) {
+    mainEl.innerHTML = `
+      <div class="hm-chat-window">
+        <div class="hm-chat-header">
+          <button class="hm-chat-header__back" id="hm-chat-back">← Back</button>
+          <div class="hm-avatar hm-avatar--sm" style="background:${color};color:#fff;">${initials}</div>
+          <span class="hm-chat-header__name">${esc(conv.otherUser.full_name)}</span>
+          <span class="hm-badge hm-badge--plus" style="margin-left:auto;">🔒 Locked</span>
+        </div>
+        <div class="hm-chat-locked">
+          <div class="hm-chat-locked__blur" aria-hidden="true">
+            <div class="hm-msg hm-msg--other"><div class="hm-msg__bubble">Hey, are you also going to the Sion centre?</div></div>
+            <div class="hm-msg hm-msg--mine"><div class="hm-msg__bubble">Yes! Travelling by train, you?</div></div>
+            <div class="hm-msg hm-msg--other"><div class="hm-msg__bubble">Same! Shall we coordinate?</div></div>
+            <div class="hm-msg hm-msg--mine"><div class="hm-msg__bubble">Sure, let's chat about stay too…</div></div>
+          </div>
+          <div class="hm-chat-locked__overlay">
+            <div class="hm-chat-locked__icon">🔒</div>
+            <h3 class="hm-chat-locked__title">Unlock this chat with Zenter Plus</h3>
+            <p class="hm-chat-locked__sub">
+              Free accounts can chat with up to ${myFreeLimit} centre mates.
+              Upgrade to Zenter Plus for <strong>unlimited chats</strong> and contact reveals.
+            </p>
+            <a href="/plus.html" class="hm-btn hm-btn--primary" id="hm-chat-locked-cta">
+              Upgrade to Zenter Plus →
+            </a>
+          </div>
+        </div>
+      </div>`;
+    document.getElementById('hm-chat-back')?.addEventListener('click', closeChat);
+    document.getElementById('hm-chat-locked-cta')?.addEventListener('click', () => {
+      trackEvent('upgrade_cta_click', myUserId, { source: 'chat_locked' });
+    });
+    trackEvent('chat_locked_view', myUserId, { conversation_id: convId });
+    return;
+  }
 
   mainEl.innerHTML = `
     <div class="hm-chat-window">

@@ -339,6 +339,68 @@
   min-width: 0;
 }
 
+/* ── Locked chat (free users beyond chat limit) ──────────────────────────── */
+
+.hm-chat-item.is-locked {
+  opacity: 0.65;
+}
+.hm-chat-item.is-locked .hm-chat-item__name {
+  color: var(--hm-text-muted);
+}
+.hm-chat-item__lock {
+  font-size: 11px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.hm-chat-locked {
+  position: relative;
+  flex: 1;
+  min-height: 320px;
+  overflow: hidden;
+  background: var(--hm-surface);
+}
+.hm-chat-locked__blur {
+  position: absolute;
+  inset: 0;
+  padding: var(--hm-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--hm-space-3);
+  filter: blur(6px);
+  opacity: 0.55;
+  pointer-events: none;
+  user-select: none;
+}
+.hm-chat-locked__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--hm-space-6);
+  background: linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.9) 40%, rgba(255,255,255,0.95) 100%);
+}
+.hm-chat-locked__icon {
+  font-size: 40px;
+  margin-bottom: var(--hm-space-3);
+}
+.hm-chat-locked__title {
+  font-weight: 700;
+  font-size: var(--hm-text-lg);
+  color: var(--hm-text);
+  margin: 0 0 var(--hm-space-2);
+}
+.hm-chat-locked__sub {
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text-muted);
+  max-width: 340px;
+  margin: 0 0 var(--hm-space-4);
+  line-height: 1.55;
+}
+
 /* ── Upgrade prompt ──────────────────────────────────────────────────────── */
 
 .hm-chat-upgrade {

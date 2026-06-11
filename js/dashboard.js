@@ -5,7 +5,7 @@ import { getAllUsers, getUserByPhone, getMyConnections,
          sendConnectionRequest, respondToRequest, deleteRequest,
          getBlockedUserIds, getBlockedByIds, getSeededUsers,
          getPlatformConfig, attemptReveal, trackEvent, flagRapidReveal, blockUser,
-         deleteConnectionsBetween, createConversation, canStartChat, getActiveChatCount } from './supabase.js';
+         deleteConnectionsBetween, createConversation, getActiveChatCount } from './supabase.js';
 import { debounce } from './utils.js';
 import { toast, setButtonBusy } from './ui.js';
 import * as Relationships from './relationships.js';
@@ -383,7 +383,11 @@ async function activateTab(name) {
             badge.textContent = unread;
             badge.hidden = unread === 0;
           }
-        }, { isVerified: myIsVerified });
+        }, {
+          isVerified: myIsVerified,
+          isPlus: myPlusMember,
+          freeLimit: myFreeLimit,
+        });
       }
     } else if (_chatsDirty) {
       _chatsDirty = false;
@@ -571,14 +575,8 @@ async function doConnect(userId) {
 }
 
 async function doAccept(userId, connId) {
-  // Check chat limit before accepting (free users: 2 active chats)
-  const { data: chatCheck } = await canStartChat(myUserId);
-  if (chatCheck && !chatCheck.can_chat) {
-    toast(`You've reached your free chat limit (${chatCheck.limit}). Upgrade to Zenter Plus for unlimited chats!`, { variant: 'warning' });
-    closeModal();
-    return;
-  }
-
+  // Free users can accept unlimited connections. The chat-open gate (in
+  // chat.js) shows a blurred view + upgrade CTA for the 3rd+ conversation.
   const { error } = await respondToRequest(connId, 'accepted');
   if (error) { toast(error.message || 'Could not accept.', { variant: 'danger' }); return; }
   Relationships.set(userId, { status: REL.CONNECTED, role: 'receiver', connectionId: connId });
