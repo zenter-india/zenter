@@ -5,7 +5,7 @@ import { getAllUsers, getUserByPhone, getMyConnections,
          sendConnectionRequest, respondToRequest, deleteRequest,
          getBlockedUserIds, getBlockedByIds, getSeededUsers,
          getPlatformConfig, attemptReveal, trackEvent, flagRapidReveal, blockUser,
-         deleteConnectionsBetween, createConversation, canStartChat } from './supabase.js';
+         deleteConnectionsBetween, createConversation, canStartChat, getActiveChatCount } from './supabase.js';
 import { debounce } from './utils.js';
 import { toast, setButtonBusy } from './ui.js';
 import * as Relationships from './relationships.js';
@@ -189,10 +189,18 @@ async function loadData() {
 
   if (usersRes.error) { renderError(usersRes.error.message); return; }
 
-  // Read config
+  // Read config — prefer the new free_active_chats key, fall back to legacy free_reveal_limit
   const cfgRows = cfgRes.data || [];
-  myFreeLimit   = cfgRows.find(r => r.key === 'free_reveal_limit')?.value ?? 2;
+  myFreeLimit   = cfgRows.find(r => r.key === 'free_active_chats')?.value
+               ?? cfgRows.find(r => r.key === 'free_reveal_limit')?.value
+               ?? 2;
   myPlusEnabled = cfgRows.find(r => r.key === 'plus_enabled')?.value !== false;
+
+  // Live count of active chats — what the banner should actually reflect
+  if (myUserId && myPlusEnabled && !myPlusMember) {
+    const { data: activeCount } = await getActiveChatCount(myUserId);
+    myRevealsUsed = activeCount ?? 0;
+  }
 
   // Clear revealed set on data reload so new sessions are clean
   revealedUserIds = new Set();
