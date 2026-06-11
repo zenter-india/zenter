@@ -36,6 +36,7 @@
       <ul class="adm-nav" id="adm-nav" role="list">
         <li><a href="#dashboard" data-route="dashboard"><span class="adm-nav__icon">📊</span><span>Dashboard</span></a></li>
         <li><a href="#users"     data-route="users"    ><span class="adm-nav__icon">👥</span><span>Users</span></a></li>
+        <li><a href="#roll-no-requests" data-route="roll-no-requests"><span class="adm-nav__icon">🪪</span><span>Roll No Requests</span><span class="adm-nav__badge" id="adm-rollno-nav-badge" hidden>0</span></a></li>
         <li><a href="#seeded"    data-route="seeded"   ><span class="adm-nav__icon">🌱</span><span>Seeded Users</span></a></li>
         <li><a href="#seeded-requests" data-route="seeded-requests"><span class="adm-nav__icon">📩</span><span>Seeded Requests</span></a></li>
         <li><a href="#feedback"  data-route="feedback" ><span class="adm-nav__icon">💬</span><span>Feedback</span></a></li>
@@ -102,6 +103,27 @@
           </div>
           <div class="adm-card">
             <div class="adm-card__body" id="adm-users-list"><div class="adm-empty">Loading…</div></div>
+          </div>
+        </section>
+
+        <!-- Roll No Requests -->
+        <section class="adm-panel" id="adm-panel-roll-no-requests" data-route="roll-no-requests">
+          <h1 class="adm-h1">🪪 Roll No Requests</h1>
+          <p class="adm-sub">Pending Roll Number verification requests — approve to grant the Verified badge, reject if the number is invalid.</p>
+          <div class="adm-toolbar">
+            <input type="search" id="adm-rollno-search" class="adm-search" placeholder="Search by name, phone, or roll no…" />
+            <select id="adm-rollno-filter-exam" class="adm-filter">
+              <option value="">All exams</option>
+              <option value="NEET UG">NEET UG</option>
+              <option value="NEET PG">NEET PG</option>
+              <option value="INICET">INICET</option>
+              <option value="NEET MDS">NEET MDS</option>
+              <option value="NEET SS">NEET SS</option>
+            </select>
+            <button class="adm-btn adm-btn--ghost adm-btn--sm" id="adm-rollno-refresh">↻ Refresh</button>
+          </div>
+          <div class="adm-card">
+            <div class="adm-card__body" id="adm-rollno-list"><div class="adm-empty">Loading…</div></div>
           </div>
         </section>
 

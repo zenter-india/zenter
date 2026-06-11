@@ -107,6 +107,18 @@ body.adm-body {
   color: var(--adm-primary);
 }
 .adm-nav__icon { width: 18px; text-align: center; font-size: 16px; }
+.adm-nav__badge {
+  margin-left: auto;
+  background: #dc2626;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  min-width: 18px;
+  text-align: center;
+  line-height: 1.4;
+}
 
 .adm-sidebar__footer {
   padding: 16px 20px;

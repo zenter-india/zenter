@@ -4,7 +4,7 @@
 import { requireAdmin, logout, onAuthChange } from './auth.js';
 import { formatPhonePretty }    from './utils.js';
 
-const ROUTES = ['dashboard','users','seeded','seeded-requests','feedback','reports','exams','analytics','plus','settings'];
+const ROUTES = ['dashboard','users','roll-no-requests','seeded','seeded-requests','feedback','reports','exams','analytics','plus','settings'];
 const loaded      = new Set();
 let allUsers      = [];
 let allSeeded     = [];
@@ -73,7 +73,27 @@ let platformConfig = {};   // { feature_toggles:{}, exam_config:[], global_maint
   wireConfirmDialog();
   wireToast();
   activateRoute(getRouteFromHash());
+
+  // Eager-fetch pending Roll No requests so the sidebar badge is correct on first load
+  primeRollNoBadge();
 })();
+
+async function primeRollNoBadge() {
+  try {
+    const { from: f } = await import('./supabase.js');
+    // Await the builder directly — our query() wrapper strips the `count` field
+    const { count } = await f('users')
+      .select('id', { count: 'exact', head: true })
+      .eq('verification_requested', true)
+      .eq('is_verified_aspirant', false)
+      .eq('verification_rejected', false);
+    const badge = document.getElementById('adm-rollno-nav-badge');
+    if (badge && Number.isFinite(count)) {
+      badge.textContent = String(count);
+      badge.hidden = count === 0;
+    }
+  } catch {}
+}
 
 // ─── Router ───────────────────────────────────────────────────────────────────
 
@@ -100,16 +120,17 @@ function activateRoute(route) {
 // ─── Section loaders ──────────────────────────────────────────────────────────
 
 const LOADERS = {
-  dashboard:  loadDashboard,
-  users:      loadUsers,
-  seeded:             loadSeeded,
-  'seeded-requests':  loadSeededRequests,
-  feedback:           loadFeedback,
-  reports:    loadReports,
-  exams:      loadExams,
-  analytics:  loadAnalytics,
-  plus:       loadPlus,
-  settings:   loadSettings,
+  dashboard:           loadDashboard,
+  users:               loadUsers,
+  'roll-no-requests':  loadRollNoRequests,
+  seeded:              loadSeeded,
+  'seeded-requests':   loadSeededRequests,
+  feedback:            loadFeedback,
+  reports:             loadReports,
+  exams:               loadExams,
+  analytics:           loadAnalytics,
+  plus:                loadPlus,
+  settings:            loadSettings,
 };
 
 async function loadDashboard() {
@@ -148,6 +169,89 @@ function renderFilteredUsers() {
   });
   const el = document.getElementById('adm-users-list');
   el.innerHTML = filtered.length ? renderUsersTable(filtered, true) : emptyState('🔍','No users match filters.');
+}
+
+// ─── Roll No Requests ─────────────────────────────────────────────────────────
+
+let allRollNoRequests = [];
+
+async function loadRollNoRequests() {
+  const el = document.getElementById('adm-rollno-list');
+  if (!el) return;
+  el.innerHTML = '<div class="adm-empty" style="padding:24px;">Loading…</div>';
+
+  const { query: q, from: f } = await import('./supabase.js');
+  const { data, error } = await q(
+    f('users')
+      .select('id, full_name, phone, exam_type, district, state, nta_application_number, verification_requested, is_verified_aspirant, verification_rejected, created_at')
+      .eq('verification_requested', true)
+      .eq('is_verified_aspirant', false)
+      .eq('verification_rejected', false)
+      .order('created_at', { ascending: true })
+  );
+  if (error) { el.innerHTML = emptyState('⚠️','Could not load requests.'); return; }
+  allRollNoRequests = data || [];
+  updateRollNoNavBadge();
+  renderRollNoRequests();
+
+  const rerender = debounce(renderRollNoRequests, 180);
+  document.getElementById('adm-rollno-search')?.addEventListener('input', rerender);
+  document.getElementById('adm-rollno-filter-exam')?.addEventListener('change', rerender);
+  document.getElementById('adm-rollno-refresh')?.addEventListener('click', () => {
+    loaded.delete('roll-no-requests');
+    loadRollNoRequests();
+  });
+}
+
+function renderRollNoRequests() {
+  const el = document.getElementById('adm-rollno-list');
+  if (!el) return;
+  const search = (document.getElementById('adm-rollno-search')?.value || '').toLowerCase();
+  const exam = document.getElementById('adm-rollno-filter-exam')?.value || '';
+  const rows = allRollNoRequests.filter(u => {
+    if (search && !`${u.full_name || ''} ${u.phone || ''} ${u.nta_application_number || ''}`.toLowerCase().includes(search)) return false;
+    if (exam && u.exam_type !== exam) return false;
+    return true;
+  });
+
+  if (!rows.length) {
+    el.innerHTML = emptyState('✅','No pending Roll No verification requests.');
+    return;
+  }
+
+  el.innerHTML = `<table class="adm-table"><thead><tr>
+    <th>Name</th><th>Phone</th><th>Exam</th><th>Home</th><th>Roll No</th><th>Submitted</th><th>Actions</th>
+  </tr></thead><tbody>${rows.map(u => `
+    <tr data-rollno-row="${esc(u.id)}">
+      <td><strong>${esc(u.full_name || '—')}</strong></td>
+      <td style="font-size:11px;">${esc(formatPhonePretty(u.phone) || u.phone || '—')}</td>
+      <td>${esc(u.exam_type || '—')}</td>
+      <td style="font-size:11px;">${esc([u.district, u.state].filter(Boolean).join(', ') || '—')}</td>
+      <td>
+        <code style="font-family:monospace;font-weight:700;font-size:13px;background:var(--adm-surface-2);padding:3px 8px;border-radius:4px;">${esc(u.nta_application_number || '—')}</code>
+      </td>
+      <td style="font-size:11px;color:var(--adm-text-dim);">${esc(fmtDate(u.created_at))}</td>
+      <td>
+        <div class="adm-actions" style="gap:4px;flex-wrap:wrap;">
+          <button class="adm-btn adm-btn--sm adm-btn--ok"
+                  data-action="rollno-approve" data-id="${esc(u.id)}" data-name="${esc(u.full_name || 'User')}">
+            ✓ Approve
+          </button>
+          <button class="adm-btn adm-btn--sm adm-btn--danger"
+                  data-action="rollno-reject" data-id="${esc(u.id)}" data-name="${esc(u.full_name || 'User')}">
+            ✗ Reject
+          </button>
+        </div>
+      </td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+function updateRollNoNavBadge() {
+  const badge = document.getElementById('adm-rollno-nav-badge');
+  if (!badge) return;
+  const n = allRollNoRequests.length;
+  badge.textContent = String(n);
+  badge.hidden = n === 0;
 }
 
 // ─── Seeded users ─────────────────────────────────────────────────────────────
@@ -1188,7 +1292,35 @@ document.addEventListener('click', async (e) => {
     }); return;
   }
 
-  // ── Reject Aspirant verification request ─────────────────────────────────
+  // ── Roll No Requests panel: approve / reject ─────────────────────────────
+  if (action === 'rollno-approve' || action === 'rollno-reject') {
+    const approving = action === 'rollno-approve';
+    const userName = btn.dataset.name || 'this user';
+    confirm_({
+      title:  approving ? `Approve Roll No for ${esc(userName)}?` : `Reject Roll No request for ${esc(userName)}?`,
+      msg:    approving ? 'Grants the green Verified badge and unlocks contact reveals.' : 'Marks the request as rejected. User can resubmit with a corrected Roll Number.',
+      danger: !approving,
+    }, async () => {
+      btn.disabled = true;
+      const { adminSetVerifiedAspirant } = await import('./supabase.js');
+      const { error } = await adminSetVerifiedAspirant(id, approving);
+      if (error) { toast('Error: ' + error.message, 'error'); btn.disabled = false; return; }
+      // Drop the row from the pending queue (either outcome removes it from this list)
+      allRollNoRequests = allRollNoRequests.filter(u => u.id !== id);
+      updateRollNoNavBadge();
+      renderRollNoRequests();
+      // Keep the Users panel in sync if it's already loaded
+      const u = allUsers.find(u => u.id === id);
+      if (u) {
+        if (approving) { u.is_verified_aspirant = true; u.verification_requested = false; u.verification_rejected = false; }
+        else           { u.is_verified_aspirant = false; u.verification_requested = false; u.verification_rejected = true; }
+        if (loaded.has('users')) renderFilteredUsers();
+      }
+      toast(approving ? `✓ Roll No verified for ${esc(userName)}` : `Request rejected ✓`, 'success');
+    }); return;
+  }
+
+  // ── Reject Aspirant verification request (Users panel button) ────────────
   if (action === 'reject-aspirant') {
     const userName = btn.dataset.name || 'this user';
     confirm_({
