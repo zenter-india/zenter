@@ -4,7 +4,7 @@
 import { requireAdmin, logout, onAuthChange } from './auth.js';
 import { formatPhonePretty }    from './utils.js';
 
-const ROUTES = ['dashboard','users','seeded','seeded-requests','feedback','reports','exams','analytics','plus','promo','settings'];
+const ROUTES = ['dashboard','users','seeded','seeded-requests','feedback','reports','exams','analytics','plus','settings'];
 const loaded      = new Set();
 let allUsers      = [];
 let allSeeded     = [];
@@ -109,7 +109,6 @@ const LOADERS = {
   exams:      loadExams,
   analytics:  loadAnalytics,
   plus:       loadPlus,
-  promo:      loadPromo,
   settings:   loadSettings,
 };
 
@@ -627,55 +626,54 @@ function sortedTop(obj, n) {
 async function loadPlus() {
   const el = document.getElementById('adm-plus-content');
   el.innerHTML = `
-    <div class="adm-card">
-      <div class="adm-card__header" style="display:flex;align-items:center;justify-content:space-between;">
-        <span>⭐ Zenter Plus</span>
-        <label class="adm-switch">
-          <input type="checkbox" data-config="plus_enabled" ${platformConfig.plus_enabled !== false ? 'checked' : ''}>
-          <span class="adm-switch__track"></span>
-        </label>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;">
+
+      <div class="adm-card">
+        <div class="adm-card__header" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>⭐ Zenter Plus</span>
+          <label class="adm-switch">
+            <input type="checkbox" data-config="plus_enabled" ${platformConfig.plus_enabled !== false ? 'checked' : ''}>
+            <span class="adm-switch__track"></span>
+          </label>
+        </div>
+        <div class="adm-card__body" style="padding:16px 20px;">
+          <p style="font-size:13px;color:var(--adm-text-muted);margin:0 0 12px;">
+            When enabled, free users are limited to the number of active chats below. Plus members get unlimited chats and premium features.
+          </p>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <label style="font-size:13px;font-weight:600;">Free active chats:</label>
+            <input type="number" id="adm-free-chat-limit" min="1" max="20"
+              value="${platformConfig.free_active_chats ?? 2}"
+              style="width:64px;padding:6px 8px;border:1px solid var(--adm-border);border-radius:6px;background:var(--adm-surface);color:var(--adm-text);font-size:13px;" />
+            <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-save-chat-limit">Save</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap;">
+            <label style="font-size:13px;font-weight:600;">Base price (paise):</label>
+            <input type="number" id="adm-plus-price" min="100" step="100"
+              value="${platformConfig.plus_price_paise ?? 4900}"
+              style="width:80px;padding:6px 8px;border:1px solid var(--adm-border);border-radius:6px;background:var(--adm-surface);color:var(--adm-text);font-size:13px;" />
+            <span style="font-size:12px;color:var(--adm-text-dim);">4900 = ₹49 &nbsp;|&nbsp; 900 = ₹9</span>
+            <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-save-plus-price">Save</button>
+          </div>
+          <div style="margin-top:10px;padding:10px 14px;background:var(--adm-surface-2);border-radius:6px;font-size:12px;color:var(--adm-text-dim);">
+            💬 <strong style="color:var(--adm-text);">Plus benefits:</strong> Unlimited chats · Verified badge · Featured profile · Priority visibility · Early supporter badge
+          </div>
+        </div>
       </div>
-      <div class="adm-card__body" style="padding:16px 20px;">
-        <p style="font-size:13px;color:var(--adm-text-muted);margin:0 0 12px;">
-          When enabled, free users are limited to the number of active chats below. Plus members get unlimited chats and premium features.
-        </p>
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-          <label style="font-size:13px;font-weight:600;">Free active chats:</label>
-          <input type="number" id="adm-free-chat-limit" min="1" max="20"
-            value="${platformConfig.free_active_chats ?? 2}"
-            style="width:64px;padding:6px 8px;border:1px solid var(--adm-border);border-radius:6px;background:var(--adm-surface);color:var(--adm-text);font-size:13px;" />
-          <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-save-chat-limit">Save</button>
+
+      <div class="adm-card" style="grid-column:1/-1;">
+        <div class="adm-card__header" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>🎟️ Promo Codes</span>
+          <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-add-coupon">+ New Coupon</button>
         </div>
-        <div style="display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap;">
-          <label style="font-size:13px;font-weight:600;">Base price (paise):</label>
-          <input type="number" id="adm-plus-price" min="100" step="100"
-            value="${platformConfig.plus_price_paise ?? 4900}"
-            style="width:80px;padding:6px 8px;border:1px solid var(--adm-border);border-radius:6px;background:var(--adm-surface);color:var(--adm-text);font-size:13px;" />
-          <span style="font-size:12px;color:var(--adm-text-dim);">4900 = ₹49 &nbsp;|&nbsp; 900 = ₹9</span>
-          <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-save-plus-price">Save</button>
-        </div>
-        <div style="margin-top:10px;padding:10px 14px;background:var(--adm-surface-2);border-radius:6px;font-size:12px;color:var(--adm-text-dim);">
-          💬 <strong style="color:var(--adm-text);">Plus benefits:</strong> Unlimited chats · Verified badge · Featured profile · Priority visibility · Early supporter badge
+        <div class="adm-card__body" id="adm-coupons-list" style="padding:16px 20px;">
+          <div class="adm-empty" style="padding:24px;">Loading…</div>
         </div>
       </div>
+
     </div>`;
 
   wireUpPlusSettings();
-}
-
-async function loadPromo() {
-  const el = document.getElementById('adm-promo-content');
-  el.innerHTML = `
-    <div class="adm-card">
-      <div class="adm-card__header" style="display:flex;align-items:center;justify-content:space-between;">
-        <span>🎟️ Promo Codes</span>
-        <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-add-coupon">+ New Coupon</button>
-      </div>
-      <div class="adm-card__body" id="adm-coupons-list" style="padding:16px 20px;">
-        <div class="adm-empty" style="padding:24px;">Loading…</div>
-      </div>
-    </div>`;
-
   await loadCoupons();
   document.getElementById('adm-add-coupon')?.addEventListener('click', () => openCouponForm(null));
 }
