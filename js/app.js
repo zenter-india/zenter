@@ -4,6 +4,7 @@
 
 import { mountChrome, highlightActiveNav, $, $$, on, toast } from './ui.js';
 import { whenReady, onAuthChange, getCurrentUser, logout, requireAuth } from './auth.js';
+import { trackUserActivity } from './supabase.js';
 import { currentRoute } from './utils.js';
 import { ROUTES, STORAGE_KEYS } from './config.js';
 
@@ -322,4 +323,17 @@ async function loadAnnouncementBar(route) {
 // Surface a one-time ready signal for debugging in DevTools.
 whenReady().then((user) => {
   window.__hm = { ready: true, user };
+
+  // Track user activity on app load
+  if (user?.id) {
+    trackUserActivity(user.id);
+
+    // Periodically update activity (every 5 minutes)
+    setInterval(() => trackUserActivity(user.id), 5 * 60 * 1000);
+
+    // Track activity on user interaction
+    ['click', 'keydown', 'mousemove', 'touchstart'].forEach(event => {
+      document.addEventListener(event, () => trackUserActivity(user.id), { once: true });
+    });
+  }
 });

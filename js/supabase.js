@@ -61,7 +61,8 @@ export async function getAdminStats() {
   const [usersR, activeR, conxR, feedbackR, reportsR] = await Promise.all([
     // seeded_users is now a separate table — users table contains only real users
     headCount('users'),
-    headCount('users', q => q.or('is_profile_paused.is.null,is_profile_paused.eq.false')),
+    // Active users: online in the last 15 minutes (real users only)
+    headCount('users', q => q.gte('last_active_at', new Date(Date.now() - 15 * 60 * 1000).toISOString())),
     headCount('connections', q => q.eq('status', 'accepted')),
     headCount('feedbacks'),
     headCount('blocked_users'),
@@ -799,4 +800,14 @@ export function subscribeToAllMessages(userId, conversationIds, onMessage) {
       .subscribe()
   );
   return channels; // caller can .unsubscribe() each
+}
+
+/** Update user's last_active_at timestamp for real-time active user metrics. */
+export async function trackUserActivity(userId) {
+  if (!userId) return;
+  try {
+    await supabase.rpc('update_user_activity', { p_user_id: userId });
+  } catch (err) {
+    console.warn('[activity] tracking failed', err);
+  }
 }
