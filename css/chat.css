@@ -384,12 +384,19 @@
 /* Mobile (≤768px) — single column, fullscreen chat */
 @media (max-width: 768px) {
   .hm-chat-layout {
+    display: grid;
     grid-template-columns: 1fr;
+    gap: var(--hm-space-3);
   }
   .hm-chat-layout__sidebar {
     display: block;
     border: none;
     padding: var(--hm-space-2);
+    min-height: auto;
+  }
+  /* Hide main content area when no chat selected (show only chat list) */
+  .hm-chat-layout:not(.has-active-chat) .hm-chat-layout__main {
+    display: none;
   }
   /* When a chat is open on mobile, make it fixed fullscreen — no page scroll */
   .hm-chat-layout.has-active-chat {
@@ -402,6 +409,11 @@
     background: var(--hm-bg);
     padding: 0;
     margin: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .hm-chat-layout.has-active-chat .hm-chat-layout__main {
+    display: block;
   }
   .hm-chat-layout.has-active-chat .hm-chat-layout__sidebar {
     display: none;
