@@ -4,7 +4,7 @@
 import { requireAdmin, logout, onAuthChange } from './auth.js';
 import { formatPhonePretty }    from './utils.js';
 
-const ROUTES = ['dashboard','users','seeded','seeded-requests','feedback','reports','exams','analytics','settings'];
+const ROUTES = ['dashboard','users','seeded','seeded-requests','feedback','reports','exams','analytics','plus','settings'];
 const loaded      = new Set();
 let allUsers      = [];
 let allSeeded     = [];
@@ -108,6 +108,7 @@ const LOADERS = {
   reports:    loadReports,
   exams:      loadExams,
   analytics:  loadAnalytics,
+  plus:       loadPlus,
   settings:   loadSettings,
 };
 
@@ -622,6 +623,102 @@ function sortedTop(obj, n) {
   return Object.fromEntries(entries);
 }
 
+async function loadPlus() {
+  const el = document.getElementById('adm-plus-content');
+  el.innerHTML = `
+    <div style="display:grid;gap:16px;">
+
+      <!-- Settings Card -->
+      <div class="adm-card">
+        <div class="adm-card__header" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>⭐ Zenter Plus Settings</span>
+          <label class="adm-switch">
+            <input type="checkbox" data-config="plus_enabled" ${platformConfig.plus_enabled !== false ? 'checked' : ''}>
+            <span class="adm-switch__track"></span>
+          </label>
+        </div>
+        <div class="adm-card__body" style="padding:16px 20px;">
+          <p style="font-size:13px;color:var(--adm-text-muted);margin:0 0 12px;">
+            When enabled, free users are limited to the number of active chats below. Plus members get unlimited chats and premium features.
+          </p>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <label style="font-size:13px;font-weight:600;">Free active chats:</label>
+            <input type="number" id="adm-free-chat-limit" min="1" max="20"
+              value="${platformConfig.free_active_chats ?? 2}"
+              style="width:64px;padding:6px 8px;border:1px solid var(--adm-border);border-radius:6px;background:var(--adm-surface);color:var(--adm-text);font-size:13px;" />
+            <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-save-chat-limit">Save</button>
+          </div>
+          <div style="margin-top:10px;padding:10px 14px;background:var(--adm-surface-2);border-radius:6px;font-size:12px;color:var(--adm-text-dim);">
+            💬 <strong style="color:var(--adm-text);">Plus benefits:</strong> Unlimited chats · Verified badge · Featured profile · Priority visibility · Early supporter badge
+          </div>
+        </div>
+      </div>
+
+      <!-- Pricing Card -->
+      <div class="adm-card">
+        <div class="adm-card__header" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>💳 Pricing Tiers</span>
+          <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-add-pricing">+ New Tier</button>
+        </div>
+        <div class="adm-card__body" id="adm-pricing-list" style="padding:16px 20px;">
+          <div class="adm-empty" style="padding:24px;">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Promo Codes Card -->
+      <div class="adm-card">
+        <div class="adm-card__header" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>🎟️ Promo Codes</span>
+          <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-add-coupon">+ New Coupon</button>
+        </div>
+        <div class="adm-card__body" id="adm-coupons-list" style="padding:16px 20px;">
+          <div class="adm-empty" style="padding:24px;">Loading…</div>
+        </div>
+      </div>
+
+    </div>`;
+
+  wireUpPlusSettings();
+  await loadPricingTiers();
+  await loadCoupons();
+  document.getElementById('adm-add-coupon')?.addEventListener('click', () => openCouponForm(null));
+  document.getElementById('adm-add-pricing')?.addEventListener('click', () => openPricingForm(null));
+}
+
+function wireUpPlusSettings() {
+  document.querySelectorAll('[data-config]').forEach(input => {
+    if (input.dataset.config === 'plus_enabled') {
+      input.addEventListener('change', async () => {
+        const { adminUpdateConfig } = await import('./supabase.js');
+        const { error } = await adminUpdateConfig('plus_enabled', input.checked, adminPhone);
+        if (error) { toast('Save failed: ' + error.message, 'error'); input.checked = !input.checked; return; }
+        platformConfig.plus_enabled = input.checked;
+        toast(`Plus feature ${input.checked ? 'enabled' : 'disabled'} ✓`, 'success');
+      });
+    }
+  });
+
+  document.getElementById('adm-save-chat-limit')?.addEventListener('click', async () => {
+    const val = parseInt(document.getElementById('adm-free-chat-limit')?.value, 10);
+    if (!val || val < 1) { toast('Enter a valid number (min 1)', 'error'); return; }
+    const { adminUpdateConfig } = await import('./supabase.js');
+    const { error } = await adminUpdateConfig('free_active_chats', val, adminPhone);
+    if (error) { toast('Save failed: ' + error.message, 'error'); return; }
+    platformConfig.free_active_chats = val;
+    toast(`Free active chats set to ${val} ✓`, 'success');
+  });
+
+  document.getElementById('adm-save-plus-price')?.addEventListener('click', async () => {
+    const val = parseInt(document.getElementById('adm-plus-price')?.value, 10);
+    if (!val || val < 100) { toast('Enter a valid price in paise (min 100 = ₹1)', 'error'); return; }
+    const { adminUpdateConfig } = await import('./supabase.js');
+    const { error } = await adminUpdateConfig('plus_price_paise', val, window._adminPhone);
+    if (error) { toast('Save failed: ' + error.message, 'error'); return; }
+    platformConfig.plus_price_paise = val;
+    toast(`Price set to ₹${val/100} ✓`, 'success');
+  });
+}
+
 async function loadSettings() {
   const el    = document.getElementById('adm-settings-content');
   const ft    = platformConfig.feature_toggles || {};
@@ -643,50 +740,7 @@ async function loadSettings() {
         </div>
       </div>
 
-      <div class="adm-card adm-settings-card">
-        <div class="adm-card__header" style="display:flex;align-items:center;justify-content:space-between;">
-          <span>⭐ Zenter Plus</span>
-          <label class="adm-switch">
-            <input type="checkbox" data-config="plus_enabled" ${platformConfig.plus_enabled !== false ? 'checked' : ''}>
-            <span class="adm-switch__track"></span>
-          </label>
-        </div>
-        <div class="adm-card__body" style="padding:16px 20px;">
-          <p style="font-size:13px;color:var(--adm-text-muted);margin:0 0 12px;">
-            When enabled, free users are limited to the number of active chats below. Plus members get unlimited chats and premium features.
-          </p>
-          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-            <label style="font-size:13px;font-weight:600;">Free active chats:</label>
-            <input type="number" id="adm-free-chat-limit" min="1" max="20"
-              value="${platformConfig.free_active_chats ?? 2}"
-              style="width:64px;padding:6px 8px;border:1px solid var(--adm-border);border-radius:6px;background:var(--adm-surface);color:var(--adm-text);font-size:13px;" />
-            <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-save-chat-limit">Save</button>
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap;">
-            <label style="font-size:13px;font-weight:600;">Base price (paise):</label>
-            <input type="number" id="adm-plus-price" min="100" step="100"
-              value="${platformConfig.plus_price_paise ?? 4900}"
-              style="width:80px;padding:6px 8px;border:1px solid var(--adm-border);border-radius:6px;background:var(--adm-surface);color:var(--adm-text);font-size:13px;" />
-            <span style="font-size:12px;color:var(--adm-text-dim);">4900 = ₹49 &nbsp;|&nbsp; 900 = ₹9</span>
-            <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-save-plus-price">Save</button>
-          </div>
-          <div style="margin-top:10px;padding:10px 14px;background:var(--adm-surface-2);border-radius:6px;font-size:12px;color:var(--adm-text-dim);">
-            💬 <strong style="color:var(--adm-text);">Plus benefits:</strong> Unlimited chats · Verified badge · Featured profile · Priority visibility · Early supporter badge
-          </div>
-        </div>
-      </div>
-
-      <div class="adm-card adm-settings-card" style="grid-column:1/-1;">
-        <div class="adm-card__header" style="display:flex;align-items:center;justify-content:space-between;">
-          <span>🎟️ Promo Codes</span>
-          <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-add-coupon">+ New Coupon</button>
-        </div>
-        <div class="adm-card__body" id="adm-coupons-list" style="padding:16px 20px;">
-          <div class="adm-empty" style="padding:24px;">Loading…</div>
-        </div>
-      </div>
-
-      <div class="adm-card adm-settings-card" style="grid-column:1/-1;">
+<div class="adm-card adm-settings-card" style="grid-column:1/-1;">
         <div class="adm-card__header">📋 Recent Audit Log</div>
         <div class="adm-card__body" id="adm-audit-log"><div class="adm-empty" style="padding:24px;">Loading…</div></div>
       </div>
@@ -833,6 +887,84 @@ async function loadCoupons() {
         await loadCoupons();
       });
     });
+  });
+}
+
+async function loadPricingTiers() {
+  const el = document.getElementById('adm-pricing-list');
+  if (!el) return;
+
+  // Get current pricing from platform config
+  const basePrice = platformConfig.plus_price_paise ?? 4900;
+  const priceRupees = Math.round(basePrice / 100);
+
+  el.innerHTML = `<table class="adm-table">
+    <thead><tr>
+      <th>Tier Name</th><th>Price</th><th>Description</th><th>Actions</th>
+    </tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Standard</strong></td>
+        <td><strong>₹${priceRupees}</strong></td>
+        <td>Base price for Zenter Plus</td>
+        <td>
+          <button class="adm-btn adm-btn--sm adm-btn--primary" id="adm-edit-price">Edit</button>
+        </td>
+      </tr>
+      <tr style="opacity:0.7;">
+        <td>With Coupon</td>
+        <td>Varies</td>
+        <td>Apply promo codes for discounts</td>
+        <td><span style="font-size:12px;color:var(--adm-text-muted);">See Promo Codes</span></td>
+      </tr>
+    </tbody></table>`;
+
+  document.getElementById('adm-edit-price')?.addEventListener('click', () => openPricingForm());
+}
+
+function openPricingForm() {
+  const basePrice = platformConfig.plus_price_paise ?? 4900;
+  const priceRupees = Math.round(basePrice / 100);
+
+  const overlay = document.createElement('div');
+  overlay.className = 'adm-overlay';
+  overlay.innerHTML = `
+    <div class="adm-dialog" style="max-width:400px;">
+      <h4>Edit Zenter Plus Pricing</h4>
+      <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--adm-text-muted);display:block;margin-bottom:4px;">Price in Rupees (₹)</label>
+          <input type="number" id="pricing-rupees" class="adm-search" placeholder="49" min="1" step="1"
+                 style="width:100%;padding:10px;font-size:14px;"
+                 value="${priceRupees}" />
+        </div>
+        <div style="padding:12px;background:var(--adm-surface-2);border-radius:6px;font-size:12px;color:var(--adm-text-muted);">
+          💡 This is the base price shown on the Plus page. Promo codes will offer discounts on this price.
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="adm-btn adm-btn--ghost" id="pricing-cancel">Cancel</button>
+        <button class="adm-btn adm-btn--ok" id="pricing-save">Save</button>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#pricing-cancel').addEventListener('click', () => overlay.remove());
+
+  overlay.querySelector('#pricing-save').addEventListener('click', async () => {
+    const priceRupees = parseInt(overlay.querySelector('#pricing-rupees').value, 10);
+    if (!priceRupees || priceRupees < 1) { toast('Enter a valid price (min 1)', 'error'); return; }
+
+    const pricePaise = priceRupees * 100;
+    const { adminUpdateConfig } = await import('./supabase.js');
+    const { error } = await adminUpdateConfig('plus_price_paise', pricePaise, adminPhone);
+    if (error) { toast('Save failed: ' + error.message, 'error'); return; }
+
+    platformConfig.plus_price_paise = pricePaise;
+    toast(`Price updated to ₹${priceRupees} ✓`, 'success');
+    overlay.remove();
+    await loadPricingTiers();
   });
 }
 

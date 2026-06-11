@@ -19,6 +19,10 @@ let realtimeChannel = null;    // Supabase realtime subscription
 let lastReadMap = {};          // { convId: ISO timestamp } — persisted to sessionStorage
 let allUsersMap = new Map();   // userId → { full_name, phone, ... } — injected by caller
 let onUnreadChange = null;     // callback(totalUnread) — wired by dashboard
+let typingChannel = null;      // Supabase realtime for typing status
+let isTyping = false;          // whether current user is typing
+let typingTimeout = null;      // timeout to clear typing status
+let otherUserTyping = false;   // whether other user is typing
 
 const STORAGE_KEY_BASE = 'hm.chat.lastRead';
 let STORAGE_KEY = STORAGE_KEY_BASE; // updated to per-user in mountChat
@@ -201,6 +205,12 @@ async function openChat(convId) {
           <div class="hm-loader__spinner" style="margin:0 auto;"></div>
         </div>
       </div>
+      <div class="hm-chat-typing-indicator" id="hm-chat-typing" hidden>
+        <span style="font-size:12px;color:var(--hm-text-muted);">typing</span>
+        <span class="hm-typing-dots">
+          <span></span><span></span><span></span>
+        </span>
+      </div>
       <div class="hm-chat-composer">
         <textarea class="hm-chat-composer__input" id="hm-chat-input"
                   placeholder="Type a message…" rows="1" maxlength="2000"></textarea>
@@ -220,6 +230,25 @@ async function openChat(convId) {
     // Auto-resize textarea
     input.style.height = 'auto';
     input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+
+    // Broadcast typing status
+    const hasText = input.value.trim().length > 0;
+    if (hasText && !isTyping) {
+      isTyping = true;
+      broadcastTyping(convId, true);
+    } else if (!hasText && isTyping) {
+      isTyping = false;
+      broadcastTyping(convId, false);
+    }
+
+    // Clear timeout and set new one
+    clearTimeout(typingTimeout);
+    if (isTyping) {
+      typingTimeout = setTimeout(() => {
+        isTyping = false;
+        broadcastTyping(convId, false);
+      }, 3000); // Clear typing after 3 seconds of no input
+    }
   });
 
   input.addEventListener('keydown', (e) => {
@@ -256,7 +285,7 @@ async function openChat(convId) {
   // Mark as read
   markAsRead(convId);
 
-  // Subscribe to realtime
+  // Subscribe to realtime messages
   realtimeChannel = subscribeToMessages(convId, (msg) => {
     appendMessage(msg);
     if (msg.sender_id !== myUserId) {
@@ -266,6 +295,12 @@ async function openChat(convId) {
     if (msg.message_type === 'system') {
       loadExchangeStatus(convId);
     }
+  });
+
+  // Subscribe to typing status
+  typingChannel = subscribeToTyping(convId, conv.otherId, (isOtherTyping) => {
+    otherUserTyping = isOtherTyping;
+    showTypingIndicator(isOtherTyping);
   });
 
   // Analytics
@@ -278,6 +313,16 @@ function closeChat() {
     realtimeChannel.unsubscribe();
     realtimeChannel = null;
   }
+  if (typingChannel) {
+    typingChannel.unsubscribe();
+    typingChannel = null;
+  }
+  if (isTyping) {
+    isTyping = false;
+    clearTimeout(typingTimeout);
+  }
+  otherUserTyping = false;
+  showTypingIndicator(false);
   document.getElementById('hm-chat-layout')?.classList.remove('has-active-chat');
   document.getElementById('hm-chat-main').innerHTML = `
     <div class="hm-chat-empty" id="hm-chat-empty">
@@ -371,6 +416,13 @@ async function handleSend() {
   input.value = '';
   input.style.height = 'auto';
   sendBtn.disabled = true;
+
+  // Clear typing indicator
+  if (isTyping) {
+    isTyping = false;
+    clearTimeout(typingTimeout);
+    await broadcastTyping(activeConvId, false);
+  }
 
   const { error } = await sendMessage(activeConvId, myUserId, body);
   if (error) {
@@ -541,6 +593,61 @@ function formatRelativeTime(iso) {
 function formatPhone(phone) {
   if (!phone) return '—';
   return phone.replace(/(\+91)(\d{5})(\d{5})/, '$1 $2 $3');
+}
+
+// ─── Typing indicators ─────────────────────────────────────────────────────────
+
+async function broadcastTyping(convId, typing) {
+  if (!convId) return;
+  try {
+    const { from: f, query: q } = await import('./supabase.js');
+    await q(
+      f('typing_status').upsert(
+        { conversation_id: convId, user_id: myUserId, is_typing: typing, updated_at: new Date().toISOString() },
+        { onConflict: 'conversation_id,user_id' }
+      )
+    );
+  } catch (err) {
+    console.warn('[typing] broadcast failed', err);
+  }
+}
+
+function subscribeToTyping(convId, otherUserId, callback) {
+  try {
+    const { supabase } = window.__hm || {};
+    if (!supabase) return null;
+
+    return supabase
+      .channel(`typing:${convId}`)
+      .on('postgres_changes',
+        { event: '*', schema: 'public', table: 'typing_status', filter: `conversation_id=eq.${convId}` },
+        (payload) => {
+          const data = payload.new;
+          if (data.user_id !== myUserId) {
+            callback(data.is_typing);
+          }
+        }
+      )
+      .subscribe();
+  } catch (err) {
+    console.warn('[typing] subscribe failed', err);
+    return null;
+  }
+}
+
+function showTypingIndicator(show) {
+  const el = document.getElementById('hm-chat-typing');
+  if (!el) return;
+  if (show) {
+    el.hidden = false;
+    // Auto-scroll to typing indicator
+    const messagesEl = document.getElementById('hm-chat-messages');
+    if (messagesEl) {
+      setTimeout(() => messagesEl.scrollTop = messagesEl.scrollHeight, 0);
+    }
+  } else {
+    el.hidden = true;
+  }
 }
 
 // ─── Public API ──────────────────────────────────────────────────────────────

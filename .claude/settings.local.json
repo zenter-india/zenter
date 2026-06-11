@@ -108,7 +108,22 @@
       "Bash(sed -i '' 's|Connect on mutual yes — no numbers shared until both agree.|Connect on mutual yes. Numbers shared only after both agree.|g' index.html)",
       "Bash(sed -i '' 's|The centre that matters most — we match you with others going there.|The centre that matters most. We match you with others going there.|g' onboarding.html)",
       "Bash(sed -i '' 's|No more wasting your last week prep time, fishing for that same centre aspirant. Here at Zenter, we help you find the right people going to the same centre as you!|No more wasting your last week prep time, searching through random WhatsApp and Telegram groups with unverified users. Here at Zenter, we help you find the right people going to the same centre as you!|g' login.html)",
-      "Bash(sed -i '' 's|Get started — it'\\\\''s free|Get started - it'\\\\''s free|g' /Users/apple/HallMate/index.html)"
+      "Bash(sed -i '' 's|Get started — it'\\\\''s free|Get started - it'\\\\''s free|g' /Users/apple/HallMate/index.html)",
+      "Bash(git commit *)",
+      "Bash(node --check /Users/apple/HallMate/js/app.js)",
+      "Bash(node --check /Users/apple/HallMate/js/ui.js)",
+      "Bash(node --check /Users/apple/HallMate/js/supabase.js)",
+      "Bash(node --check /Users/apple/HallMate/js/dashboard.js)",
+      "Bash(node --check /Users/apple/HallMate/js/chat.js)",
+      "Bash(node --check /Users/apple/HallMate/js/connections.js)",
+      "Bash(git reset *)",
+      "mcp__cdf8ba1f-7903-4611-ac07-eaadc71ec6bd__list_edge_functions",
+      "mcp__cdf8ba1f-7903-4611-ac07-eaadc71ec6bd__get_edge_function",
+      "mcp__cdf8ba1f-7903-4611-ac07-eaadc71ec6bd__get_logs",
+      "Bash(node --check /Users/apple/HallMate/js/admin.js)",
+      "mcp__cdf8ba1f-7903-4611-ac07-eaadc71ec6bd__deploy_edge_function",
+      "Bash(node --check /Users/apple/HallMate/js/profile.js)",
+      "Bash(curl -s http://localhost:5173)"
     ]
   }
 }

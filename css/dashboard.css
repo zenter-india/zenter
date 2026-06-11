@@ -1,5 +1,8 @@
 /* HallMate — Dashboard + profile page styling. */
 
+/* Remove default page padding at top for dashboard (tabs start immediately) */
+#hm-main { padding-top: 0; }
+
 /* ── Connections page — received requests link banner ───────────────────── */
 .hm-conn-requests-link {
   display: flex;
@@ -150,6 +153,13 @@
   display: flex; align-items: flex-end; justify-content: space-between;
   gap: var(--hm-space-4);
   margin-bottom: var(--hm-space-5);
+  cursor: pointer;
+  transition: transform 140ms ease-out, opacity 140ms ease-out;
+  will-change: transform;
+}
+.hm-feed-header:hover {
+  transform: translateY(-2px);
+  opacity: 0.85;
 }
 .hm-feed-header h1 { margin-bottom: 4px; }
 .hm-feed-header p  { margin-bottom: 0; }

@@ -112,6 +112,9 @@
   border-bottom: 1px solid var(--hm-border);
   background: var(--hm-surface);
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 .hm-chat-header__back {
   background: none;
@@ -216,6 +219,9 @@
   border-top: 1px solid var(--hm-border);
   background: var(--hm-surface);
   flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
 }
 .hm-chat-composer__input {
   flex: 1;
@@ -255,6 +261,48 @@
 }
 .hm-chat-composer__send:hover:not(:disabled) {
   opacity: 0.85;
+}
+
+/* ── Typing indicator ────────────────────────────────────────────────────────── */
+
+.hm-chat-typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--hm-space-1);
+  padding: var(--hm-space-2) var(--hm-space-4);
+  font-size: var(--hm-text-sm);
+}
+
+.hm-typing-dots {
+  display: flex;
+  gap: 2px;
+}
+
+.hm-typing-dots span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--hm-text-muted);
+  animation: hm-typing-pulse 1.4s infinite;
+}
+
+.hm-typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.hm-typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes hm-typing-pulse {
+  0%, 60%, 100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-4px);
+  }
 }
 
 /* ── Chat empty state ────────────────────────────────────────────────────── */
@@ -362,7 +410,7 @@
     display: inline-flex;
   }
   .hm-chat-layout.has-active-chat .hm-chat-window {
-    height: 100%;
+    height: calc(100vh - var(--hm-navbar-h) - 180px);
     border-radius: 0;
     border: none;
   }

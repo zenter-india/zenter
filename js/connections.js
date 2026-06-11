@@ -223,6 +223,7 @@ function cardHead(user) {
         <p class="hm-mate__name">${esc(name)}</p>
         <div class="hm-mate__badges">
           ${user.gender ? `<span class="hm-badge ${genderCls}">${esc(user.gender)}</span>` : ''}
+          ${user.plus_member ? `<span class="hm-badge hm-badge--plus">⭐ Plus</span>` : ''}
           ${user.is_verified_aspirant ? `<span class="hm-badge hm-badge--verified-full" title="Admit card verified">✓ Verified</span>` : ''}
         </div>
       </div>
@@ -278,7 +279,7 @@ function cardBody(user) {
 function receivedCard(user, conn) {
   if (!user) return '';
   return `
-    <article class="hm-card hm-mate" data-conn-card-id="${esc(user.id)}">
+    <article class="hm-card hm-mate${user.plus_member ? ' hm-mate--plus' : ''}" data-conn-card-id="${esc(user.id)}">
       ${cardHead(user)}
       ${cardBody(user)}
       <div class="hm-mate__footer">
@@ -344,7 +345,7 @@ function connectedCard(user, conn) {
   }
 
   return `
-    <article class="hm-card hm-mate" data-conn-card-id="${esc(user.id)}">
+    <article class="hm-card hm-mate${user.plus_member ? ' hm-mate--plus' : ''}" data-conn-card-id="${esc(user.id)}">
       ${cardHead(user)}
       ${cardBody(user)}
       <div style="padding-top:var(--hm-space-3);border-top:1px solid var(--hm-border);">
