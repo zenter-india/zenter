@@ -304,6 +304,11 @@
           <button type="button" id="hm-coupon-apply" class="hm-btn hm-btn--ghost hm-btn--sm">Apply</button>
         </div>
         <p id="hm-coupon-status" style="font-size:12px;margin-top:6px;min-height:18px;"></p>
+        <button type="button" id="hm-coupon-remove" hidden
+          style="background:none;border:none;color:var(--hm-danger,#dc2626);font-size:12px;font-weight:600;
+                 cursor:pointer;padding:2px 0;text-decoration:underline;">
+          ✕ Remove coupon
+        </button>
       </div>
 
       <!-- CTA -->
@@ -355,6 +360,8 @@
       const couponInput   = document.getElementById('hm-coupon-input');
       const couponApply   = document.getElementById('hm-coupon-apply');
       const couponStatus  = document.getElementById('hm-coupon-status');
+      const couponRemove  = document.getElementById('hm-coupon-remove');
+      let basePrice = null; // remember original price so we can restore on remove
       const priceOriginal = document.getElementById('hm-price-original');
       const priceFinal    = document.getElementById('hm-price-final');
 
@@ -362,6 +369,7 @@
       try {
         const probe = await createRazorpayOrder(me.id, null, true);
         const price = probe.original_paise / 100;
+        basePrice = price;
         document.querySelectorAll('.plus-price').forEach(el => {
           el.innerHTML = `₹${price} <span>/ exam season</span>`;
           el.style.visibility = 'visible';
@@ -412,6 +420,7 @@
             couponStatus.textContent = `✓ Coupon applied! ${probe.coupon_label || ''}`;
             couponInput.disabled = true;
             couponApply.textContent = '✓';
+            if (couponRemove) couponRemove.hidden = false;
             trackEvent('coupon_applied', me.id, { coupon: code, price: discounted });
           } else {
             appliedCoupon = null;
@@ -428,6 +437,26 @@
 
       couponInput?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') couponApply?.click();
+      });
+
+      // Remove coupon — restore base price and re-enable Apply
+      couponRemove?.addEventListener('click', () => {
+        const prevCode = appliedCoupon;
+        appliedCoupon = null;
+        couponInput.value = '';
+        couponInput.disabled = false;
+        couponApply.disabled = false;
+        couponApply.textContent = 'Apply';
+        couponStatus.textContent = '';
+        couponStatus.style.color = 'var(--hm-text-muted)';
+        couponRemove.hidden = true;
+        if (basePrice != null) {
+          priceFinal.textContent = `₹${basePrice}`;
+          priceOriginal.style.display = 'none';
+          btn.textContent = `Get Zenter Plus — ₹${basePrice}`;
+        }
+        couponInput.focus();
+        trackEvent('coupon_removed', me.id, { coupon: prevCode });
       });
 
       // Buy button — Razorpay checkout
