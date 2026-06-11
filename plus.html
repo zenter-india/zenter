@@ -318,7 +318,7 @@
         </button>
         <p id="hm-plus-pay-status" style="text-align:center;font-size:13px;color:var(--hm-text-muted);margin-top:var(--hm-space-2);min-height:20px;"></p>
         <p style="text-align:center;margin-top:var(--hm-space-3);">
-          <a href="/dashboard.html" style="color:var(--hm-primary);font-size:14px;font-weight:600;">← Back to Find Mates</a>
+          <a href="/dashboard.html" style="color:var(--hm-primary);font-size:14px;font-weight:600;">← Back to Home</a>
         </p>
       </div>
 
@@ -346,7 +346,7 @@
       const { data: cfgRows } = await query(from('platform_config').select('key,value'));
       const plusEnabled = cfgRows?.find(r => r.key === 'plus_enabled')?.value !== false;
       if (!plusEnabled) {
-        document.body.innerHTML = '<div style="text-align:center;padding:40px 20px;"><p style="font-size:18px;margin-bottom:20px;">Zenter Plus is not available right now.</p><a href="/dashboard.html" style="color:#FF6B35;text-decoration:none;font-weight:600;">← Back to Dashboard</a></div>';
+        document.body.innerHTML = '<div style="text-align:center;padding:40px 20px;"><p style="font-size:18px;margin-bottom:20px;">Zenter Plus is not available right now.</p><a href="/dashboard.html" style="color:#FF6B35;text-decoration:none;font-weight:600;">← Back to Home</a></div>';
         return;
       }
 
