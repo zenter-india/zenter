@@ -174,11 +174,12 @@ function ensureToastRoot() {
   return toastRoot;
 }
 
-export function toast(message, { variant = 'info', duration = 3200 } = {}) {
+export function toast(message, { variant = 'info', duration = 3200, html = false } = {}) {
   const root = ensureToastRoot();
   const el = document.createElement('div');
   el.className = `hm-toast hm-toast--${variant}`;
-  el.textContent = message;
+  if (html) el.innerHTML = message;
+  else el.textContent = message;
   root.appendChild(el);
   requestAnimationFrame(() => el.classList.add('is-visible'));
   setTimeout(() => {

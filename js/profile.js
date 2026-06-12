@@ -551,13 +551,16 @@ function wireAccountActions() {
     btn.disabled = true; btn.textContent = 'Submitting…';
     const { requestAdmitCardVerification } = await import('./supabase.js');
     const { error } = await requestAdmitCardVerification(profilePhone, ntaVal);
-    btn.disabled = false; btn.textContent = 'Request Verification';
+    btn.disabled = false; btn.textContent = 'Get Verified';
     if (error) { toast(error.message || 'Could not submit. Please try again.', { variant: 'danger' }); return; }
     profileData.nta_application_number = ntaVal;
     profileData.verification_requested = true;
     profileData.verification_rejected  = false;
     hydrateAll(); // re-render to show pending state
-    toast('Verification request submitted. We\'ll review your details shortly.', { variant: 'success' });
+    toast(
+      'Request submitted. We\'ll review your details and mark your profile <span class="hm-badge hm-badge--verified-full" style="font-size:11px;padding:1px 6px;">✓ Verified</span> shortly.',
+      { variant: 'success', html: true }
+    );
   });
 
   // ── Pause / Reactivate ────────────────────────────────────────────────────

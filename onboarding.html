@@ -208,6 +208,70 @@
 
   <div data-include="footer"></div>
 
+  <!-- Age confirmation modal — shown before final profile submit -->
+  <div id="hm-age-modal" class="hm-age-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="hm-age-title">
+    <div class="hm-age-modal">
+      <h3 id="hm-age-title" class="hm-age-modal__title">Age confirmation (18+)</h3>
+      <p class="hm-age-modal__text">
+        By continuing, you confirm that you are 18 years of age or older.
+        If you are under 18 years of age, please access Zenter only under the
+        supervision and guidance of your parent or legal guardian.
+      </p>
+      <label class="hm-age-modal__checkbox">
+        <input type="checkbox" id="hm-age-confirm-checkbox" />
+        <span>I have read and agree to the above.</span>
+      </label>
+      <div class="hm-age-modal__actions">
+        <button type="button" class="hm-btn hm-btn--ghost" id="hm-age-cancel">Cancel</button>
+        <button type="button" class="hm-btn hm-btn--primary" id="hm-age-confirm" disabled>Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .hm-age-modal-overlay {
+      position: fixed; inset: 0; z-index: 1100;
+      background: rgba(15, 23, 42, 0.52);
+      display: none;
+      align-items: center; justify-content: center;
+      padding: var(--hm-space-4);
+    }
+    .hm-age-modal-overlay.is-open { display: flex; }
+    .hm-age-modal {
+      width: 100%; max-width: 440px;
+      background: var(--hm-surface);
+      border-radius: var(--hm-radius-lg);
+      box-shadow: var(--hm-shadow-lg, 0 24px 60px rgba(0,0,0,.25));
+      padding: var(--hm-space-5);
+    }
+    .hm-age-modal__title {
+      font-size: var(--hm-text-lg);
+      font-weight: 700;
+      margin: 0 0 var(--hm-space-3);
+    }
+    .hm-age-modal__text {
+      font-size: var(--hm-text-sm);
+      color: var(--hm-text-muted);
+      line-height: 1.6;
+      margin: 0 0 var(--hm-space-4);
+    }
+    .hm-age-modal__checkbox {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: var(--hm-text-sm);
+      color: var(--hm-text);
+      cursor: pointer;
+      margin-bottom: var(--hm-space-4);
+    }
+    .hm-age-modal__checkbox input { margin-top: 3px; cursor: pointer; }
+    .hm-age-modal__actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--hm-space-2);
+    }
+  </style>
+
   <script type="module" src="/js/app.js"></script>
   <script type="module" src="/js/onboarding.js"></script>
   <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>

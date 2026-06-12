@@ -13,6 +13,14 @@ import { populateStateSelect, wireDistrictCascade, DISTRICTS_BY_STATE } from './
 
 const { REL } = Relationships;
 
+// States/UTs whose aspirants share exam centres in practice (e.g. Puducherry
+// is a union territory geographically embedded in Tamil Nadu). Listed pairs
+// are matched both ways — a user from either side sees the other's mates too.
+const NEIGHBOURING_STATES = {
+  'Tamil Nadu': ['Puducherry'],
+  'Puducherry': ['Tamil Nadu'],
+};
+
 let allUsers        = [];
 let rawUserMap      = new Map(); // all fetched users keyed by id — used by renderRequests()
 let displayedUsers  = [];
@@ -126,8 +134,8 @@ async function init() {
   const plusNavItem = document.getElementById('hm-plus-nav-item');
   if (plusNavItem) plusNavItem.hidden = myPlusMember;
 
-  // Non-NEET UG exam types → maintenance page (product focus is NEET UG).
-  if (myExamType !== 'NEET UG') {
+  // Only NEET UG and NEET PG are live; other exam types → maintenance page.
+  if (myExamType !== 'NEET UG' && myExamType !== 'NEET PG') {
     window.location.replace('/maintenance.html');
     return;
   }
@@ -232,11 +240,13 @@ async function loadData() {
     if (u.id === myUserId) return false;
     if (blockedUserIds.has(u.id)) return false; // users I blocked
     if (blockedByIds.has(u.id))   return false; // users who blocked me
-    // Exam-centre-state matching: only show users going to the same exam state.
+    // Exam-centre-state matching: only show users going to the same exam state
+    // (or a neighbouring state/UT, e.g. Tamil Nadu ↔ Puducherry).
     // Home location is irrelevant — two users from different cities still match
-    // as long as their exam centre is in the same state.
+    // as long as their exam centre is in the same (or neighbouring) state.
     if (myExamCentreState) {
-      if (u.exam_centre_state !== myExamCentreState) return false;
+      const allowedStates = [myExamCentreState, ...(NEIGHBOURING_STATES[myExamCentreState] || [])];
+      if (!allowedStates.includes(u.exam_centre_state)) return false;
     }
     return true;
   });
@@ -348,6 +358,12 @@ function wireTabs() {
 
 async function activateTab(name) {
   const tab = VALID_TABS.includes(name) ? name : 'find-mates';
+
+  // Reset scroll position when switching tabs — otherwise the new (often
+  // shorter) panel renders below the fold and mobile/tablet browsers clamp
+  // the scroll to the bottom of the page, making it look like it "jumped"
+  // to the footer.
+  window.scrollTo(0, 0);
 
   document.querySelectorAll('.hm-tab[data-tab]').forEach(btn => {
     const active = btn.dataset.tab === tab;

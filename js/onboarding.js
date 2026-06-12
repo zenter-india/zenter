@@ -93,6 +93,39 @@ async function init() {
     e.preventDefault();
     collected.travel_mode = val('hm-travel-mode') || null;
     collected.stay_plan   = val('hm-stay-plan')   || null;
+    openAgeModal();
+  });
+
+  wireAgeModal();
+}
+
+// ─── Age confirmation modal ──────────────────────────────────────────────────
+
+function openAgeModal() {
+  const overlay = document.getElementById('hm-age-modal');
+  if (!overlay) { saveProfile(); return; }
+  overlay.classList.add('is-open');
+}
+
+function closeAgeModal() {
+  document.getElementById('hm-age-modal')?.classList.remove('is-open');
+}
+
+function wireAgeModal() {
+  const overlay  = document.getElementById('hm-age-modal');
+  const checkbox = document.getElementById('hm-age-confirm-checkbox');
+  const confirm  = document.getElementById('hm-age-confirm');
+  const cancel   = document.getElementById('hm-age-cancel');
+  if (!overlay || !checkbox || !confirm || !cancel) return;
+
+  checkbox.addEventListener('change', () => {
+    confirm.disabled = !checkbox.checked;
+  });
+
+  cancel.addEventListener('click', closeAgeModal);
+
+  confirm.addEventListener('click', async () => {
+    closeAgeModal();
     await saveProfile();
   });
 }

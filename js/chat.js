@@ -542,9 +542,13 @@ async function loadExchangeStatus(convId) {
       // I need to respond
       const requester = allUsersMap.get(exchange.requester_id);
       banner.innerHTML = `
-        <span class="hm-exchange-banner__text">${esc(requester?.full_name || 'Someone')} wants to share contact details.</span>
-        <button class="hm-btn hm-btn--primary hm-btn--sm" data-exchange-action="accept" data-exchange-id="${exchange.id}">Accept</button>
-        <button class="hm-btn hm-btn--ghost hm-btn--sm" data-exchange-action="decline" data-exchange-id="${exchange.id}">Decline</button>`;
+        <div style="display:flex;flex-direction:column;align-items:center;gap:var(--hm-space-2);width:100%;">
+          <span class="hm-exchange-banner__text">${esc(requester?.full_name || 'Someone')} wants to exchange contact details.</span>
+          <div style="display:flex;gap:var(--hm-space-2);">
+            <button class="hm-btn hm-btn--primary hm-btn--sm" data-exchange-action="accept" data-exchange-id="${exchange.id}">Accept</button>
+            <button class="hm-btn hm-btn--ghost hm-btn--sm" data-exchange-action="decline" data-exchange-id="${exchange.id}">Decline</button>
+          </div>
+        </div>`;
 
       // Wire buttons
       banner.querySelectorAll('[data-exchange-action]').forEach(btn => {

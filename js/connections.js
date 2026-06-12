@@ -56,9 +56,9 @@ export async function runConnections(root, firebaseUser) {
     return;
   }
 
-  // Non-NEET UG users are redirected to maintenance (product focus is NEET UG).
+  // Only NEET UG and NEET PG are live; other exam types → maintenance page.
   // Legacy users with null exam_type are treated as NEET UG.
-  if (me.exam_type && me.exam_type !== 'NEET UG') {
+  if (me.exam_type && me.exam_type !== 'NEET UG' && me.exam_type !== 'NEET PG') {
     window.location.replace('/maintenance.html');
     return;
   }
@@ -121,11 +121,20 @@ export async function runConnections(root, firebaseUser) {
     }
   }
 
+  // New-connections badge: shows the count of newly-accepted connections the
+  // user hasn't seen yet on this tab, then is dismissed for good once shown.
+  const seenKey = `hm.connections.seen.${me.id}`;
+  let seenIds = [];
+  try { seenIds = JSON.parse(localStorage.getItem(seenKey) || '[]'); } catch {}
+  const seenSet = new Set(seenIds);
+  const newCount = accepted.filter(c => !seenSet.has(c.id)).length;
+
   root.innerHTML = `
     ${renderRequestsLink(received.length)}
     ${renderSection({
       title: 'Connected', icon: '🔗',
       count: accepted.length,
+      newCount,
       empty: 'You have not connected with anyone yet.',
       cards: accepted.map(c => {
         const otherId = c.sender_id === me.id ? c.receiver_id : c.sender_id;
@@ -133,6 +142,12 @@ export async function runConnections(root, firebaseUser) {
       }),
     })}
   `;
+
+  // Mark all currently-accepted connections as seen so the "New" badge only
+  // appears the first time it's shown.
+  if (newCount > 0) {
+    try { localStorage.setItem(seenKey, JSON.stringify(accepted.map(c => c.id))); } catch {}
+  }
 
   // Wire call-exchange buttons
   wireExchangeButtons(root);
@@ -195,13 +210,16 @@ function renderRequestsLink(count) {
     </a>`;
 }
 
-function renderSection({ title, icon, count, empty, cards }) {
+function renderSection({ title, icon, count, newCount = 0, empty, cards }) {
   return `
     <section class="hm-conn-section">
       <header class="hm-conn-section__header">
         <h2 class="hm-conn-section__title">
           <span aria-hidden="true">${icon}</span> ${esc(title)}
           <span class="hm-conn-section__count">${count}</span>
+          ${newCount > 0
+            ? `<span class="hm-conn-section__new-badge">+${newCount} New</span>`
+            : ''}
         </h2>
       </header>
       ${cards.length === 0
@@ -327,7 +345,7 @@ function connectedCard(user, conn) {
     // Masked phone — Call triggers exchange request
     const maskedPhone = maskPhone(phone);
     const callLabel = isPending
-      ? (exchange.requester_id === _myUserId ? '⏳ Exchange Pending' : '📞 Accept Exchange')
+      ? (exchange.requester_id === _myUserId ? '⏳ Waiting for approval' : '📞 Accept Exchange')
       : '📞 Call';
     const callDisabled = isPending && exchange.requester_id === _myUserId;
     phoneSection = `
