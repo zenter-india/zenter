@@ -356,6 +356,13 @@ function wireTabs() {
   });
 }
 
+/** Scroll to the very top of the page, regardless of which element is the scroll container. */
+function scrollPageToTop() {
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+}
+
 async function activateTab(name) {
   const tab = VALID_TABS.includes(name) ? name : 'find-mates';
 
@@ -363,7 +370,7 @@ async function activateTab(name) {
   // shorter) panel renders below the fold and mobile/tablet browsers clamp
   // the scroll to the bottom of the page, making it look like it "jumped"
   // to the footer.
-  window.scrollTo(0, 0);
+  scrollPageToTop();
 
   document.querySelectorAll('.hm-tab[data-tab]').forEach(btn => {
     const active = btn.dataset.tab === tab;
@@ -418,6 +425,11 @@ async function activateTab(name) {
       const { openChatByUserId } = await import('./chat.js');
       openChatByUserId(uid);
     }
+
+    // Re-assert scroll position after the chat panel finishes rendering —
+    // the layout shift from mounting/opening a conversation can otherwise
+    // leave the page scrolled to the composer/footer.
+    requestAnimationFrame(scrollPageToTop);
   }
 
   // Lazy-load Connections — mount once, re-render if data changed

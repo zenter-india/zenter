@@ -334,6 +334,8 @@
   background: var(--hm-surface);
   overflow-y: auto;
   padding: var(--hm-space-3);
+  height: calc(100vh - var(--hm-navbar-h) - 180px);
+  min-height: 400px;
 }
 .hm-chat-layout__main {
   min-width: 0;
@@ -427,7 +429,8 @@
 /* Large desktop (1440px+) — spacious layout */
 @media (min-width: 1440px) {
   .hm-chat-layout { grid-template-columns: 360px 1fr; gap: var(--hm-space-5); }
-  .hm-chat-window { height: calc(100vh - var(--hm-navbar-h) - 160px); min-height: 500px; }
+  .hm-chat-window,
+  .hm-chat-layout__sidebar { height: calc(100vh - var(--hm-navbar-h) - 160px); min-height: 500px; }
   .hm-chat-messages { padding: var(--hm-space-5); }
   .hm-msg { max-width: 60%; }
 }
@@ -437,7 +440,8 @@
 /* Tablet (769px–1023px) — narrower sidebar */
 @media (min-width: 769px) and (max-width: 1023px) {
   .hm-chat-layout { grid-template-columns: 240px 1fr; gap: var(--hm-space-3); }
-  .hm-chat-window { height: calc(100vh - var(--hm-navbar-h) - 160px); min-height: 350px; }
+  .hm-chat-window,
+  .hm-chat-layout__sidebar { height: calc(100vh - var(--hm-navbar-h) - 160px); min-height: 350px; }
   .hm-chat-item__name { font-size: 13px; }
   .hm-chat-item__preview { font-size: 11px; }
   .hm-chat-header__exchange { font-size: 12px; padding: 4px 8px; }
