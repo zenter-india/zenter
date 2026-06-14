@@ -997,6 +997,88 @@ export const DISTRICTS_BY_STATE = {
   ],
 };
 
+// ─── UPSC CMS Exam Centres (48 centres — August 2026 notification) ───────────
+// Each entry maps the centre city to its parent state/UT for storage.
+// The centre name is stored in exam_centre_district; the state in exam_centre_state.
+
+export const UPSC_CMS_CENTRES = [
+  { centre: 'Agartala',                       state: 'Tripura' },
+  { centre: 'Ahmedabad',                      state: 'Gujarat' },
+  { centre: 'Aizawl',                         state: 'Mizoram' },
+  { centre: 'Bareilly',                       state: 'Uttar Pradesh' },
+  { centre: 'Bengaluru',                      state: 'Karnataka' },
+  { centre: 'Bhopal',                         state: 'Madhya Pradesh' },
+  { centre: 'Bhubaneswar',                    state: 'Odisha' },
+  { centre: 'Chandigarh',                     state: 'Chandigarh' },
+  { centre: 'Chennai',                        state: 'Tamil Nadu' },
+  { centre: 'Cuttack',                        state: 'Odisha' },
+  { centre: 'Dehradun',                       state: 'Uttarakhand' },
+  { centre: 'Delhi',                          state: 'Delhi' },
+  { centre: 'Dharwad',                        state: 'Karnataka' },
+  { centre: 'Dispur',                         state: 'Assam' },
+  { centre: 'Faridabad',                      state: 'Haryana' },
+  { centre: 'Gangtok',                        state: 'Sikkim' },
+  { centre: 'Gautam Buddha Nagar (Noida)',    state: 'Uttar Pradesh' },
+  { centre: 'Ghaziabad',                      state: 'Uttar Pradesh' },
+  { centre: 'Gurugram',                       state: 'Haryana' },
+  { centre: 'Hyderabad',                      state: 'Telangana' },
+  { centre: 'Imphal',                         state: 'Manipur' },
+  { centre: 'Itanagar',                       state: 'Arunachal Pradesh' },
+  { centre: 'Jaipur',                         state: 'Rajasthan' },
+  { centre: 'Jammu',                          state: 'Jammu & Kashmir' },
+  { centre: 'Jorhat',                         state: 'Assam' },
+  { centre: 'Kanpur',                         state: 'Uttar Pradesh' },
+  { centre: 'Kochi',                          state: 'Kerala' },
+  { centre: 'Kohima',                         state: 'Nagaland' },
+  { centre: 'Kolkata',                        state: 'West Bengal' },
+  { centre: 'Lucknow',                        state: 'Uttar Pradesh' },
+  { centre: 'Madurai',                        state: 'Tamil Nadu' },
+  { centre: 'Meerut',                         state: 'Uttar Pradesh' },
+  { centre: 'Mumbai',                         state: 'Maharashtra' },
+  { centre: 'Nagpur',                         state: 'Maharashtra' },
+  { centre: 'Panaji (Goa)',                   state: 'Goa' },
+  { centre: 'Patna',                          state: 'Bihar' },
+  { centre: 'Sri Vijaya Puram (Port Blair)',  state: 'Andaman & Nicobar Islands' },
+  { centre: 'Prayagraj',                      state: 'Uttar Pradesh' },
+  { centre: 'Raipur',                         state: 'Chhattisgarh' },
+  { centre: 'Ranchi',                         state: 'Jharkhand' },
+  { centre: 'Sambalpur',                      state: 'Odisha' },
+  { centre: 'Shillong',                       state: 'Meghalaya' },
+  { centre: 'Shimla',                         state: 'Himachal Pradesh' },
+  { centre: 'Srinagar',                       state: 'Jammu & Kashmir' },
+  { centre: 'Thiruvananthapuram',             state: 'Kerala' },
+  { centre: 'Tirupati',                       state: 'Andhra Pradesh' },
+  { centre: 'Udaipur',                        state: 'Rajasthan' },
+  { centre: 'Visakhapatnam',                  state: 'Andhra Pradesh' },
+];
+
+/**
+ * Populate a <select> with the 48 UPSC CMS exam centres.
+ * @param {HTMLSelectElement} selectEl
+ * @param {object} opts
+ * @param {string} opts.defaultLabel  First blank option text
+ * @param {boolean} opts.filterMode   true → "All centres" default
+ */
+export function populateCmsCentreSelect(selectEl, { defaultLabel = 'Select exam centre…', filterMode = false } = {}) {
+  selectEl.innerHTML = `<option value="">${filterMode ? 'All centres' : defaultLabel}</option>`;
+  UPSC_CMS_CENTRES.forEach(({ centre }) => {
+    const o = document.createElement('option');
+    o.value = o.textContent = centre;
+    selectEl.appendChild(o);
+  });
+  selectEl.disabled = false;
+}
+
+/**
+ * Look up the parent state for a UPSC CMS centre name.
+ * @param {string} centreName
+ * @returns {string|null}
+ */
+export function getCmsCentreState(centreName) {
+  const entry = UPSC_CMS_CENTRES.find(c => c.centre === centreName);
+  return entry ? entry.state : null;
+}
+
 // ─── Cascade helpers (shared by onboarding, dashboard filter, profile edit) ──
 
 /**

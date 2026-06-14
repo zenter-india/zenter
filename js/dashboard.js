@@ -9,7 +9,7 @@ import { getAllUsers, getUserByPhone, getMyConnections,
 import { debounce } from './utils.js';
 import { toast, setButtonBusy } from './ui.js';
 import * as Relationships from './relationships.js';
-import { populateStateSelect, wireDistrictCascade, DISTRICTS_BY_STATE } from './location-data.js';
+import { populateStateSelect, wireDistrictCascade, DISTRICTS_BY_STATE, UPSC_CMS_CENTRES } from './location-data.js';
 
 const { REL } = Relationships;
 
@@ -107,19 +107,27 @@ async function init() {
   myRevealsUsed = me?.contact_reveals_used || 0;
   myIsVerified  = me?.is_verified_aspirant === true;
 
-  // Populate the district filter dropdown with districts from the user's exam state.
-  // Admin has no state boundary so show all districts (sorted A-Z).
+  // Populate the district filter dropdown.
+  // UPSC CMS: show the 48 CMS centres. NEET: show districts from user's exam state.
   const districtEl = document.getElementById('hm-filter-district');
   if (districtEl) {
-    const stateForDistricts = me?.exam_centre_state || null;
-    const districts = stateForDistricts
-      ? (DISTRICTS_BY_STATE[stateForDistricts] || [])
-      : Object.values(DISTRICTS_BY_STATE).flat().sort();
-    districts.forEach(d => {
-      const opt = document.createElement('option');
-      opt.value = d; opt.textContent = d;
-      districtEl.appendChild(opt);
-    });
+    if (myExamType === 'UPSC CMS') {
+      UPSC_CMS_CENTRES.forEach(({ centre }) => {
+        const opt = document.createElement('option');
+        opt.value = centre; opt.textContent = centre;
+        districtEl.appendChild(opt);
+      });
+    } else {
+      const stateForDistricts = me?.exam_centre_state || null;
+      const districts = stateForDistricts
+        ? (DISTRICTS_BY_STATE[stateForDistricts] || [])
+        : Object.values(DISTRICTS_BY_STATE).flat().sort();
+      districts.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d; opt.textContent = d;
+        districtEl.appendChild(opt);
+      });
+    }
   }
 
   // Cache role so the navbar admin link can show/hide without an extra fetch.
@@ -134,15 +142,19 @@ async function init() {
   const plusNavItem = document.getElementById('hm-plus-nav-item');
   if (plusNavItem) plusNavItem.hidden = myPlusMember;
 
-  // Only NEET UG and NEET PG are live; other exam types → maintenance page.
-  if (myExamType !== 'NEET UG' && myExamType !== 'NEET PG') {
+  // Only NEET UG, NEET PG, and UPSC CMS are live; other exam types → maintenance page.
+  const LIVE_EXAMS = ['NEET UG', 'NEET PG', 'UPSC CMS'];
+  if (!LIVE_EXAMS.includes(myExamType)) {
     window.location.replace('/maintenance.html');
     return;
   }
 
+  // UPSC CMS: skip state-level matching — show all CMS users, let them filter by centre.
+  if (myExamType === 'UPSC CMS') myExamCentreState = null;
+
   // Reflect the user's permanent exam type in the header label.
   const examLabel = document.getElementById('hm-exam-label');
-  const examYearDisplay = { 'NEET UG': 'NEET UG 2026', 'NEET PG': 'NEET PG 2026' };
+  const examYearDisplay = { 'NEET UG': 'NEET UG 2026', 'NEET PG': 'NEET PG 2026', 'UPSC CMS': 'UPSC CMS 2026' };
   if (examLabel) examLabel.textContent = examYearDisplay[myExamType] || myExamType;
 
   // Load both block directions so neither side sees the other while blocked.
