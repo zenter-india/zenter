@@ -122,11 +122,13 @@
                     <option value="INICET">INICET</option>
                     <option value="NEET MDS">NEET MDS</option>
                     <option value="NEET SS">NEET SS</option>
+                    <option value="UPSC CMS">UPSC CMS 2026</option>
                   </select>
                   <p class="text-danger small mt-1" id="hm-err-exam-type" hidden></p>
                 </div>
               </div>
-              <div class="col-sm-6">
+              <!-- NEET: state + district cascade -->
+              <div class="col-sm-6" id="hm-exam-state-wrap">
                 <div class="hm-field">
                   <label class="hm-label" for="hm-exam-state">Exam centre state <span class="text-danger">*</span></label>
                   <select class="hm-select" id="hm-exam-state" required>
@@ -135,8 +137,7 @@
                   <p class="text-danger small mt-1" id="hm-err-exam-state" hidden></p>
                 </div>
               </div>
-              <!-- Row 2: Exam centre district (required) · Exam centre name -->
-              <div class="col-sm-6">
+              <div class="col-sm-6" id="hm-exam-district-wrap">
                 <div class="hm-field">
                   <label class="hm-label" for="hm-exam-district">Exam centre district <span class="text-danger">*</span></label>
                   <select class="hm-select" id="hm-exam-district" required disabled>
@@ -145,10 +146,21 @@
                   <p class="text-danger small mt-1" id="hm-err-exam-district" hidden></p>
                 </div>
               </div>
-              <div class="col-sm-6">
+              <div class="col-sm-6" id="hm-exam-center-wrap">
                 <div class="hm-field">
                   <label class="hm-label" for="hm-exam-center">Exam centre name</label>
                   <input class="hm-input" id="hm-exam-center" type="text" placeholder="Enter exam centre name" />
+                </div>
+              </div>
+
+              <!-- UPSC CMS: single centre dropdown (hidden by default) -->
+              <div class="col-sm-6" id="hm-cms-centre-wrap" hidden>
+                <div class="hm-field">
+                  <label class="hm-label" for="hm-cms-centre">Exam centre <span class="text-danger">*</span></label>
+                  <select class="hm-select" id="hm-cms-centre" required>
+                    <option value="">Select exam centre…</option>
+                  </select>
+                  <p class="text-danger small mt-1" id="hm-err-cms-centre" hidden></p>
                 </div>
               </div>
             </div>

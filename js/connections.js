@@ -56,9 +56,8 @@ export async function runConnections(root, firebaseUser) {
     return;
   }
 
-  // Only NEET UG and NEET PG are live; other exam types → maintenance page.
-  // Legacy users with null exam_type are treated as NEET UG.
-  if (me.exam_type && me.exam_type !== 'NEET UG' && me.exam_type !== 'NEET PG') {
+  const LIVE_EXAMS = ['NEET UG', 'NEET PG', 'UPSC CMS'];
+  if (me.exam_type && !LIVE_EXAMS.includes(me.exam_type)) {
     window.location.replace('/maintenance.html');
     return;
   }

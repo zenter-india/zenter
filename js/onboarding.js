@@ -20,7 +20,7 @@ function getDeviceFingerprint() {
 }
 import { setButtonBusy } from './ui.js';
 import { ROUTES, STORAGE_KEYS } from './config.js';
-import { populateStateSelect, wireDistrictCascade } from './location-data.js';
+import { populateStateSelect, wireDistrictCascade, populateCmsCentreSelect, getCmsCentreState } from './location-data.js';
 
 let firebaseUser = null;
 const collected = {};
@@ -37,12 +37,22 @@ async function init() {
     wireDistrictCascade(stateEl, districtEl);
   }
 
-  // Exam centre state → district cascade (Step 3)
+  // Exam centre state → district cascade (Step 3 — NEET exams)
   const examStateEl    = document.getElementById('hm-exam-state');
   const examDistrictEl = document.getElementById('hm-exam-district');
   if (examStateEl && examDistrictEl) {
     populateStateSelect(examStateEl);
     wireDistrictCascade(examStateEl, examDistrictEl);
+  }
+
+  // UPSC CMS centre dropdown (Step 3 — CMS exam)
+  const cmsCentreEl = document.getElementById('hm-cms-centre');
+  if (cmsCentreEl) populateCmsCentreSelect(cmsCentreEl);
+
+  // Toggle Step 3 fields based on exam type selection
+  const examTypeEl = document.getElementById('hm-exam-type');
+  if (examTypeEl) {
+    examTypeEl.addEventListener('change', () => toggleExamFields(examTypeEl.value));
   }
 
   // Step navigation via data-go-step buttons
@@ -74,18 +84,29 @@ async function init() {
 
   document.getElementById('hm-form-step3').addEventListener('submit', (e) => {
     e.preventDefault();
-    // Only state + district are required — exam centre name is optional and
-    // exam_type is no longer collected during onboarding (kept in DB for
-    // backward compatibility with existing users).
-    if (!validate([
-      { id: 'hm-exam-type',     errId: 'hm-err-exam-type',     msg: 'Please select your exam type.' },
-      { id: 'hm-exam-state',    errId: 'hm-err-exam-state',    msg: 'Select your exam centre state.' },
-      { id: 'hm-exam-district', errId: 'hm-err-exam-district', msg: 'Select your exam centre district.' },
-    ])) return;
-    collected.exam_type            = val('hm-exam-type');
-    collected.exam_centre_state    = val('hm-exam-state');
-    collected.exam_centre_district = val('hm-exam-district');
-    collected.exam_center          = val('hm-exam-center') || null;
+    const examType = val('hm-exam-type');
+
+    if (examType === 'UPSC CMS') {
+      if (!validate([
+        { id: 'hm-exam-type',  errId: 'hm-err-exam-type',  msg: 'Please select your exam type.' },
+        { id: 'hm-cms-centre', errId: 'hm-err-cms-centre', msg: 'Please select your exam centre.' },
+      ])) return;
+      const centre = val('hm-cms-centre');
+      collected.exam_type            = examType;
+      collected.exam_centre_district = centre;
+      collected.exam_centre_state    = getCmsCentreState(centre) || centre;
+      collected.exam_center          = null;
+    } else {
+      if (!validate([
+        { id: 'hm-exam-type',     errId: 'hm-err-exam-type',     msg: 'Please select your exam type.' },
+        { id: 'hm-exam-state',    errId: 'hm-err-exam-state',    msg: 'Select your exam centre state.' },
+        { id: 'hm-exam-district', errId: 'hm-err-exam-district', msg: 'Select your exam centre district.' },
+      ])) return;
+      collected.exam_type            = examType;
+      collected.exam_centre_state    = val('hm-exam-state');
+      collected.exam_centre_district = val('hm-exam-district');
+      collected.exam_center          = val('hm-exam-center') || null;
+    }
     goToStep(4);
   });
 
@@ -97,6 +118,20 @@ async function init() {
   });
 
   wireAgeModal();
+}
+
+// ─── Exam-type field toggling ────────────────────────────────────────────────
+
+function toggleExamFields(examType) {
+  const isCms = examType === 'UPSC CMS';
+  const neetEls = ['hm-exam-state-wrap', 'hm-exam-district-wrap', 'hm-exam-center-wrap'];
+  const cmsEl   = document.getElementById('hm-cms-centre-wrap');
+
+  neetEls.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.hidden = isCms;
+  });
+  if (cmsEl) cmsEl.hidden = !isCms;
 }
 
 // ─── Age confirmation modal ──────────────────────────────────────────────────

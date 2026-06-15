@@ -12,7 +12,7 @@ import { getProfileByPhone, upsertUser,
 import { formatPhonePretty }                           from './utils.js';
 import { STORAGE_KEYS, ROUTES }                        from './config.js';
 import { setButtonBusy, toast }                        from './ui.js';
-import { STATES, wireDistrictCascade }                 from './location-data.js';
+import { STATES, wireDistrictCascade, UPSC_CMS_CENTRES, getCmsCentreState } from './location-data.js';
 
 // ─── Module state ─────────────────────────────────────────────────────────────
 let profilePhone = '';   // Firebase E.164 phone number
@@ -79,15 +79,24 @@ const SECTIONS = {
         key: 'exam_centre_state', ddId: 'hm-kv-exam-state', type: 'select',
         options: STATES, prompt: 'Add exam centre state',
         fallback: 'state',
+        hideForCms: true,
       },
       {
         key: 'exam_centre_district', ddId: 'hm-kv-exam-district', type: 'select',
         options: [], prompt: 'Add exam centre district',
         fallback: 'district',
+        hideForCms: true,
+      },
+      {
+        key: 'exam_centre_district', ddId: 'hm-kv-cms-centre', type: 'select',
+        options: UPSC_CMS_CENTRES.map(c => c.centre),
+        prompt: 'Add exam centre',
+        cmsOnly: true,
       },
       {
         key: 'exam_center', ddId: 'hm-kv-exam-center', type: 'text',
         placeholder: 'e.g. Tirupati Medical College', prompt: 'Add your exam centre',
+        hideForCms: true,
       },
     ],
   },
@@ -212,8 +221,19 @@ function hydrateAll() {
 }
 
 function hydrateSection(sec) {
+  const isCms = profileData.exam_type === 'UPSC CMS';
   sec.fields.forEach(f => {
-    // Use fallback field for backward compat (old users without exam_centre_* cols)
+    const ddEl = document.getElementById(f.ddId);
+    // Show/hide fields based on exam type
+    if (f.hideForCms && ddEl) {
+      const row = ddEl.closest('.hm-kv__row');
+      if (row) row.hidden = isCms;
+    }
+    if (f.cmsOnly && ddEl) {
+      const row = ddEl.closest('.hm-kv__row');
+      if (row) row.hidden = !isCms;
+    }
+    if ((f.hideForCms && isCms) || (f.cmsOnly && !isCms)) return;
     const value = trimOrNull(profileData[f.key])
                ?? (f.fallback ? trimOrNull(profileData[f.fallback]) : null);
     setDd(f.ddId, value, f.prompt);
@@ -278,6 +298,11 @@ async function saveAll(saveBtn) {
   }
   if (!valid) return;
 
+  // UPSC CMS: auto-derive exam_centre_state from the selected centre
+  if (profileData.exam_type === 'UPSC CMS' && updates.exam_centre_district) {
+    updates.exam_centre_state = getCmsCentreState(updates.exam_centre_district) || updates.exam_centre_district;
+  }
+
   setButtonBusy(saveBtn, true, 'Saving…');
   const { error } = await upsertUser({ phone: profilePhone, profile_completed: true, ...updates });
   setButtonBusy(saveBtn, false);
@@ -317,19 +342,17 @@ function enterEditMode(sectionKey) {
   const sec     = SECTIONS[sectionKey];
   const article = document.getElementById(sec.sectionId);
   if (!article) return;
+  const isCms = profileData.exam_type === 'UPSC CMS';
 
   // Replace each <dd> text with the appropriate input
   sec.fields.forEach(f => {
+    if ((f.hideForCms && isCms) || (f.cmsOnly && !isCms)) return;
     const dd = document.getElementById(f.ddId);
     if (!dd) return;
-    // Permanent identity fields (name, gender) stay read-only ONCE set — they
-    // remain as plain text instead of becoming an input. Legacy users who never
-    // set the field can still fill it in once (then the DB trigger locks it).
     if (f.locked && trimOrNull(profileData[f.key])) {
       dd.classList.add('hm-kv__locked');
       return;
     }
-    // Fallback to legacy field so old users see their existing data pre-filled
     const currentVal = trimOrNull(profileData[f.key])
                     ?? (f.fallback ? trimOrNull(profileData[f.fallback]) : null)
                     ?? '';
@@ -340,8 +363,8 @@ function enterEditMode(sectionKey) {
     dd.appendChild(input);
   });
 
-  // Wire state → district cascade for the centre section
-  if (sectionKey === 'centre') {
+  // Wire state → district cascade for NEET centre section (skip for CMS)
+  if (sectionKey === 'centre' && !isCms) {
     const stateEl = document.getElementById('hm-kv-exam-state')?.querySelector('select');
     const distEl  = document.getElementById('hm-kv-exam-district')?.querySelector('select');
     if (stateEl && distEl) {
