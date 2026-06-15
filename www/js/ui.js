@@ -26,13 +26,12 @@ export async function mountPartial(selector, url) {
   }
 }
 
-// Loads the navbar + footer in parallel into their mount points.
+// Loads the navbar + bottom nav in parallel into their mount points.
 // Wires all navbar interactivity AFTER the HTML is injected — inline <script>
 // tags inside innerHTML are never executed by the browser.
 export async function mountChrome() {
   await Promise.all([
     mountPartial('[data-include="navbar"]', '/components/navbar.html'),
-    mountPartial('[data-include="footer"]', '/components/footer.html'),
     mountPartial('[data-include="bottom-nav"]', '/components/bottom-nav.html'),
   ]);
   wireNavbarToggle();
@@ -42,7 +41,7 @@ export async function mountChrome() {
 
 // Highlights the active bottom-tab based on the current page + hash, and
 // keeps it in sync as the dashboard's in-page tabs change via #hash.
-const BOTTOMNAV_PAGES = new Set(['/dashboard.html', '/connections.html', '/plus.html', '/profile.html']);
+const BOTTOMNAV_PAGES = new Set(['/dashboard.html']);
 
 export function wireBottomNav() {
   const nav = document.getElementById('hm-bottomnav');
@@ -54,10 +53,10 @@ export function wireBottomNav() {
 
     let active = null;
     if (path === '/profile.html') active = 'profile';
-    else if (path === '/plus.html') active = 'plus';
     else if (path === '/connections.html') active = 'connections';
     else if (path === '/dashboard.html') {
       if (hash === 'connections') active = 'connections';
+      else if (hash === 'requests') active = 'requests';
       else if (hash.startsWith('chats')) active = 'chats';
       else active = 'home';
     }
@@ -166,32 +165,47 @@ export function wireNavbarToggle() {
   else if (mql.addListener) mql.addListener(onBreakpointChange); // legacy Safari
 }
 
-// Profile avatar dropdown wiring — idempotent, guarded by data attribute.
+// Account drawer wiring — idempotent, guarded by data attribute.
 // Uses a CSS class (is-open) instead of the hidden attr so enter/exit
 // transitions run correctly.
 export function wireAvatarDropdown() {
   const btn      = document.getElementById('hm-avatar-btn');
-  const dropdown = document.getElementById('hm-avatar-dropdown');
-  if (!btn || !dropdown) return;
+  const drawer   = document.getElementById('hm-account-drawer');
+  const backdrop = document.getElementById('hm-account-backdrop');
+  const closeBtn = document.getElementById('hm-account-drawer-close');
+  if (!btn || !drawer) return;
   if (btn.dataset.hmDropdownWired === '1') return;
   btn.dataset.hmDropdownWired = '1';
 
-  const open  = () => { dropdown.classList.add('is-open');    btn.setAttribute('aria-expanded', 'true'); };
-  const close = () => { dropdown.classList.remove('is-open'); btn.setAttribute('aria-expanded', 'false'); };
-  const toggle = () => dropdown.classList.contains('is-open') ? close() : open();
+  const year = document.getElementById('hm-year');
+  if (year) year.textContent = new Date().getFullYear();
+
+  const open  = () => {
+    drawer.classList.add('is-open');
+    backdrop?.classList.add('is-open');
+    btn.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  };
+  const close = () => {
+    drawer.classList.remove('is-open');
+    backdrop?.classList.remove('is-open');
+    btn.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  };
+  const toggle = () => drawer.classList.contains('is-open') ? close() : open();
 
   btn.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+  closeBtn?.addEventListener('click', close);
+  backdrop?.addEventListener('click', close);
 
-  // Close when clicking outside the profile container.
-  document.addEventListener('click', (e) => {
-    if (!dropdown.classList.contains('is-open')) return;
-    if (btn.closest('.hm-nav-profile').contains(e.target)) return;
-    close();
+  // Auto-close when a link/action inside the drawer is activated.
+  drawer.addEventListener('click', (e) => {
+    if (e.target.closest('a, button')) close();
   });
 
   // Close on Escape, return focus to trigger button.
   document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Escape' || !dropdown.classList.contains('is-open')) return;
+    if (e.key !== 'Escape' || !drawer.classList.contains('is-open')) return;
     close();
     btn.focus();
   });

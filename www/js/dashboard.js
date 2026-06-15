@@ -782,7 +782,7 @@ function updateNavBadge() {
   if (navBadge) { navBadge.textContent = n; navBadge.hidden = n === 0; }
   const tabBadge = document.getElementById('hm-requests-tab-badge');
   if (tabBadge) { tabBadge.textContent = n; tabBadge.hidden = n === 0; }
-  const bottomBadge = document.getElementById('hm-bottomnav-connections-badge');
+  const bottomBadge = document.getElementById('hm-bottomnav-requests-badge');
   if (bottomBadge) { bottomBadge.textContent = n; bottomBadge.hidden = n === 0; }
 }
 

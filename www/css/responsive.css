@@ -106,8 +106,6 @@ html, body { overflow-x: hidden; max-width: 100%; }
 
   .hm-profile { grid-template-columns: 1fr; }
 
-  .hm-footer__grid { grid-template-columns: 1fr 1fr; }
-
   .hm-auth { grid-template-columns: 1fr; }
   .hm-auth__aside { display: none; }
 }
@@ -152,10 +150,6 @@ html, body { overflow-x: hidden; max-width: 100%; }
   /* Toasts */
   .hm-toast-container { top: 16px; right: 16px; left: 16px; }
   .hm-toast { max-width: 100%; }
-
-  /* Footer */
-  .hm-footer__grid  { grid-template-columns: 1fr; gap: var(--hm-space-5); }
-  .hm-footer__legal { flex-direction: column; align-items: flex-start; }
 
   /* Section card header: let edit button wrap */
   .hm-section-card__header { flex-wrap: wrap; gap: var(--hm-space-2); }
@@ -267,6 +261,6 @@ html, body { overflow-x: hidden; max-width: 100%; }
    PRINT
 ============================================================ */
 @media print {
-  .hm-navbar, .hm-footer, .hm-toast-container, .hm-loader-overlay { display: none !important; }
+  .hm-navbar, .hm-toast-container, .hm-loader-overlay { display: none !important; }
   body { background: #fff; }
 }
