@@ -136,14 +136,53 @@
 /* ── Profile avatar trigger ─────────────────────────────────────────────── */
 .hm-nav-profile { position: relative; }
 
+/* Hamburger-style toggle — 3 equal bars, opens the account drawer */
 .hm-nav-profile__btn {
-  display: flex; align-items: center; gap: 4px;
-  background: none; border: none; cursor: pointer;
-  padding: 4px 6px;
+  display: inline-flex;
+  width: 44px; height: 44px;
+  flex-shrink: 0;
+  align-items: center; justify-content: center;
+  border: 1.5px solid var(--hm-border-strong);
+  background: var(--hm-surface);
   border-radius: var(--hm-radius-md);
-  transition: background var(--hm-duration-fast) var(--hm-ease);
+  cursor: pointer;
+  transition: background var(--hm-duration-fast) var(--hm-ease),
+              border-color var(--hm-duration-fast) var(--hm-ease);
 }
-.hm-nav-profile__btn:hover { background: var(--hm-surface-2); }
+.hm-nav-profile__btn:hover  { background: var(--hm-surface-2); border-color: var(--hm-text-subtle); }
+.hm-nav-profile__btn:active { background: var(--hm-border); }
+
+.hm-nav-profile__bar {
+  display: block;
+  width: 20px; height: 2px;
+  background: var(--hm-text);
+  border-radius: 2px;
+  position: relative;
+  transition: background var(--hm-duration-base) var(--hm-ease),
+              transform var(--hm-duration-base) var(--hm-ease);
+}
+.hm-nav-profile__bar::before,
+.hm-nav-profile__bar::after {
+  content: '';
+  position: absolute; left: 0;
+  width: 20px; height: 2px;
+  background: var(--hm-text);
+  border-radius: 2px;
+  transition: top var(--hm-duration-base) var(--hm-ease),
+              transform var(--hm-duration-base) var(--hm-ease),
+              background var(--hm-duration-base) var(--hm-ease);
+}
+.hm-nav-profile__bar::before { top: -6px; }
+.hm-nav-profile__bar::after  { top: 6px; }
+
+/* X animation while the account drawer is open */
+.hm-nav-profile__btn.is-open {
+  background: var(--hm-surface-2);
+  border-color: var(--hm-border-strong);
+}
+.hm-nav-profile__btn.is-open .hm-nav-profile__bar           { background: transparent; }
+.hm-nav-profile__btn.is-open .hm-nav-profile__bar::before   { top: 0; transform: rotate(45deg); }
+.hm-nav-profile__btn.is-open .hm-nav-profile__bar::after    { top: 0; transform: rotate(-45deg); }
 
 /* ── Account drawer (slide-out from the right) ──────────────────────────── */
 .hm-account-backdrop {

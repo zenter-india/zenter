@@ -183,12 +183,14 @@ export function wireAvatarDropdown() {
   const open  = () => {
     drawer.classList.add('is-open');
     backdrop?.classList.add('is-open');
+    btn.classList.add('is-open');
     btn.setAttribute('aria-expanded', 'true');
     document.body.style.overflow = 'hidden';
   };
   const close = () => {
     drawer.classList.remove('is-open');
     backdrop?.classList.remove('is-open');
+    btn.classList.remove('is-open');
     btn.setAttribute('aria-expanded', 'false');
     document.body.style.overflow = '';
   };

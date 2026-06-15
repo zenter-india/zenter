@@ -300,8 +300,6 @@ async function loadData() {
         const lr = lastRead[c.id];
         if (lr && new Date(c.updated_at) > new Date(lr)) unread++;
       });
-      const badge = document.getElementById('hm-chats-tab-badge');
-      if (badge) { badge.textContent = unread; badge.hidden = unread === 0; }
       const bottomBadge = document.getElementById('hm-bottomnav-chats-badge');
       if (bottomBadge) { bottomBadge.textContent = unread; bottomBadge.hidden = unread === 0; }
     } catch {}
@@ -334,11 +332,6 @@ function applyInitialTabFromHash() {
   const tab = VALID_TABS.includes(h) ? h : 'find-mates';
   if (tab === 'find-mates') return; // HTML default already correct — nothing to do
 
-  document.querySelectorAll('.hm-tab[data-tab]').forEach(btn => {
-    const active = btn.dataset.tab === tab;
-    btn.classList.toggle('is-active', active);
-    btn.setAttribute('aria-selected', String(active));
-  });
   Object.entries(TAB_PANELS()).forEach(([key, el]) => { if (el) el.hidden = key !== tab; });
 }
 
@@ -355,14 +348,6 @@ function parseHash(hash) {
 function wireTabs() {
   const startTab = parseHash(location.hash);
   if (startTab !== 'find-mates') activateTab(startTab);
-
-  document.querySelectorAll('.hm-tab[data-tab]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const t = btn.dataset.tab;
-      activateTab(t);
-      history.replaceState(null, '', t === 'find-mates' ? location.pathname : `#${t}`);
-    });
-  });
 
   window.addEventListener('hashchange', () => {
     const tab = parseHash(location.hash);
@@ -385,12 +370,6 @@ async function activateTab(name) {
   // the scroll to the bottom of the page, making it look like it "jumped"
   // to the footer.
   scrollPageToTop();
-
-  document.querySelectorAll('.hm-tab[data-tab]').forEach(btn => {
-    const active = btn.dataset.tab === tab;
-    btn.classList.toggle('is-active', active);
-    btn.setAttribute('aria-selected', String(active));
-  });
 
   const panels = {
     'requests':    document.getElementById('hm-panel-requests'),
@@ -415,11 +394,6 @@ async function activateTab(name) {
 
         const { mountChat } = await import('./chat.js');
         await mountChat(root, myUserId, usersMap, (unread) => {
-          const badge = document.getElementById('hm-chats-tab-badge');
-          if (badge) {
-            badge.textContent = unread;
-            badge.hidden = unread === 0;
-          }
           const bottomBadge = document.getElementById('hm-bottomnav-chats-badge');
           if (bottomBadge) {
             bottomBadge.textContent = unread;
@@ -780,8 +754,6 @@ function updateNavBadge() {
     .length;
   const navBadge = document.getElementById('hm-requests-badge');
   if (navBadge) { navBadge.textContent = n; navBadge.hidden = n === 0; }
-  const tabBadge = document.getElementById('hm-requests-tab-badge');
-  if (tabBadge) { tabBadge.textContent = n; tabBadge.hidden = n === 0; }
   const bottomBadge = document.getElementById('hm-bottomnav-requests-badge');
   if (bottomBadge) { bottomBadge.textContent = n; bottomBadge.hidden = n === 0; }
 }
