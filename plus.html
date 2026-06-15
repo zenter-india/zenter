@@ -346,15 +346,11 @@
         const cta = document.querySelector('.plus-cta');
         if (cta) {
           cta.innerHTML = `
-            <a href="#" id="hm-buy-plus-guest" class="hm-btn hm-btn--primary hm-btn--lg" style="width:100%;font-size:17px;display:block;text-align:center;">Get Zenter Plus — ₹49</a>
-            <p id="hm-plus-guest-status" style="text-align:center;font-size:13px;color:var(--hm-text-muted);margin-top:var(--hm-space-2);min-height:18px;"></p>
+            <a href="/login.html" class="hm-btn hm-btn--primary hm-btn--lg" style="width:100%;font-size:17px;display:block;text-align:center;">Get Zenter Plus — ₹49</a>
+            <p style="text-align:center;font-size:13px;color:var(--hm-text-muted);margin-top:var(--hm-space-2);">Sign in to complete your purchase.</p>
             <p style="text-align:center;margin-top:var(--hm-space-3);">
               <a href="/index.html" style="color:var(--hm-primary);font-size:14px;font-weight:600;">← Back to Home</a>
             </p>`;
-          document.getElementById('hm-buy-plus-guest')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            document.getElementById('hm-plus-guest-status').textContent = 'Something went wrong. Please try again later.';
-          });
         }
         const coupon = document.querySelector('#hm-coupon-input')?.closest('div');
         if (coupon) coupon.hidden = true;
