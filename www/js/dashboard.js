@@ -302,6 +302,8 @@ async function loadData() {
       });
       const badge = document.getElementById('hm-chats-tab-badge');
       if (badge) { badge.textContent = unread; badge.hidden = unread === 0; }
+      const bottomBadge = document.getElementById('hm-bottomnav-chats-badge');
+      if (bottomBadge) { bottomBadge.textContent = unread; bottomBadge.hidden = unread === 0; }
     } catch {}
   }
 
@@ -417,6 +419,11 @@ async function activateTab(name) {
           if (badge) {
             badge.textContent = unread;
             badge.hidden = unread === 0;
+          }
+          const bottomBadge = document.getElementById('hm-bottomnav-chats-badge');
+          if (bottomBadge) {
+            bottomBadge.textContent = unread;
+            bottomBadge.hidden = unread === 0;
           }
         }, {
           isVerified: myIsVerified,
@@ -775,6 +782,8 @@ function updateNavBadge() {
   if (navBadge) { navBadge.textContent = n; navBadge.hidden = n === 0; }
   const tabBadge = document.getElementById('hm-requests-tab-badge');
   if (tabBadge) { tabBadge.textContent = n; tabBadge.hidden = n === 0; }
+  const bottomBadge = document.getElementById('hm-bottomnav-connections-badge');
+  if (bottomBadge) { bottomBadge.textContent = n; bottomBadge.hidden = n === 0; }
 }
 
 // ─── Requests tab ─────────────────────────────────────────────────────────────

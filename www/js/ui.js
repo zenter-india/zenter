@@ -33,9 +33,44 @@ export async function mountChrome() {
   await Promise.all([
     mountPartial('[data-include="navbar"]', '/components/navbar.html'),
     mountPartial('[data-include="footer"]', '/components/footer.html'),
+    mountPartial('[data-include="bottom-nav"]', '/components/bottom-nav.html'),
   ]);
   wireNavbarToggle();
   wireAvatarDropdown();
+  wireBottomNav();
+}
+
+// Highlights the active bottom-tab based on the current page + hash, and
+// keeps it in sync as the dashboard's in-page tabs change via #hash.
+const BOTTOMNAV_PAGES = new Set(['/dashboard.html', '/connections.html', '/plus.html', '/profile.html']);
+
+export function wireBottomNav() {
+  const nav = document.getElementById('hm-bottomnav');
+  if (!nav) return;
+
+  const update = () => {
+    const path = location.pathname;
+    const hash = location.hash.replace('#', '');
+
+    let active = null;
+    if (path === '/profile.html') active = 'profile';
+    else if (path === '/plus.html') active = 'plus';
+    else if (path === '/connections.html') active = 'connections';
+    else if (path === '/dashboard.html') {
+      if (hash === 'connections') active = 'connections';
+      else if (hash.startsWith('chats')) active = 'chats';
+      else active = 'home';
+    }
+
+    $$('.hm-bottomnav__item', nav).forEach((el) => {
+      el.classList.toggle('is-active', el.dataset.bottomnav === active);
+    });
+  };
+
+  update();
+  if (BOTTOMNAV_PAGES.has(location.pathname)) {
+    window.addEventListener('hashchange', update);
+  }
 }
 
 // Hamburger / mobile-drawer wiring. Idempotent — safe to call multiple times

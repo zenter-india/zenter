@@ -756,6 +756,68 @@
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
+/* ── Shared badge (also defined in dashboard.css for the in-page dashboard
+   tabs; duplicated here so it renders on every page that mounts the bottom
+   tab nav, even pages that don't load dashboard.css) ── */
+.hm-nav-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px;
+  background: var(--hm-primary); color: #fff;
+  border-radius: 9px;
+  font-size: 10px; font-weight: 700;
+  padding: 0 5px;
+  margin-left: 4px;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+/* ============================================================
+   BOTTOM TAB NAV (mobile app shell)
+============================================================ */
+.hm-bottomnav {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 1030;
+  display: flex;
+  align-items: stretch;
+  height: var(--hm-bottomnav-h);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  border-top: 1px solid var(--hm-border);
+  box-shadow: 0 -2px 12px rgba(15, 23, 42, 0.06);
+}
+.hm-bottomnav__item {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  color: var(--hm-text-subtle);
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 500;
+  transition: color var(--hm-duration-fast) var(--hm-ease);
+}
+.hm-bottomnav__item:hover { color: var(--hm-text-muted); }
+.hm-bottomnav__icon {
+  width: 22px; height: 22px;
+  flex-shrink: 0;
+}
+.hm-bottomnav__label { line-height: 1.2; }
+.hm-bottomnav__item.is-active {
+  color: var(--hm-primary);
+}
+.hm-bottomnav__item .hm-nav-badge {
+  position: absolute;
+  top: 2px;
+  left: calc(50% + 6px);
+  margin-left: 0;
+}
+
 @media (max-width: 480px) {
   .hm-announcement-bar { font-size: 12px; height: 32px; }
   .hm-announcement-bar__ticker { animation-duration: 20s; }
