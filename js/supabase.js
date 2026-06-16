@@ -556,6 +556,14 @@ export async function createRazorpayOrder(userId, couponCode = null, dryRun = fa
   throw lastError;
 }
 
+/** Grant Plus when the final price is ₹0 (coupon covers full cost, no gateway needed).
+ *  Calls a SECURITY DEFINER RPC that verifies auth.uid() === p_user_id server-side. */
+export async function claimFreePlus(userId) {
+  const { data, error } = await supabase.rpc('claim_free_plus', { p_user_id: userId });
+  if (error) throw new Error(error.message || 'Failed to activate Plus');
+  return data;
+}
+
 /** Verify payment server-side and grant Plus. */
 export async function verifyRazorpayPayment(orderId, paymentId, signature, userId) {
   const resp = await fetch(`${EDGE_BASE}/verify-razorpay-payment`, {
