@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#FF6B35" />
+  <title>My profile - Zenter</title>
+  <meta name="description" content="Manage your Zenter profile, exam centre, and connection preferences." />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="canonical" href="https://zenter.in/profile.html" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="/css/style.css" rel="stylesheet" />
+  <link href="/css/components.css" rel="stylesheet" />
+  <link href="/css/dashboard.css" rel="stylesheet" />
+  <link href="/css/responsive.css" rel="stylesheet" />
+
+  <link rel="icon" href="/assets/logos/favicon.svg?v=2" type="image/svg+xml" />
+</head>
+<body>
+  <div data-include="navbar"></div>
+
+  <main class="hm-page" id="hm-main">
+    <div class="hm-container">
+      <header class="hm-feed-header">
+        <div>
+          <span class="hm-eyebrow">Account</span>
+          <h1 style="margin-top: 12px;">My profile</h1>
+          <p class="hm-text-muted">Update your details so centre mates can find and trust you.</p>
+        </div>
+      </header>
+
+      <section class="hm-profile">
+        <!-- LEFT — identity card -->
+        <aside>
+          <div class="hm-card hm-profile-card">
+            <div class="hm-avatar hm-avatar--lg" id="hm-profile-avatar">HM</div>
+            <p class="hm-profile-card__name" id="hm-profile-name">Your name</p>
+            <p class="hm-profile-card__phone" id="hm-profile-phone">+91 ••••• •••••</p>
+            <!-- Zenter Plus status -->
+            <div id="hm-plus-status" style="margin-top:var(--hm-space-2);" hidden>
+              <span class="hm-badge hm-badge--plus">⭐ Zenter Plus</span>
+            </div>
+            <div id="hm-plus-upgrade-link" style="margin-top:var(--hm-space-2);" hidden>
+              <a href="/plus.html" style="font-size:var(--hm-text-xs);color:var(--hm-primary);font-weight:600;">Get Zenter Plus →</a>
+            </div>
+
+            <!-- Verified badge callout — hidden once verified -->
+            <div id="hm-verify-callout" style="margin-top:var(--hm-space-4);width:100%;padding:14px 16px;
+                 background:linear-gradient(135deg,#dcfce7,#f0fdf4);border:1px solid #bbf7d0;
+                 border-radius:var(--hm-radius-lg);text-align:left;" hidden>
+              <p style="margin:0 0 4px;font-weight:700;font-size:var(--hm-text-sm);color:#15803d;">
+                ✓ Get the Verified Badge
+              </p>
+              <p style="margin:0 0 10px;font-size:12px;color:#166534;line-height:1.5;">
+                Verify your Roll no as in admit card to earn a green ✓ Verified badge on your profile card,
+                unlock contact reveals, and gain trust from centre mates.
+              </p>
+              <a href="#hm-verification-section" style="font-size:12px;font-weight:600;color:#15803d;text-decoration:underline;">
+                Verify now ↓
+              </a>
+            </div>
+
+            <!-- Roll No verification -->
+            <div id="hm-verification-section" style="margin-top:var(--hm-space-4);width:100%;text-align:left;" hidden>
+              <p style="font-size:var(--hm-text-xs);font-weight:700;color:var(--hm-text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Roll No Verification</p>
+              <!-- Already verified -->
+              <div id="hm-verified-state" hidden>
+                <span class="hm-badge hm-badge--verified-full" style="display:inline-flex;">✓ Roll No verified</span>
+              </div>
+              <!-- Pending review -->
+              <div id="hm-pending-state" hidden>
+                <span class="hm-badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;">⏳ Pending review</span>
+                <p style="font-size:11px;color:var(--hm-text-muted);margin-top:4px;">We'll verify your Roll No shortly.</p>
+              </div>
+              <!-- Rejected -->
+              <div id="hm-rejected-state" hidden>
+                <span class="hm-badge" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;">✗ Not verified</span>
+                <p style="font-size:11px;color:var(--hm-text-muted);margin-top:4px;">Resubmit with correct Roll Number.</p>
+              </div>
+              <!-- Not submitted yet OR rejected — show form -->
+              <div id="hm-verify-form">
+                <input type="text" id="hm-nta-number" class="hm-input" placeholder="Enter Roll Number"
+                  style="margin-top:6px;font-size:13px;" maxlength="20" autocomplete="off" />
+                <button type="button" class="hm-btn hm-btn--primary hm-btn--sm hm-btn--block"
+                  id="hm-request-verify" style="margin-top:6px;">Get Verified</button>
+              </div>
+            </div>
+
+            <!-- Paused notice — shown when profile is hidden from Find Mates -->
+            <div id="hm-paused-notice" hidden
+                 style="margin-top:var(--hm-space-3);padding:8px 12px;
+                        background:#fef3c7;border:1px solid #fde68a;
+                        border-radius:var(--hm-radius-md);
+                        font-size:var(--hm-text-xs);color:#92400e;text-align:left;">
+              ⏸ Your profile is paused and hidden from Find&nbsp;Mates.
+            </div>
+
+            <!-- Single edit control for entire profile -->
+            <button type="button" class="hm-btn hm-btn--primary hm-btn--sm hm-btn--block"
+                    id="hm-edit-all" style="margin-top:var(--hm-space-4);">Edit profile</button>
+            <div id="hm-edit-all-actions" hidden style="margin-top:var(--hm-space-4);">
+              <button type="button" class="hm-btn hm-btn--primary hm-btn--sm hm-btn--block"
+                      id="hm-save-all">Save changes</button>
+              <button type="button" class="hm-btn hm-btn--ghost hm-btn--sm hm-btn--block"
+                      id="hm-cancel-all" style="margin-top:8px;">Cancel</button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- RIGHT — editable sections -->
+        <section>
+
+          <!-- ── About you ──────────────────────────────────────────────────── -->
+          <article class="hm-card hm-section-card" id="hm-section-about">
+            <header class="hm-section-card__header">
+              <h3>About you</h3>
+            </header>
+            <dl class="hm-kv">
+              <dt>Name</dt>    <dd id="hm-kv-name">—</dd>
+              <dt>Gender</dt>  <dd id="hm-kv-gender">—</dd>
+            </dl>
+          </article>
+
+          <!-- ── Exam centre ───────────────────────────────────────────────── -->
+          <article class="hm-card hm-section-card" id="hm-section-centre">
+            <header class="hm-section-card__header">
+              <h3>Exam centre</h3>
+            </header>
+            <dl class="hm-kv">
+              <div class="hm-kv__row"><dt>State</dt>        <dd id="hm-kv-exam-state">—</dd></div>
+              <div class="hm-kv__row"><dt>District</dt>     <dd id="hm-kv-exam-district">—</dd></div>
+              <div class="hm-kv__row" hidden><dt>Exam centre</dt> <dd id="hm-kv-cms-centre">—</dd></div>
+              <div class="hm-kv__row"><dt>Centre name</dt>  <dd id="hm-kv-exam-center">—</dd></div>
+            </dl>
+          </article>
+
+          <!-- ── Travel & stay ─────────────────────────────────────────────── -->
+          <article class="hm-card hm-section-card" id="hm-section-travel">
+            <header class="hm-section-card__header">
+              <h3>Travel &amp; stay</h3>
+            </header>
+            <dl class="hm-kv">
+              <dt>Travel mode</dt> <dd id="hm-kv-travel">—</dd>
+              <dt>Stay plan</dt>   <dd id="hm-kv-stay">—</dd>
+            </dl>
+          </article>
+
+          <!-- ── Privacy & account ─────────────────────────────────────────── -->
+          <article class="hm-card hm-section-card">
+            <header class="hm-section-card__header">
+              <h3>Privacy &amp; account</h3>
+            </header>
+            <p class="hm-text-muted">
+              Your phone number is never shown to other students until
+              <strong>both of you</strong> accept the connection.
+            </p>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+              <a href="/blocked-users.html" class="hm-btn hm-btn--ghost hm-btn--sm">
+                🚫 Blocked users
+              </a>
+              <button type="button" class="hm-btn hm-btn--ghost hm-btn--sm" id="hm-pause-profile">
+                Pause my profile
+              </button>
+            </div>
+          </article>
+
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <div data-include="footer"></div>
+
+  <!-- ── Pause profile confirmation ─────────────────────────────────────── -->
+  <div id="hm-modal-pause" class="hm-modal-overlay"
+       role="dialog" aria-modal="true" aria-labelledby="hm-modal-pause-title">
+    <div class="hm-modal" style="max-width:380px;padding:var(--hm-space-5);">
+      <h3 id="hm-modal-pause-title" style="margin:0 0 var(--hm-space-2);">Pause your profile?</h3>
+      <p class="hm-text-muted" style="margin:0 0 var(--hm-space-5);">
+        Your profile will be hidden from Find&nbsp;Mates until you reactivate it.
+      </p>
+      <div class="d-flex gap-2 justify-content-end flex-wrap">
+        <button type="button" class="hm-btn hm-btn--ghost hm-btn--sm"
+                id="hm-modal-pause-cancel">Cancel</button>
+        <button type="button" class="hm-btn hm-btn--primary hm-btn--sm"
+                id="hm-modal-pause-confirm">Pause profile</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Delete account confirmation ─────────────────────────────────────── -->
+  <div id="hm-modal-delete" class="hm-modal-overlay"
+       role="dialog" aria-modal="true" aria-labelledby="hm-modal-delete-title">
+    <div class="hm-modal" style="max-width:380px;padding:var(--hm-space-5);">
+      <h3 id="hm-modal-delete-title"
+          style="margin:0 0 var(--hm-space-2);color:var(--hm-danger);">Delete your account?</h3>
+      <p class="hm-text-muted" style="margin:0 0 var(--hm-space-5);">
+        This permanently deletes your Zenter profile and connections.
+        This action cannot be undone.
+      </p>
+      <div class="d-flex gap-2 justify-content-end flex-wrap">
+        <button type="button" class="hm-btn hm-btn--ghost hm-btn--sm"
+                id="hm-modal-delete-cancel">Cancel</button>
+        <button type="button" class="hm-btn hm-btn--sm" id="hm-modal-delete-confirm"
+                style="background:var(--hm-danger);color:#fff;border-color:var(--hm-danger);">
+          Delete permanently
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="/js/profile.js"></script>
+  <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
+  <script>
+    window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/speed-insights/script.js"></script>
+</body>
+</html>

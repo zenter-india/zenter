@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0F172A" />
+  <title>Zenter Admin</title>
+  <meta name="description" content="Internal operational console." />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="/css/admin.css" rel="stylesheet" />
+  <link rel="icon" href="/assets/logos/favicon.svg?v=2" type="image/svg+xml" />
+</head>
+<body class="adm-body">
+
+  <!-- Gate: shown until requireAdmin() resolves. Non-admins are redirected
+       before this is dismissed → they never see the admin shell. -->
+  <div id="adm-gate" class="adm-gate" aria-live="polite">
+    <div class="adm-gate__spinner" aria-hidden="true"></div>
+    <p class="adm-gate__label">Verifying admin access…</p>
+  </div>
+
+  <div class="adm-shell" id="adm-shell" hidden>
+
+    <!-- ── Sidebar ── -->
+    <aside class="adm-sidebar" aria-label="Admin navigation">
+      <a href="#dashboard" class="adm-brand" aria-label="Zenter admin home">
+        <span class="adm-brand__mark">Z</span>
+        <span class="adm-brand__text">Zenter</span>
+        <span class="adm-brand__tag">Admin</span>
+      </a>
+
+      <ul class="adm-nav" id="adm-nav" role="list">
+        <li><a href="#dashboard" data-route="dashboard"><span class="adm-nav__icon">📊</span><span>Dashboard</span></a></li>
+        <li><a href="#users"     data-route="users"    ><span class="adm-nav__icon">👥</span><span>Users</span></a></li>
+        <li><a href="#roll-no-requests" data-route="roll-no-requests"><span class="adm-nav__icon">🪪</span><span>Verified Approval</span><span class="adm-nav__badge" id="adm-rollno-nav-badge" hidden>0</span></a></li>
+        <li><a href="#seeded"    data-route="seeded"   ><span class="adm-nav__icon">🌱</span><span>Seeded Users</span></a></li>
+        <li><a href="#seeded-requests" data-route="seeded-requests"><span class="adm-nav__icon">📩</span><span>Seeded Requests</span></a></li>
+        <li><a href="#feedback"  data-route="feedback" ><span class="adm-nav__icon">💬</span><span>Feedback</span></a></li>
+        <li><a href="#reports"   data-route="reports"  ><span class="adm-nav__icon">🚩</span><span>Reports</span></a></li>
+        <li><a href="#exams"     data-route="exams"    ><span class="adm-nav__icon">🎓</span><span>Exams</span></a></li>
+        <li><a href="#analytics" data-route="analytics"><span class="adm-nav__icon">📈</span><span>Analytics</span></a></li>
+        <li><a href="#plus"      data-route="plus"     ><span class="adm-nav__icon">⭐</span><span>Zenter Plus</span></a></li>
+        <li><a href="#settings"  data-route="settings" ><span class="adm-nav__icon">⚙️</span><span>Settings</span></a></li>
+      </ul>
+
+      <div class="adm-sidebar__footer">
+      </div>
+    </aside>
+
+    <!-- ── Main ── -->
+    <main class="adm-main">
+      <div class="adm-topbar">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <a href="/dashboard.html" class="adm-topbar__back">← App</a>
+          <span class="adm-topbar__title" id="adm-page-title">Dashboard</span>
+        </div>
+        <div class="adm-topbar__user">
+          <div class="adm-topbar__avatar" id="adm-user-avatar" aria-hidden="true">A</div>
+          <span id="adm-user-phone">—</span>
+          <button type="button" class="adm-topbar__logout" data-action="logout">Sign out</button>
+        </div>
+      </div>
+
+      <div class="adm-content">
+
+        <!-- Dashboard -->
+        <section class="adm-panel" id="adm-panel-dashboard" data-route="dashboard">
+          <h1 class="adm-h1">Dashboard</h1>
+          <p class="adm-sub">Operational overview of Zenter.</p>
+
+          <div class="adm-stats" id="adm-stats">
+            <div class="adm-stat adm-stat--link" data-nav="users"  style="cursor:pointer;" title="View all users"><div class="adm-stat__label">Total Users</div><div class="adm-stat__value" id="stat-total-users">—</div></div>
+            <div class="adm-stat adm-stat--link" data-nav="users"  style="cursor:pointer;" title="View active users"><div class="adm-stat__label">Active Users</div><div class="adm-stat__value" id="stat-active-users">—</div><div class="adm-stat__hint">Not paused</div></div>
+            <div class="adm-stat adm-stat--link" data-nav="feedback" style="cursor:pointer;" title="View feedback"><div class="adm-stat__label">Feedback</div><div class="adm-stat__value" id="stat-feedback">—</div></div>
+            <div class="adm-stat adm-stat--link" data-nav="reports"  style="cursor:pointer;" title="View reports"><div class="adm-stat__label">Reports</div><div class="adm-stat__value" id="stat-reports">—</div><div class="adm-stat__hint">User blocks</div></div>
+          </div>
+
+          <div class="adm-card">
+            <div class="adm-card__header">Latest signups</div>
+            <div class="adm-card__body" id="adm-latest-users"><div class="adm-empty">Loading…</div></div>
+          </div>
+        </section>
+
+        <!-- Users -->
+        <section class="adm-panel" id="adm-panel-users" data-route="users">
+          <h1 class="adm-h1">Users</h1>
+          <p class="adm-sub">Search, filter, and manage all registered users.</p>
+          <div class="adm-toolbar">
+            <input type="search" id="adm-user-search" class="adm-search" placeholder="Search by name or phone…" />
+            <select id="adm-user-filter-exam" class="adm-filter">
+              <option value="">All exams</option>
+              <option value="NEET UG">NEET UG</option>
+              <option value="NEET PG">NEET PG</option>
+              <option value="INICET">INICET</option>
+              <option value="NEET MDS">NEET MDS</option>
+              <option value="NEET SS">NEET SS</option>
+            </select>
+            <select id="adm-user-filter-gender" class="adm-filter"><option value="">All genders</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select>
+          </div>
+          <div class="adm-card">
+            <div class="adm-card__body" id="adm-users-list"><div class="adm-empty">Loading…</div></div>
+          </div>
+        </section>
+
+        <!-- Roll No Requests -->
+        <section class="adm-panel" id="adm-panel-roll-no-requests" data-route="roll-no-requests">
+          <h1 class="adm-h1">🪪 Verified Approval</h1>
+          <p class="adm-sub">Pending Roll Number verification requests — approve to grant the Verified badge, reject if the number is invalid.</p>
+          <div class="adm-toolbar">
+            <input type="search" id="adm-rollno-search" class="adm-search" placeholder="Search by name, phone, or roll no…" />
+            <select id="adm-rollno-filter-exam" class="adm-filter">
+              <option value="">All exams</option>
+              <option value="NEET UG">NEET UG</option>
+              <option value="NEET PG">NEET PG</option>
+              <option value="INICET">INICET</option>
+              <option value="NEET MDS">NEET MDS</option>
+              <option value="NEET SS">NEET SS</option>
+            </select>
+            <button class="adm-btn adm-btn--ghost adm-btn--sm" id="adm-rollno-refresh">↻ Refresh</button>
+          </div>
+          <div class="adm-card">
+            <div class="adm-card__body" id="adm-rollno-list"><div class="adm-empty">Loading…</div></div>
+          </div>
+        </section>
+
+        <!-- Seeded Users -->
+        <section class="adm-panel" id="adm-panel-seeded" data-route="seeded">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:4px;">
+            <h1 class="adm-h1" style="margin:0;">Seeded Users</h1>
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:13px;color:var(--adm-text-dim);" id="adm-seeded-global-label">Seeded users visible in feed</span>
+                <label class="adm-toggle" title="Show or hide ALL seeded users from the Find Mates feed">
+                  <input type="checkbox" id="adm-seeded-global-toggle" checked />
+                  <span class="adm-toggle__track"></span>
+                </label>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:13px;color:var(--adm-text-dim);" id="adm-seeded-visibility-label">Exam centre on cards</span>
+                <label class="adm-toggle" title="Show or hide exam centre name on seeded user cards">
+                  <input type="checkbox" id="adm-seeded-visibility-toggle" checked />
+                  <span class="adm-toggle__track"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <p class="adm-sub">Demo accounts for district discovery.</p>
+          <div class="adm-toolbar">
+            <input type="search" id="adm-seeded-search" class="adm-search" placeholder="Search by name or district…" />
+            <select id="adm-seeded-filter-district" class="adm-filter">
+              <option value="">All districts</option>
+            </select>
+          </div>
+          <div class="adm-card">
+            <div class="adm-card__body" id="adm-seeded-list"><div class="adm-empty">Loading…</div></div>
+          </div>
+
+        </section>
+
+        <!-- Seeded Requests -->
+        <section class="adm-panel" id="adm-panel-seeded-requests" data-route="seeded-requests">
+          <h1 class="adm-h1">Seeded Requests</h1>
+
+          <!-- Send request FROM seeded user TO real user -->
+          <div class="adm-card" style="margin-bottom:var(--hm-space-4);">
+            <div class="adm-card__header">Send request as seeded user</div>
+            <div class="adm-card__body" style="padding:16px 20px;">
+              <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+                <div style="flex:1;min-width:140px;">
+                  <label style="font-size:12px;font-weight:600;color:var(--adm-text-muted);display:block;margin-bottom:4px;">From (Seeded)</label>
+                  <select id="adm-seeded-sender" class="adm-filter" style="width:100%;"></select>
+                </div>
+                <div style="font-size:18px;padding-bottom:6px;">→</div>
+                <div style="flex:1;min-width:140px;">
+                  <label style="font-size:12px;font-weight:600;color:var(--adm-text-muted);display:block;margin-bottom:4px;">To (Real User)</label>
+                  <select id="adm-real-receiver" class="adm-filter" style="width:100%;"></select>
+                </div>
+                <button class="adm-btn adm-btn--ok adm-btn--sm" id="adm-send-seeded-request" style="padding-bottom:7px;">Send Request</button>
+              </div>
+              <p id="adm-seeded-send-status" style="font-size:12px;margin-top:8px;min-height:18px;"></p>
+            </div>
+          </div>
+
+          <p class="adm-sub">Manage connection requests involving seeded profiles.</p>
+          <div class="adm-card">
+            <div class="adm-card__body" id="adm-seeded-requests"><div class="adm-empty">Loading…</div></div>
+          </div>
+        </section>
+
+        <!-- Feedback -->
+        <section class="adm-panel" id="adm-panel-feedback" data-route="feedback">
+          <h1 class="adm-h1">Feedbacks</h1>
+          <p class="adm-sub">In-app feedback submissions — resolve or remove spam.</p>
+          <div class="adm-card">
+            <div class="adm-card__body" id="adm-feedback-list"><div class="adm-empty">Loading…</div></div>
+          </div>
+        </section>
+
+        <!-- Reports -->
+        <section class="adm-panel" id="adm-panel-reports" data-route="reports">
+          <h1 class="adm-h1">Reports</h1>
+          <p class="adm-sub">User-submitted abuse, spam, and fake-profile reports.</p>
+          <div class="adm-card">
+            <div class="adm-card__body" id="adm-reports-list"><div class="adm-empty">Loading…</div></div>
+          </div>
+        </section>
+
+        <!-- Exams -->
+        <section class="adm-panel" id="adm-panel-exams" data-route="exams">
+          <h1 class="adm-h1">Exams</h1>
+          <p class="adm-sub">Manage exam lifecycle — live, maintenance, coming soon, or disabled.</p>
+          <div id="adm-exams-content"><div class="adm-empty">Loading…</div></div>
+        </section>
+
+        <!-- Analytics -->
+        <section class="adm-panel" id="adm-panel-analytics" data-route="analytics">
+          <h1 class="adm-h1">Analytics</h1>
+          <p class="adm-sub">Operational metrics — user distribution, connections, moderation counts.</p>
+          <div id="adm-analytics-content"><div class="adm-empty">Loading…</div></div>
+        </section>
+
+        <!-- Zenter Plus & Promo Codes -->
+        <section class="adm-panel" id="adm-panel-plus" data-route="plus">
+          <h1 class="adm-h1">⭐ Zenter Plus</h1>
+          <p class="adm-sub">Manage pricing, chat limits, membership features, and promo codes.</p>
+          <div id="adm-plus-content"><div class="adm-empty">Loading…</div></div>
+        </section>
+
+        <!-- Settings -->
+        <section class="adm-panel" id="adm-panel-settings" data-route="settings">
+          <h1 class="adm-h1">Settings</h1>
+          <p class="adm-sub">Feature toggles, global maintenance, announcements, audit log.</p>
+          <div id="adm-settings-content"><div class="adm-empty">Loading…</div></div>
+        </section>
+
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Confirmation dialog (reused for all destructive actions) -->
+  <div id="adm-confirm-overlay" class="adm-overlay" hidden>
+    <div class="adm-dialog">
+      <h4 id="adm-confirm-title">Confirm action</h4>
+      <p id="adm-confirm-msg">Are you sure?</p>
+      <div class="adm-dialog__actions">
+        <button type="button" class="adm-btn adm-btn--ghost" id="adm-confirm-cancel">Cancel</button>
+        <button type="button" class="adm-btn adm-btn--danger" id="adm-confirm-ok">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Announcement form overlay -->
+  <div id="adm-ann-overlay" class="adm-overlay" hidden>
+    <div class="adm-dialog" style="max-width:500px;">
+      <h4>Announcement</h4>
+      <input type="hidden" id="adm-ann-id" />
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;">
+        <textarea id="adm-ann-message" class="adm-search" rows="3" placeholder="Announcement text…" style="resize:vertical;padding:10px;"></textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <select id="adm-ann-target" class="adm-filter">
+            <option value="">All exams</option>
+            <option value="NEET UG">NEET UG only</option>
+            <option value="NEET PG">NEET PG only</option>
+          </select>
+          <input type="number" id="adm-ann-priority" class="adm-search" placeholder="Order (1=first, 0=last)" style="padding:8px 10px;" title="Higher number = shown first in the ticker. Use 1 for urgent, 0 for regular." />
+        </div>
+        <input type="date" id="adm-ann-expires" class="adm-search" style="padding:8px 10px;" title="Expires at (optional)" />
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--adm-text-muted);">
+          <input type="checkbox" id="adm-ann-active" checked /> Active (visible to users)
+        </label>
+      </div>
+      <div class="adm-dialog__actions">
+        <button type="button" class="adm-btn adm-btn--ghost" data-action="cancel-announcement">Cancel</button>
+        <button type="button" class="adm-btn adm-btn--ok"   data-action="save-announcement">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div id="adm-toast" class="adm-toast is-hidden" aria-live="polite"></div>
+
+  <script type="module" src="/js/admin.js"></script>
+</body>
+</html>

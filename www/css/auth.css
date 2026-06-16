@@ -1,0 +1,119 @@
+/* HallMate — Auth screens (login + onboarding). */
+
+.hm-auth {
+  min-height: calc(100vh - var(--hm-navbar-h));
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+}
+
+.hm-auth__panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--hm-space-7) var(--hm-space-5);
+}
+
+.hm-auth__card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-xl);
+  box-shadow: var(--hm-shadow-md);
+  padding: var(--hm-space-6);
+}
+.hm-auth__title { font-size: var(--hm-text-2xl); margin-bottom: var(--hm-space-2); }
+.hm-auth__subtitle { color: var(--hm-text-muted); margin-bottom: var(--hm-space-5); }
+
+.hm-auth__aside {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(1100px 600px at 80% -10%, rgba(255, 107, 53, 0.25), transparent 60%),
+    radial-gradient(900px 600px at -10% 110%, rgba(79, 70, 229, 0.25), transparent 60%),
+    linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--hm-space-7);
+}
+.hm-auth__aside-inner { max-width: 440px; }
+.hm-auth__aside h2 { color: #fff; font-size: var(--hm-text-3xl); line-height: 1.15; }
+.hm-auth__aside p  { color: rgba(255, 255, 255, 0.78); font-size: var(--hm-text-lg); }
+.hm-auth__aside ul { list-style: none; padding: 0; margin-top: var(--hm-space-5); }
+.hm-auth__aside li {
+  display: flex; gap: 12px; align-items: flex-start;
+  margin-bottom: var(--hm-space-3);
+  color: rgba(255, 255, 255, 0.86);
+}
+.hm-auth__aside li::before {
+  content: '';
+  flex: 0 0 24px;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--hm-primary), #ffd6c2);
+  margin-top: 2px;
+}
+
+/* Step indicator for onboarding wizard. */
+.hm-steps {
+  display: flex; align-items: center; gap: var(--hm-space-2);
+  margin-bottom: var(--hm-space-5);
+}
+.hm-steps__dot {
+  flex: 1;
+  height: 6px;
+  border-radius: var(--hm-radius-pill);
+  background: var(--hm-border);
+  transition: background var(--hm-duration-base) var(--hm-ease);
+}
+.hm-steps__dot.is-active { background: var(--hm-primary); }
+.hm-steps__dot.is-done   { background: var(--hm-accent); }
+
+.hm-step-meta {
+  display: flex; justify-content: space-between;
+  font-size: var(--hm-text-xs); color: var(--hm-text-subtle);
+  margin-bottom: var(--hm-space-4);
+  text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;
+}
+
+/* reCAPTCHA: invisible mode (production). The container must exist in the DOM
+   so the SDK can render its iframe, but it takes no visual space — kept
+   absolute + 0x0 so its in-flow position inside the phone form leaves no
+   whitespace. The floating bottom-right badge is also hidden; reCAPTCHA
+   usage is disclosed in the Privacy Policy per Google's terms. */
+#hm-recaptcha-container {
+  position: absolute;
+  width:    0;
+  height:   0;
+  overflow: hidden;
+  border:   0;
+}
+.grecaptcha-badge { visibility: hidden !important; }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+/* Tablet (≤991px): single column, hide aside */
+@media (max-width: 991.98px) {
+  .hm-auth { grid-template-columns: 1fr; }
+  .hm-auth__aside { display: none; }
+  .hm-auth__panel { padding: var(--hm-space-5) var(--hm-space-4); }
+}
+
+/* Phone (≤767px): compact card */
+@media (max-width: 767.98px) {
+  .hm-auth__card {
+    padding: var(--hm-space-5);
+    border-radius: var(--hm-radius-lg);
+    box-shadow: none;
+    border: none;
+  }
+  .hm-auth__title { font-size: var(--hm-text-xl); }
+  .hm-auth__panel { padding: var(--hm-space-3); }
+}
+
+/* Small phone (≤479px) */
+@media (max-width: 479.98px) {
+  .hm-auth__card { padding: var(--hm-space-4); }
+  .hm-steps { gap: var(--hm-space-1); }
+}

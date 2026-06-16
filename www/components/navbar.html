@@ -1,0 +1,105 @@
+<nav class="hm-navbar" id="hm-navbar">
+  <div class="hm-container hm-navbar__inner">
+
+    <!-- ── LEFT: Brand ────────────────────────────────────────────────────── -->
+    <a href="/index.html" class="hm-brand" id="hm-brand-link" aria-label="Zenter home">
+      <span class="hm-brand__mark">Z</span>
+      <span class="hm-brand__text">Zenter</span>
+    </a>
+
+    <!--
+      ── RIGHT: hm-nav-right ────────────────────────────────────────────────
+      1. hm-nav-cta      — mobile-only; logged-out Sign in
+      2. hm-nav-actions  — desktop-only; logged-out Sign in
+      3. hm-nav-profile  — all viewports; logged-in avatar + dropdown
+         (all secondary actions live in this dropdown — no hamburger menu)
+    -->
+    <div class="hm-nav-right">
+
+      <!-- ← Back button — hidden by default, shown on secondary pages via app.js -->
+      <button type="button" id="hm-nav-back" aria-label="Go back"
+        onclick="history.length>1?history.back():window.location.href='/dashboard.html'"
+        hidden>← Back to Home</button>
+
+      <!-- 1. Mobile CTA (logged-out, always visible on mobile) -->
+      <div class="hm-nav-cta" data-auth="logged-out">
+        <a href="/login.html" class="hm-btn hm-btn--primary hm-btn--xs" style="white-space:nowrap;">Signup / Login</a>
+      </div>
+
+      <!-- 2. Desktop CTA (logged-out, hidden on mobile) -->
+      <div class="hm-nav-actions" data-auth="logged-out">
+        <a href="/login.html" class="hm-btn hm-btn--primary hm-btn--sm" style="white-space:nowrap;">Signup / Login</a>
+      </div>
+
+      <!-- 3. Logged-in avatar + dropdown (all viewports) -->
+      <div class="hm-nav-profile" data-auth="logged-in" hidden>
+        <button
+          class="hm-nav-profile__btn"
+          id="hm-avatar-btn"
+          type="button"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-label="Account menu"
+        >
+          <div class="hm-avatar hm-avatar--sm" id="hm-navbar-avatar" aria-hidden="true">Me</div>
+          <span class="hm-nav-profile__chevron" aria-hidden="true">▾</span>
+        </button>
+
+        <ul class="hm-nav-profile__dropdown" id="hm-avatar-dropdown" role="menu">
+          <!-- Admin link — shown only when role=admin is cached (set by dashboard.js) -->
+          <li role="none" id="hm-admin-nav-item" hidden>
+            <a href="/admin.html" class="hm-nav-profile__item" role="menuitem">⚙️ Admin panel</a>
+          </li>
+          <li role="none" id="hm-plus-nav-item">
+            <a href="/plus.html" class="hm-nav-profile__item hm-nav-profile__item--plus" role="menuitem">⭐ Get Zenter Plus</a>
+          </li>
+          <li role="none">
+            <a href="/profile.html" class="hm-nav-profile__item" role="menuitem">Profile</a>
+          </li>
+          <li role="none">
+            <a href="/dashboard.html" class="hm-nav-profile__item" role="menuitem">Find Mates</a>
+          </li>
+          <li role="none">
+            <a href="/dashboard.html#chats" class="hm-nav-profile__item" role="menuitem">Chats</a>
+          </li>
+          <li role="none">
+            <a href="/contact.html" class="hm-nav-profile__item" role="menuitem">Contact us</a>
+          </li>
+          <li role="none">
+            <button type="button" class="hm-nav-profile__item" role="menuitem"
+                    data-action="feedback">Feedback</button>
+          </li>
+          <li role="none">
+            <button
+              type="button"
+              class="hm-nav-profile__item hm-nav-profile__item--danger"
+              role="menuitem"
+              data-action="logout"
+            >Log out</button>
+          </li>
+        </ul>
+      </div>
+
+    </div><!-- /.hm-nav-right -->
+
+  </div><!-- /.hm-navbar__inner -->
+</nav>
+
+<!-- ── Feedback modal — wired by app.js; loaded on every page via navbar ── -->
+<div id="hm-feedback-overlay" class="hm-feedback-overlay"
+     role="dialog" aria-modal="true" aria-labelledby="hm-feedback-title">
+  <div class="hm-feedback-box">
+    <h3 id="hm-feedback-title">😊 We'd love your feedback</h3>
+    <p class="hm-feedback-sub">Help us improve Zenter - your thoughts go directly to the team.</p>
+    <textarea id="hm-feedback-text" class="hm-textarea hm-feedback-ta"
+              rows="4" maxlength="1000"
+              placeholder="Share your thoughts, suggestions or issues…"></textarea>
+    <p id="hm-feedback-err" class="text-danger small mt-1" hidden></p>
+    <div class="hm-feedback-actions">
+      <button type="button" class="hm-btn hm-btn--ghost hm-btn--sm"
+              id="hm-feedback-cancel">Cancel</button>
+      <button type="button" class="hm-btn hm-btn--primary hm-btn--sm"
+              id="hm-feedback-submit">Submit</button>
+    </div>
+  </div>
+</div>

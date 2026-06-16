@@ -1,0 +1,189 @@
+/* HallMate — Global theme, design tokens, typography, base layout.
+   Load order: bootstrap.css -> style.css -> components.css -> page.css -> responsive.css */
+
+:root {
+  /* Brand palette */
+  --hm-primary: #FF6B35;
+  --hm-primary-600: #ef5a23;
+  --hm-primary-100: #FFE9DD;
+  --hm-secondary: #4F46E5;
+  --hm-secondary-600: #4338CA;
+  --hm-secondary-100: #ECEBFF;
+  --hm-accent: #10B981;
+  --hm-accent-100: #D1FAE5;
+
+  /* Neutrals */
+  --hm-bg: #F8FAFC;
+  --hm-surface: #FFFFFF;
+  --hm-surface-2: #F1F5F9;
+  --hm-border: #E2E8F0;
+  --hm-border-strong: #CBD5E1;
+  --hm-text: #0F172A;
+  --hm-text-muted: #475569;
+  --hm-text-subtle: #94A3B8;
+
+  /* Semantic */
+  --hm-danger: #EF4444;
+  --hm-warning: #F59E0B;
+  --hm-success: var(--hm-accent);
+  --hm-info: var(--hm-secondary);
+
+  /* Spacing scale (4px base) */
+  --hm-space-1: 4px;
+  --hm-space-2: 8px;
+  --hm-space-3: 12px;
+  --hm-space-4: 16px;
+  --hm-space-5: 24px;
+  --hm-space-6: 32px;
+  --hm-space-7: 48px;
+  --hm-space-8: 64px;
+  --hm-space-9: 96px;
+
+  /* Radius */
+  --hm-radius-sm: 8px;
+  --hm-radius-md: 12px;
+  --hm-radius-lg: 16px;
+  --hm-radius-xl: 24px;
+  --hm-radius-pill: 999px;
+
+  /* Shadows */
+  --hm-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --hm-shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.06);
+  --hm-shadow-md: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --hm-shadow-lg: 0 16px 40px rgba(15, 23, 42, 0.10);
+  --hm-shadow-focus: 0 0 0 4px rgba(255, 107, 53, 0.18);
+
+  /* Typography */
+  --hm-font-display: 'Poppins', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --hm-font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --hm-text-xs: 12px;
+  --hm-text-sm: 14px;
+  --hm-text-base: 16px;
+  --hm-text-lg: 18px;
+  --hm-text-xl: 22px;
+  --hm-text-2xl: 28px;
+  --hm-text-3xl: 36px;
+  --hm-text-4xl: 48px;
+
+  /* Motion */
+  --hm-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --hm-duration-fast: 140ms;
+  --hm-duration-base: 220ms;
+
+  /* Layout */
+  --hm-navbar-h: 72px;
+  --hm-container-max: 1180px;
+}
+
+/* Bootstrap variable overrides — keeps native components on-brand. */
+:root {
+  --bs-primary: var(--hm-primary);
+  --bs-primary-rgb: 255, 107, 53;
+  --bs-body-font-family: var(--hm-font-body);
+  --bs-body-color: var(--hm-text);
+  --bs-body-bg: var(--hm-bg);
+  --bs-border-color: var(--hm-border);
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  padding-top: var(--hm-navbar-h); /* offset for fixed navbar */
+  font-family: var(--hm-font-body);
+  font-size: var(--hm-text-base);
+  line-height: 1.55;
+  color: var(--hm-text);
+  background: var(--hm-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--hm-font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--hm-text);
+  margin: 0 0 var(--hm-space-3);
+}
+
+h1 { font-size: var(--hm-text-3xl); line-height: 1.15; letter-spacing: -0.02em; }
+h2 { font-size: var(--hm-text-2xl); line-height: 1.2; }
+h3 { font-size: var(--hm-text-xl); line-height: 1.25; }
+
+p { margin: 0 0 var(--hm-space-4); color: var(--hm-text-muted); }
+
+a {
+  color: var(--hm-secondary);
+  text-decoration: none;
+  transition: color var(--hm-duration-fast) var(--hm-ease);
+}
+a:hover { color: var(--hm-secondary-600); }
+
+::selection { background: var(--hm-primary-100); color: var(--hm-text); }
+
+/* Page scaffolding — pages use <main class="hm-page"> for default vertical rhythm. */
+@keyframes hm-page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+.hm-page {
+  min-height: calc(100vh - var(--hm-navbar-h));
+  padding-top: var(--hm-space-7);
+  padding-bottom: var(--hm-space-8);
+  animation: hm-page-enter 200ms ease-out both;
+}
+
+.hm-container {
+  width: 100%;
+  max-width: var(--hm-container-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--hm-space-4);
+  padding-right: var(--hm-space-4);
+}
+
+.hm-section { padding: var(--hm-space-8) 0; }
+.hm-section--tight { padding: var(--hm-space-6) 0; }
+
+/* Eyebrow / kicker label above headings. */
+.hm-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hm-space-2);
+  font-size: var(--hm-text-xs);
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hm-primary);
+  background: var(--hm-primary-100);
+  padding: 6px 12px;
+  border-radius: var(--hm-radius-pill);
+}
+
+/* Generic utility classes — kept small; rely on Bootstrap for the rest. */
+.hm-text-muted { color: var(--hm-text-muted); }
+.hm-text-subtle { color: var(--hm-text-subtle); }
+.hm-text-center { text-align: center; }
+.hm-bg-surface { background: var(--hm-surface); }
+.hm-bg-soft { background: var(--hm-surface-2); }
+.hm-divider { height: 1px; background: var(--hm-border); margin: var(--hm-space-5) 0; border: 0; }
+
+/* Focus ring — accessible + on-brand. Applies everywhere. */
+:where(a, button, input, select, textarea):focus-visible {
+  outline: none;
+  box-shadow: var(--hm-shadow-focus);
+  border-radius: var(--hm-radius-sm);
+}
+
+/* Hide-but-accessible. */
+.hm-sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap; border: 0;
+}

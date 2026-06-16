@@ -1,0 +1,637 @@
+/* HallMate — Dashboard + profile page styling. */
+
+/* Remove default page padding at top only on dashboard (tabs start immediately).
+   :has(.hm-tabs) scopes this to the dashboard main element so it doesn't strip
+   padding from the landing page (which shares id="hm-main"). */
+#hm-main:has(.hm-tabs) { padding-top: 0; }
+
+/* ── Connections page — received requests link banner ───────────────────── */
+.hm-conn-requests-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--hm-space-4) var(--hm-space-5);
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-lg);
+  text-decoration: none;
+  color: var(--hm-text);
+  font-weight: 600;
+  margin-bottom: var(--hm-space-5);
+  transition: background var(--hm-duration-fast) var(--hm-ease),
+              border-color var(--hm-duration-fast) var(--hm-ease);
+}
+.hm-conn-requests-link:hover {
+  background: var(--hm-surface-2);
+  border-color: var(--hm-primary);
+  text-decoration: none;
+  color: var(--hm-text);
+}
+.hm-conn-requests-link__label { display: flex; align-items: center; }
+.hm-conn-requests-link__arrow { color: var(--hm-text-muted); font-size: var(--hm-text-lg); }
+
+/* ── Connection 3-section layout ─────────────────────────────────────────── */
+.hm-conn-section { margin-bottom: var(--hm-space-7); }
+.hm-conn-section:last-child { margin-bottom: 0; }
+
+.hm-conn-section__header {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--hm-border);
+  padding-bottom: var(--hm-space-3);
+  margin-bottom: var(--hm-space-4);
+}
+
+.hm-conn-section__title {
+  font-size: var(--hm-text-lg);
+  font-weight: 700;
+  color: var(--hm-text);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--hm-space-2);
+  flex: 1;
+}
+
+.hm-conn-section__new-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--hm-text-xs);
+  font-weight: 700;
+  color: #15803d;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--hm-radius-pill);
+  padding: 2px 10px;
+  line-height: 1.4;
+}
+
+.hm-conn-section__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  background: var(--hm-primary-100);
+  color: var(--hm-primary);
+  border-radius: var(--hm-radius-pill);
+  font-size: var(--hm-text-xs);
+  font-weight: 700;
+  padding: 0 6px;
+}
+
+.hm-conn-section__empty {
+  padding: var(--hm-space-4) 0;
+  font-size: var(--hm-text-sm);
+  font-style: italic;
+  color: var(--hm-text-muted);
+}
+
+/* Tab panel entrance — fade-up when panel is revealed */
+@keyframes hm-panel-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+#hm-panel-requests:not([hidden]),
+#hm-panel-find-mates:not([hidden]),
+#hm-panel-connections:not([hidden]) {
+  animation: hm-panel-enter 180ms ease-out both;
+}
+
+/* ── Dashboard tab bar ─────────────────────────────────────────────────────── */
+.hm-tabs {
+  display: flex;
+  justify-content: center;
+  gap: var(--hm-space-2);
+  border-bottom: 1px solid var(--hm-border);
+  margin-bottom: var(--hm-space-5);
+}
+.hm-tab {
+  padding: var(--hm-space-3) var(--hm-space-6);
+  font-size: var(--hm-text-base);
+  font-weight: 600;
+  color: var(--hm-text-subtle);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  min-height: 48px;
+  white-space: nowrap;
+  transition: color var(--hm-duration-fast) var(--hm-ease),
+              border-color var(--hm-duration-fast) var(--hm-ease);
+}
+.hm-tab:hover { color: var(--hm-text); }
+.hm-tab.is-active {
+  color: var(--hm-primary);
+  border-bottom-color: var(--hm-primary);
+}
+@media (max-width: 479px) {
+  .hm-tabs { gap: 0; }
+  .hm-tab { padding: var(--hm-space-2) var(--hm-space-2); font-size: var(--hm-text-xs, 0.75rem); flex: 1; min-width: 0; white-space: nowrap; }
+}
+
+.hm-dashboard {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--hm-space-6);
+  align-items: start;
+}
+
+.hm-sidebar {
+  position: sticky;
+  top: calc(var(--hm-navbar-h) + var(--hm-space-4));
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-lg);
+  padding: var(--hm-space-5);
+  box-shadow: var(--hm-shadow-xs);
+}
+.hm-sidebar__title {
+  font-size: var(--hm-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--hm-text-subtle);
+  margin-bottom: var(--hm-space-3);
+  font-weight: 700;
+}
+.hm-sidebar + .hm-sidebar { margin-top: var(--hm-space-4); }
+
+/* Filter fields — stacked on desktop, 2-col grid on mobile when sidebar is full-width. */
+.hm-sidebar__fields { display: flex; flex-direction: column; gap: var(--hm-space-3); }
+.hm-sidebar__fields .hm-field { margin-bottom: 0; }
+
+/* Filter toggle — hidden on desktop (sidebar always visible), shown on mobile via responsive.css */
+.hm-filter-toggle { display: none; }
+
+.hm-feed-header {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: var(--hm-space-4);
+  margin-bottom: var(--hm-space-5);
+  cursor: pointer;
+  transition: transform 140ms ease-out, opacity 140ms ease-out;
+  will-change: transform;
+}
+.hm-feed-header:hover {
+  transform: translateY(-2px);
+  opacity: 0.85;
+}
+.hm-feed-header h1 { margin-bottom: 4px; }
+.hm-feed-header p  { margin-bottom: 0; }
+
+.hm-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--hm-space-4);
+}
+
+/* ── Mate card ── */
+.hm-mate {
+  display: flex; flex-direction: column;
+  gap: var(--hm-space-3);
+  position: relative;
+}
+
+/* Zenter Plus — highlighted card */
+.hm-mate--plus {
+  border: 1.5px solid #fde68a;
+  background: linear-gradient(135deg, #fffbeb 0%, #ffffff 60%);
+  box-shadow: 0 2px 12px rgba(251, 191, 36, 0.15);
+}
+.hm-mate--plus:hover {
+  border-color: #fbbf24;
+  box-shadow: 0 4px 16px rgba(251, 191, 36, 0.25);
+}
+
+/* Header: avatar + name + badges, bottom rule */
+.hm-mate__head {
+  display: flex; align-items: center; gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--hm-border);
+}
+
+/* Card avatar — 44 px circle */
+.hm-avatar--card {
+  width: 44px; height: 44px;
+  font-size: 18px; font-weight: 700;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+.hm-mate__head-info { min-width: 0; flex: 1; }
+
+.hm-mate__name {
+  font-size: 16px; font-weight: 700;
+  color: var(--hm-text); margin: 0 0 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Badges: gender + verified */
+.hm-mate__badges  { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; line-height: 1; flex: 1; }
+.hm-mate .hm-badge--plus { position: absolute; top: 12px; right: 12px; }
+.hm-badge--female { background: #f3e8ff; color: #7c3aed; border: 1px solid #ddd6fe; }
+.hm-badge--male   { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+/* Phone verified — light green pill with dark green text */
+.hm-badge--verified {
+  background: #dcfce7;
+  border: 1.5px solid #15803d;
+  color: #15803d;
+}
+
+/* Fully verified (admit card) — solid dark green pill */
+.hm-badge--verified-full {
+  background: #15803d;
+  color: #fff;
+  border: 1.5px solid #15803d;
+}
+
+/* Gender symbol (♀ ♂) sit below text baseline on iOS Safari due to the
+   mathematical Unicode block's font metrics in Apple's SF font.
+   inline-block + vertical-align:middle + top nudge is the reliable cross-
+   platform fix — inline-flex alone doesn't move the element up on iOS. */
+.hm-gender-symbol {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 1;
+  font-style: normal;
+  position: relative;
+  top: -1px; /* compensates iOS SF-font baseline offset for ♀ ♂ */
+}
+
+/* Card hover micro-interaction — subtle lift on hover, press on active */
+.hm-card--interactive {
+  transition: transform 140ms ease-out, box-shadow 140ms ease-out;
+  will-change: transform;
+}
+.hm-card--interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--hm-shadow-md);
+}
+.hm-card--interactive:active { transform: scale(0.99); transition-duration: 60ms; }
+
+.hm-mate__footer {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: auto; padding-top: var(--hm-space-3);
+  border-top: 1px solid var(--hm-border);
+}
+.hm-mate__joined { font-size: var(--hm-text-xs); color: var(--hm-text-subtle); }
+
+/* Plus badge strip — bottom of card, full width, centered */
+.hm-mate__plus-strip {
+  text-align: center;
+  padding-top: var(--hm-space-2);
+  margin-top: var(--hm-space-2);
+  border-top: 1px solid var(--hm-border);
+}
+
+/* ── Route-timeline body (reference design) ─────────────────────────────── */
+
+/* Body: route wrap + optional vertical divider + optional badge cards */
+.hm-mate__body {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  min-height: 88px;
+}
+
+/* Route wrap: icon track (left) + text column (right) */
+.hm-mate__route-wrap {
+  display: flex; gap: 10px;
+  flex: 1; min-width: 0;
+  align-items: stretch;
+}
+
+/* Left: home icon → connector → exam icon */
+.hm-mate__route-track {
+  display: flex; flex-direction: column; align-items: center;
+  flex-shrink: 0;
+}
+
+.hm-mate__icon-bubble {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--hm-surface);
+  border: 1.5px solid var(--hm-border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+}
+
+/* Connector between the two icon bubbles */
+.hm-mate__route-connector {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 3px 0; min-height: 18px;
+}
+
+.hm-mate__route-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%; flex-shrink: 0;
+}
+.hm-mate__route-dot--top    { background: #1e293b; }
+.hm-mate__route-dot--bottom { background: #ef4444; }
+
+.hm-mate__route-dashes {
+  flex: 1; width: 2px; margin: 3px 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    #94a3b8 0, #94a3b8 4px,
+    transparent 4px, transparent 9px
+  );
+}
+
+/* Text column: home loc (top, aligns with home icon) ↔ exam info (bottom) */
+.hm-mate__route-info {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+
+.hm-mate__home-loc { font-size: 13px; color: var(--hm-text); margin: 2px 0 0; }
+.hm-loc-state      { color: var(--hm-text-muted); font-weight: 400; }
+
+.hm-mate__exam-info { margin-bottom: 2px; }
+
+.hm-mate__centre-name {
+  font-size: 13px; font-weight: 700;
+  color: var(--hm-text); margin: 0 0 1px;
+  overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.hm-mate__centre-loc { font-size: 11px; color: var(--hm-text-muted); margin: 0; }
+
+/* Vertical dashed divider between route and badge cards */
+.hm-mate__v-divider {
+  width: 1px; flex-shrink: 0; align-self: stretch;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--hm-border) 0, var(--hm-border) 4px,
+    transparent 4px, transparent 9px
+  );
+}
+
+/* Badge cards — right column, icon + label in a bordered rounded box */
+.hm-mate__badge-cards {
+  display: flex; flex-direction: column; gap: 6px;
+  flex-shrink: 0; justify-content: center;
+}
+.hm-mate__badge-card {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: 10px;
+  padding: 6px 10px;
+  min-width: 82px;
+}
+.hm-mate__badge-icon  { font-size: 15px; line-height: 1; flex-shrink: 0; }
+.hm-mate__badge-label { font-size: 11px; font-weight: 500; color: var(--hm-text); white-space: nowrap; }
+
+/* ============================================================
+   PROFILE MODAL
+============================================================ */
+.hm-modal-overlay {
+  position: fixed; inset: 0; z-index: 1050;
+  background: rgba(15, 23, 42, 0.52);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--hm-space-4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--hm-duration-base) var(--hm-ease);
+}
+.hm-modal-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.hm-modal {
+  position: relative;
+  width: 100%; max-width: 460px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--hm-surface);
+  border-radius: var(--hm-radius-xl);
+  box-shadow: var(--hm-shadow-lg);
+  transform: scale(0.96) translateY(10px);
+  transition: transform var(--hm-duration-base) var(--hm-ease);
+  overscroll-behavior: contain;
+}
+.hm-modal-overlay.is-open .hm-modal {
+  transform: scale(1) translateY(0);
+}
+
+.hm-modal__close {
+  position: absolute; top: 16px; right: 16px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--hm-border);
+  background: var(--hm-surface-2);
+  color: var(--hm-text-muted);
+  font-size: 18px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background var(--hm-duration-fast) var(--hm-ease),
+              color var(--hm-duration-fast) var(--hm-ease);
+}
+.hm-modal__close:hover { background: var(--hm-border); color: var(--hm-text); }
+
+.hm-modal__header {
+  display: flex; align-items: center; gap: var(--hm-space-4);
+  padding: var(--hm-space-6) var(--hm-space-5) var(--hm-space-4);
+  border-bottom: 1px solid var(--hm-border);
+}
+.hm-modal__header-info { min-width: 0; flex: 1; }
+.hm-modal__name {
+  font-size: var(--hm-text-xl);
+  font-family: var(--hm-font-display);
+  margin: 0; line-height: 1.2;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.hm-modal__body { padding: var(--hm-space-4) var(--hm-space-5); }
+.hm-modal__row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: var(--hm-space-3);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--hm-border);
+  align-items: start;
+}
+.hm-modal__row:last-child { border-bottom: 0; }
+.hm-modal__label {
+  font-size: var(--hm-text-sm); font-weight: 600;
+  color: var(--hm-text-subtle);
+}
+.hm-modal__row--phone .hm-modal__label { color: var(--hm-text-subtle); }
+.hm-modal__phone {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text-muted);
+  letter-spacing: 0.04em;
+}
+.hm-modal__center-val { font-size: var(--hm-text-sm); color: var(--hm-text); }
+
+.hm-modal__footer {
+  padding: var(--hm-space-3) var(--hm-space-5) var(--hm-space-5);
+}
+.hm-modal__privacy {
+  font-size: var(--hm-text-xs);
+  color: var(--hm-text-subtle);
+  background: var(--hm-surface-2);
+  border-radius: var(--hm-radius-md);
+  padding: 10px 14px;
+  margin: 0;
+}
+
+/* ============================================================
+   INCOMING REQUESTS BANNER
+============================================================ */
+.hm-requests-banner {
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-left: 3px solid var(--hm-primary);
+  border-radius: var(--hm-radius-lg);
+  padding: var(--hm-space-4) var(--hm-space-5);
+  margin-bottom: var(--hm-space-5);
+  box-shadow: var(--hm-shadow-xs);
+}
+.hm-requests-banner__title {
+  font-size: var(--hm-text-sm); font-weight: 600;
+  color: var(--hm-text); margin: 0 0 var(--hm-space-3);
+}
+.hm-requests-banner__list { display: flex; flex-direction: column; gap: var(--hm-space-3); }
+
+.hm-request-item {
+  display: flex; align-items: center; gap: var(--hm-space-3);
+  padding: var(--hm-space-3);
+  background: var(--hm-surface-2);
+  border-radius: var(--hm-radius-md);
+}
+.hm-request-item__name {
+  flex: 1; min-width: 0;
+  font-weight: 600; font-size: var(--hm-text-sm);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hm-request-item__actions { display: flex; gap: var(--hm-space-2); flex-shrink: 0; }
+
+/* ── Navbar badge ── */
+.hm-nav-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px;
+  background: var(--hm-primary); color: #fff;
+  border-radius: 9px;
+  font-size: 10px; font-weight: 700;
+  padding: 0 5px;
+  margin-left: 4px;
+  vertical-align: middle;
+  line-height: 1;
+}
+
+/* ── Card CTA ── */
+.hm-mate__cta { flex-shrink: 0; }
+
+/* ── Modal actions section ── */
+.hm-modal__actions {
+  display: flex; flex-direction: column;
+  gap: var(--hm-space-2);
+  margin-bottom: var(--hm-space-3);
+}
+
+/* Block row — subtly separated from primary actions */
+.hm-modal__block-row {
+  border-top: 1px solid var(--hm-border);
+  padding-top: var(--hm-space-3);
+  margin-top: var(--hm-space-2);
+}
+.hm-modal__block-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--hm-text-xs);
+  color: var(--hm-danger);
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity var(--hm-duration-fast) var(--hm-ease);
+}
+.hm-modal__block-btn:hover { opacity: 1; }
+
+/* ── Revealed contact ── */
+.hm-contact-revealed {
+  display: flex; flex-direction: column; gap: var(--hm-space-2);
+}
+.hm-contact-revealed__number {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: var(--hm-text-base);
+  font-weight: 700;
+  color: var(--hm-text);
+  letter-spacing: 0.04em;
+}
+.hm-contact-revealed__links { display: flex; gap: var(--hm-space-2); flex-wrap: wrap; }
+
+/* Results count inline with subtitle. */
+.hm-results-count {
+  display: inline-block;
+  font-size: var(--hm-text-xs);
+  font-weight: 600;
+  color: var(--hm-primary);
+  background: var(--hm-primary-100);
+  padding: 2px 10px;
+  border-radius: var(--hm-radius-pill);
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* Empty + error states. */
+.hm-empty {
+  text-align: center;
+  padding: var(--hm-space-7) var(--hm-space-5);
+  background: var(--hm-surface);
+  border: 1px dashed var(--hm-border-strong);
+  border-radius: var(--hm-radius-lg);
+}
+.hm-empty__icon {
+  width: 64px; height: 64px; margin: 0 auto var(--hm-space-3);
+  border-radius: var(--hm-radius-lg);
+  background: var(--hm-primary-100);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+}
+
+/* ============================================================
+   PROFILE PAGE
+============================================================ */
+.hm-profile {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: var(--hm-space-6);
+  align-items: start;
+}
+.hm-profile-card { text-align: center; }
+.hm-profile-card .hm-avatar { margin: 0 auto var(--hm-space-3); }
+.hm-profile-card__name { font-size: var(--hm-text-xl); margin-bottom: 4px; }
+.hm-profile-card__phone { color: var(--hm-text-subtle); font-size: var(--hm-text-sm); margin-bottom: var(--hm-space-3); }
+
+.hm-section-card { margin-bottom: var(--hm-space-4); }
+.hm-section-card__header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: var(--hm-space-4);
+}
+.hm-section-card__header h3 { margin: 0; }
+
+.hm-kv { display: grid; grid-template-columns: 160px 1fr; row-gap: 12px; column-gap: var(--hm-space-4); align-items: start; }
+.hm-kv dt { color: var(--hm-text-subtle); font-size: var(--hm-text-sm); font-weight: 500; padding-top: 10px; }
+.hm-kv dd { margin: 0; color: var(--hm-text); font-weight: 500; }
+/* Empty-state prompts — muted + italic so they differ visually from real values. */
+.hm-kv dd.hm-kv__empty { color: var(--hm-text-subtle); font-style: italic; font-weight: 400; }
+/* Permanent identity field shown read-only during edit mode — subtle lock cue. */
+.hm-kv dd.hm-kv__locked::after { content: ' 🔒'; opacity: 0.45; font-size: 0.85em; }
+
+/* ── Inline edit mode ─────────────────────────────────────────────────────────
+   When a section enters edit mode (article.is-editing), inputs replace dd text.
+   Use the full-width hm-input / hm-select / hm-textarea — they fill the dd cell.
+   The kv grid expands vertically to accommodate input height: no layout jumps. */
+.hm-section-card.is-editing { border-color: var(--hm-primary); }
+.hm-kv .hm-input,
+.hm-kv .hm-select { width: 100%; }
+/* Bio textarea — shorter than the default 120px so it doesn't dominate the card */
+.hm-profile-bio { min-height: 80px !important; resize: vertical; }

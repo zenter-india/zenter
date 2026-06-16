@@ -1,0 +1,37 @@
+<!--
+  HallMate — Reusable loader + skeleton snippets.
+  Copy/paste these directly into page markup or clone via JS where needed.
+-->
+
+<!-- Inline spinner: drop next to small actions. -->
+<template id="hm-tpl-spinner">
+  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+</template>
+
+<!-- Full card skeleton — use while a mate card loads. -->
+<template id="hm-tpl-skeleton-card">
+  <div class="hm-card hm-mate" aria-hidden="true">
+    <div class="hm-mate__head">
+      <div class="hm-skeleton" style="width: 40px; height: 40px; border-radius: 50%;"></div>
+      <div style="flex: 1;">
+        <div class="hm-skeleton" style="height: 14px; width: 60%; margin-bottom: 8px;"></div>
+        <div class="hm-skeleton" style="height: 12px; width: 40%;"></div>
+      </div>
+    </div>
+    <div class="hm-skeleton" style="height: 12px; width: 90%;"></div>
+    <div class="hm-skeleton" style="height: 12px; width: 70%;"></div>
+    <div class="hm-mate__actions">
+      <div class="hm-skeleton" style="height: 36px; width: 100px; border-radius: 12px;"></div>
+      <div class="hm-skeleton" style="height: 36px; width: 100px; border-radius: 12px;"></div>
+    </div>
+  </div>
+</template>
+
+<!-- Page-level fallback empty state. -->
+<template id="hm-tpl-empty">
+  <div class="hm-empty">
+    <div class="hm-empty__icon" aria-hidden="true">🔍</div>
+    <h3>No mates yet</h3>
+    <p class="hm-text-muted">We'll show centre mates here as soon as they join.</p>
+  </div>
+</template>

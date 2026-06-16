@@ -1,0 +1,762 @@
+/* HallMate — Reusable component library: buttons, cards, forms, badges, navbar, footer, toasts, loaders. */
+
+/* ── Feedback modal ─────────────────────────────────────────────────────────
+   Loaded on every page via navbar component — must not depend on dashboard.css */
+.hm-feedback-overlay {
+  display: flex; /* always flex — visibility controlled by opacity+pointer-events */
+  position: fixed; inset: 0; z-index: 1060;
+  background: rgba(15, 23, 42, 0.52);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+  padding: var(--hm-space-4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease-out;
+}
+.hm-feedback-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+@keyframes hm-feedback-enter {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);   }
+}
+.hm-feedback-overlay.is-open .hm-feedback-box {
+  animation: hm-feedback-enter 220ms ease-out both;
+}
+
+.hm-feedback-box {
+  width: 100%; max-width: 400px;
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-xl);
+  box-shadow: var(--hm-shadow-lg);
+  padding: var(--hm-space-5);
+}
+.hm-feedback-box h3  { margin: 0 0 var(--hm-space-2); font-size: var(--hm-text-xl); }
+.hm-feedback-sub     { margin: 0 0 var(--hm-space-4); font-size: var(--hm-text-sm); color: var(--hm-text-muted); }
+.hm-feedback-ta      { width: 100%; resize: vertical; min-height: 100px; }
+.hm-feedback-actions {
+  display: flex; gap: var(--hm-space-2); justify-content: flex-end;
+  flex-wrap: wrap; margin-top: var(--hm-space-4);
+}
+
+/* ============================================================
+   NAVBAR
+============================================================ */
+.hm-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1030;
+  background: rgba(255, 255, 255, 0.78);
+  /* backdrop-filter is on ::before, NOT here.
+     When backdrop-filter is on the element itself it creates a new containing
+     block for position:fixed descendants (Chrome/Safari bug), which collapses
+     the mobile drawer to ~0px height. Moving it to a pseudo-element preserves
+     the glass effect without affecting fixed-child positioning. */
+  border-bottom: 1px solid var(--hm-border);
+  height: var(--hm-navbar-h);
+  display: flex;
+  align-items: center;
+}
+/* Frosted-glass effect via pseudo-element so the navbar itself does NOT
+   create a containing block for position:fixed children. */
+.hm-navbar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  pointer-events: none;
+}
+.hm-navbar__inner {
+  /* 3-column grid: [brand 1fr] [nav-links auto, centered] [nav-right 1fr] */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  width: 100%;
+  gap: var(--hm-space-4);
+}
+
+/* ← Back button — sits next to profile icon, hidden by default */
+#hm-nav-back {
+  background: none;
+  border: 1px solid var(--hm-border);
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--hm-text-muted);
+  cursor: pointer;
+  border-radius: 6px;
+  white-space: nowrap;
+  transition: background 120ms, color 120ms;
+}
+#hm-nav-back:hover { background: var(--hm-surface-2); color: var(--hm-text); }
+.hm-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--hm-space-2);
+  font-family: var(--hm-font-display);
+  font-weight: 700;
+  font-size: var(--hm-text-lg);
+  color: var(--hm-text);
+  letter-spacing: -0.01em;
+}
+.hm-brand__mark {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--hm-primary), #ff8a5b);
+  color: #fff;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 16px;
+  box-shadow: var(--hm-shadow-sm);
+}
+.hm-brand__logo {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  object-fit: cover;
+  box-shadow: var(--hm-shadow-sm);
+  flex-shrink: 0;
+}
+.hm-nav-links {
+  display: flex; align-items: center; justify-content: center; gap: var(--hm-space-2);
+  list-style: none; padding: 0; margin: 0;
+}
+.hm-nav-links a {
+  color: var(--hm-text-muted);
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: var(--hm-radius-sm);
+  transition: background var(--hm-duration-fast) var(--hm-ease), color var(--hm-duration-fast) var(--hm-ease);
+}
+.hm-nav-links a:hover { color: var(--hm-text); background: var(--hm-surface-2); }
+.hm-nav-links a.active { color: var(--hm-primary); background: var(--hm-primary-100); }
+
+/* Right-side group: wraps cta / nav-actions / profile / toggle on a single flex row. */
+.hm-nav-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--hm-space-2);
+}
+
+.hm-nav-actions { display: flex; align-items: center; gap: var(--hm-space-3); }
+
+/* ── Profile avatar + dropdown ───────────────────────────────────────────── */
+.hm-nav-profile { position: relative; }
+
+.hm-nav-profile__btn {
+  display: flex; align-items: center; gap: 4px;
+  background: none; border: none; cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--hm-radius-md);
+  transition: background var(--hm-duration-fast) var(--hm-ease);
+}
+.hm-nav-profile__btn:hover { background: var(--hm-surface-2); }
+
+.hm-nav-profile__chevron {
+  font-size: 10px; color: var(--hm-text-subtle); line-height: 1;
+  transition: transform var(--hm-duration-fast) var(--hm-ease);
+}
+.hm-nav-profile__btn[aria-expanded="true"] .hm-nav-profile__chevron {
+  transform: rotate(180deg);
+}
+
+.hm-nav-profile__dropdown {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  min-width: 168px;
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-md);
+  box-shadow: var(--hm-shadow-md);
+  z-index: 1040;
+  list-style: none; padding: var(--hm-space-1) 0; margin: 0;
+  /* Animated with CSS class — JS toggles .is-open */
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity var(--hm-duration-fast) var(--hm-ease),
+              transform var(--hm-duration-fast) var(--hm-ease),
+              visibility 0s var(--hm-duration-fast);
+  pointer-events: none;
+}
+.hm-nav-profile__dropdown.is-open {
+  visibility: visible; opacity: 1; transform: translateY(0);
+  transition: opacity var(--hm-duration-fast) var(--hm-ease),
+              transform var(--hm-duration-fast) var(--hm-ease),
+              visibility 0s;
+  pointer-events: auto;
+}
+
+.hm-nav-profile__item {
+  display: flex; align-items: center;
+  width: 100%; text-align: left;
+  padding: 10px 16px;
+  font-size: var(--hm-text-sm); font-weight: 500;
+  color: var(--hm-text-muted);
+  background: none; border: none; cursor: pointer;
+  font-family: var(--hm-font-body);
+  transition: background var(--hm-duration-fast) var(--hm-ease),
+              color var(--hm-duration-fast) var(--hm-ease);
+  text-decoration: none;
+}
+.hm-nav-profile__item:hover { background: var(--hm-surface-2); color: var(--hm-text); }
+.hm-nav-profile__item--danger { color: var(--hm-danger); }
+.hm-nav-profile__item--danger:hover { background: #FEE2E2; color: var(--hm-danger); }
+
+.hm-nav-toggle {
+  display: none;
+  width: 44px; height: 44px;
+  flex-shrink: 0;
+  /* Stronger border + tinted background for better contrast against glassy navbar */
+  border: 1.5px solid var(--hm-border-strong);
+  background: var(--hm-surface);
+  border-radius: var(--hm-radius-md);
+  align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background var(--hm-duration-fast) var(--hm-ease),
+              border-color var(--hm-duration-fast) var(--hm-ease),
+              box-shadow var(--hm-duration-fast) var(--hm-ease);
+}
+.hm-nav-toggle:hover  { background: var(--hm-surface-2); border-color: var(--hm-text-subtle); }
+.hm-nav-toggle:active { background: var(--hm-border); box-shadow: none; }
+
+/* Hamburger bars — slightly wider (20px), rounded caps, with animated transitions */
+.hm-nav-toggle span {
+  display: block;
+  width: 20px; height: 2px;
+  background: var(--hm-text);
+  border-radius: 2px;
+  position: relative;
+  transition: background var(--hm-duration-base) var(--hm-ease),
+              transform var(--hm-duration-base) var(--hm-ease);
+}
+.hm-nav-toggle span::before,
+.hm-nav-toggle span::after {
+  content: '';
+  position: absolute; left: 0;
+  width: 20px; height: 2px;
+  background: var(--hm-text);
+  border-radius: 2px;
+  transition: top    var(--hm-duration-base) var(--hm-ease),
+              transform var(--hm-duration-base) var(--hm-ease),
+              background var(--hm-duration-base) var(--hm-ease);
+}
+.hm-nav-toggle span::before { top: -6px; }
+.hm-nav-toggle span::after  { top:  6px; }
+
+/* ── X animation when drawer is open ──────────────────────────────────────── */
+.hm-navbar.is-open .hm-nav-toggle {
+  background: var(--hm-surface-2);
+  border-color: var(--hm-border-strong);
+}
+.hm-navbar.is-open .hm-nav-toggle span            { background: transparent; }
+.hm-navbar.is-open .hm-nav-toggle span::before    { top: 0; transform: rotate(45deg); }
+.hm-navbar.is-open .hm-nav-toggle span::after     { top: 0; transform: rotate(-45deg); }
+
+/* hm-nav-cta — mobile-only auth CTA container. Hidden on desktop by default;
+   responsive.css shows it at ≤991px. */
+.hm-nav-cta { display: none; align-items: center; gap: var(--hm-space-2); flex-shrink: 0; }
+
+/* ── Drawer backdrop ─────────────────────────────────────────────────────── */
+/* Created by JS (wireNavbarToggle) and appended to <body> so it is not
+   affected by the navbar's backdrop-filter stacking context. */
+.hm-drawer-backdrop {
+  position: fixed; inset: 0;
+  z-index: 1028; /* below drawer (1029) and navbar (1030) */
+  background: rgba(15, 23, 42, 0.50);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--hm-duration-base) var(--hm-ease);
+}
+.hm-drawer-backdrop.is-open { opacity: 1; pointer-events: auto; }
+
+/* ── Drawer header (Menu label + close button) ───────────────────────────── */
+/* Hidden on desktop — only meaningful inside the slide drawer. */
+.hm-nav-links__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 4px 12px;
+  margin-bottom: var(--hm-space-2);
+  border-bottom: 1px solid var(--hm-border);
+  list-style: none;
+  flex-shrink: 0;
+}
+.hm-nav-links__header-label {
+  font-size: var(--hm-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hm-text-subtle);
+}
+.hm-nav-links__close {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px;
+  border: 1px solid var(--hm-border);
+  background: var(--hm-surface-2);
+  border-radius: var(--hm-radius-sm);
+  font-size: 16px; line-height: 1;
+  color: var(--hm-text-muted);
+  cursor: pointer;
+  transition: background var(--hm-duration-fast) var(--hm-ease),
+              color var(--hm-duration-fast) var(--hm-ease);
+}
+.hm-nav-links__close:hover { background: var(--hm-border); color: var(--hm-text); }
+
+/* ── Mobile drawer action items ──────────────────────────────────────────── */
+/* Separator between nav links and logged-in actions inside the drawer. */
+.hm-nav-links__sep {
+  height: 1px;
+  background: var(--hm-border);
+  margin: var(--hm-space-2) 0;
+  list-style: none;
+}
+/* Full-width button/link inside the drawer that looks like a nav link. */
+.hm-nav-links__action {
+  display: block; width: 100%; text-align: left;
+  padding: 14px 12px;
+  border-radius: var(--hm-radius-md);
+  font-size: var(--hm-text-base); font-weight: 500;
+  color: var(--hm-text-muted);
+  background: none; border: none; cursor: pointer;
+  font-family: var(--hm-font-body);
+  transition: background var(--hm-duration-fast) var(--hm-ease),
+              color var(--hm-duration-fast) var(--hm-ease);
+}
+.hm-nav-links__action:hover { color: var(--hm-text); background: var(--hm-surface-2); }
+.hm-nav-links__action--danger { color: var(--hm-danger); }
+.hm-nav-links__action--danger:hover { color: var(--hm-danger); background: #FEE2E2; }
+
+/* ============================================================
+   BUTTONS
+============================================================ */
+.hm-btn {
+  --hm-btn-bg: var(--hm-primary);
+  --hm-btn-color: #fff;
+  --hm-btn-border: transparent;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 44px; padding: 0 20px;
+  font-family: var(--hm-font-body);
+  font-weight: 600; font-size: var(--hm-text-sm);
+  color: var(--hm-btn-color);
+  background: var(--hm-btn-bg);
+  border: 1px solid var(--hm-btn-border);
+  border-radius: var(--hm-radius-md);
+  cursor: pointer;
+  transition: transform var(--hm-duration-fast) var(--hm-ease),
+              box-shadow var(--hm-duration-base) var(--hm-ease),
+              background var(--hm-duration-fast) var(--hm-ease);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.hm-btn:hover { transform: translateY(-1px); box-shadow: var(--hm-shadow-md); color: var(--hm-btn-color); }
+.hm-btn:active { transform: translateY(0); box-shadow: var(--hm-shadow-sm); }
+.hm-btn:disabled, .hm-btn[aria-disabled="true"] {
+  opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none;
+}
+
+.hm-btn--primary   { --hm-btn-bg: var(--hm-primary); --hm-btn-color: #fff; }
+.hm-btn--primary:hover { --hm-btn-bg: var(--hm-primary-600); }
+
+.hm-btn--secondary { --hm-btn-bg: var(--hm-secondary); --hm-btn-color: #fff; }
+.hm-btn--secondary:hover { --hm-btn-bg: var(--hm-secondary-600); }
+
+.hm-btn--ghost     { --hm-btn-bg: transparent; --hm-btn-color: var(--hm-text); --hm-btn-border: var(--hm-border); }
+.hm-btn--ghost:hover { --hm-btn-bg: var(--hm-surface-2); }
+
+.hm-btn--soft      { --hm-btn-bg: var(--hm-primary-100); --hm-btn-color: var(--hm-primary); }
+.hm-btn--soft:hover { --hm-btn-bg: #ffd8c2; }
+
+.hm-btn--lg { height: 52px; padding: 0 28px; font-size: var(--hm-text-base); border-radius: var(--hm-radius-lg); }
+.hm-btn--sm { height: 36px; padding: 0 14px; font-size: var(--hm-text-xs); }
+/* xs — compact variant used for always-visible mobile navbar CTAs */
+.hm-btn--xs { height: 32px; padding: 0 10px; font-size: 11px; border-radius: var(--hm-radius-sm); white-space: nowrap; }
+.hm-btn--block { width: 100%; }
+
+/* ============================================================
+   CARDS
+============================================================ */
+.hm-card {
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-lg);
+  box-shadow: var(--hm-shadow-xs);
+  padding: var(--hm-space-5);
+  transition: box-shadow var(--hm-duration-base) var(--hm-ease),
+              transform var(--hm-duration-base) var(--hm-ease),
+              border-color var(--hm-duration-base) var(--hm-ease);
+}
+.hm-card--interactive { cursor: pointer; }
+.hm-card--interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--hm-shadow-md);
+  border-color: var(--hm-border-strong);
+}
+.hm-card--glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: var(--hm-shadow-lg);
+}
+.hm-card__title { font-size: var(--hm-text-lg); margin-bottom: var(--hm-space-2); }
+.hm-card__meta  { color: var(--hm-text-subtle); font-size: var(--hm-text-sm); }
+
+/* ============================================================
+   FORMS
+============================================================ */
+.hm-field { margin-bottom: var(--hm-space-4); }
+.hm-label {
+  display: block;
+  font-size: var(--hm-text-sm);
+  font-weight: 600;
+  color: var(--hm-text);
+  margin-bottom: 6px;
+}
+.hm-help {
+  display: block;
+  font-size: var(--hm-text-xs);
+  color: var(--hm-text-subtle);
+  margin-top: 6px;
+}
+.hm-input,
+.hm-select,
+.hm-textarea {
+  width: 100%;
+  height: 48px;
+  padding: 12px 14px;
+  font-family: var(--hm-font-body);
+  font-size: var(--hm-text-base);
+  color: var(--hm-text);
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-md);
+  transition: border-color var(--hm-duration-fast) var(--hm-ease),
+              box-shadow var(--hm-duration-fast) var(--hm-ease),
+              background var(--hm-duration-fast) var(--hm-ease);
+}
+.hm-textarea { height: auto; min-height: 120px; resize: vertical; padding-top: 12px; }
+.hm-input::placeholder, .hm-textarea::placeholder { color: var(--hm-text-subtle); }
+.hm-input:hover, .hm-select:hover, .hm-textarea:hover { border-color: var(--hm-border-strong); }
+.hm-input:focus, .hm-select:focus, .hm-textarea:focus {
+  outline: none;
+  border-color: var(--hm-primary);
+  box-shadow: var(--hm-shadow-focus);
+}
+.hm-input--invalid { border-color: var(--hm-danger); }
+
+.hm-input-prefix {
+  display: flex; align-items: stretch;
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-md);
+  overflow: hidden;
+  background: var(--hm-surface);
+  transition: border-color var(--hm-duration-fast) var(--hm-ease),
+              box-shadow var(--hm-duration-fast) var(--hm-ease);
+}
+.hm-input-prefix:focus-within {
+  border-color: var(--hm-primary);
+  box-shadow: var(--hm-shadow-focus);
+}
+.hm-input-prefix__addon {
+  display: inline-flex; align-items: center;
+  padding: 0 14px;
+  background: var(--hm-surface-2);
+  color: var(--hm-text-muted);
+  font-weight: 600;
+  border-right: 1px solid var(--hm-border);
+}
+.hm-input-prefix .hm-input {
+  border: 0; box-shadow: none; border-radius: 0; height: 48px;
+}
+.hm-input-prefix .hm-input:focus { box-shadow: none; }
+
+/* OTP code input cells. */
+.hm-otp { display: flex; gap: var(--hm-space-2); justify-content: center; }
+.hm-otp__cell {
+  width: 48px; height: 56px;
+  text-align: center;
+  font-size: var(--hm-text-xl);
+  font-weight: 600;
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-md);
+  background: var(--hm-surface);
+  transition: border-color var(--hm-duration-fast) var(--hm-ease),
+              box-shadow var(--hm-duration-fast) var(--hm-ease);
+}
+.hm-otp__cell:focus { outline: none; border-color: var(--hm-primary); box-shadow: var(--hm-shadow-focus); }
+
+/* ============================================================
+   BADGES + CHIPS
+============================================================ */
+.hm-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 24px; padding: 0 10px;
+  border-radius: var(--hm-radius-pill);
+  font-size: var(--hm-text-xs); font-weight: 600;
+  background: var(--hm-surface-2); color: var(--hm-text-muted);
+}
+/* hm-badge--success: kept for other uses (e.g. Connected badge) */
+.hm-badge--success {
+  background: var(--hm-accent-100);
+  color: #047857;
+}
+/* hm-badge--verified and hm-badge--verified-full are defined in dashboard.css */
+.hm-badge--plus    { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; font-weight: 700; }
+.hm-badge--info    { background: var(--hm-secondary-100); color: var(--hm-secondary-600); }
+.hm-badge--warning { background: #FEF3C7; color: #92400E; }
+.hm-badge--danger  { background: #FEE2E2; color: #991B1B; }
+
+.hm-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-pill);
+  background: var(--hm-surface);
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text-muted);
+}
+
+/* ============================================================
+   AVATAR
+============================================================ */
+.hm-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--hm-primary-100);
+  color: var(--hm-primary);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  overflow: hidden;
+}
+.hm-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.hm-avatar--sm { width: 32px; height: 32px; font-size: var(--hm-text-xs); font-weight: 700; }
+.hm-avatar--lg { width: 96px; height: 96px; font-size: var(--hm-text-2xl); }
+
+/* ============================================================
+   FOOTER
+============================================================ */
+.hm-footer {
+  background: var(--hm-surface);
+  border-top: 1px solid var(--hm-border);
+  padding: var(--hm-space-7) 0 var(--hm-space-5);
+  margin-top: var(--hm-space-8);
+}
+.hm-footer__grid { display: grid; gap: var(--hm-space-6); grid-template-columns: 1.4fr 1fr 1fr 1fr; }
+.hm-footer__col h5 { font-size: var(--hm-text-sm); text-transform: uppercase; letter-spacing: 0.08em; color: var(--hm-text-subtle); }
+.hm-footer__col ul { list-style: none; padding: 0; margin: 0; }
+.hm-footer__col li { margin-bottom: 8px; }
+.hm-footer__col a { color: var(--hm-text-muted); }
+.hm-footer__col a:hover { color: var(--hm-text); }
+.hm-footer__legal {
+  margin-top: var(--hm-space-6);
+  padding-top: var(--hm-space-4);
+  border-top: 1px solid var(--hm-border);
+  display: flex; justify-content: space-between; align-items: center; gap: var(--hm-space-3);
+  font-size: var(--hm-text-sm); color: var(--hm-text-subtle);
+}
+
+/* ============================================================
+   TOAST + LOADERS
+============================================================ */
+.hm-toast-container {
+  position: fixed; top: 24px; right: 24px;
+  display: flex; flex-direction: column; gap: 10px;
+  z-index: 1080;
+  pointer-events: none;
+}
+.hm-toast {
+  pointer-events: auto;
+  background: var(--hm-text); color: #fff;
+  padding: 12px 16px;
+  border-radius: var(--hm-radius-md);
+  box-shadow: var(--hm-shadow-lg);
+  font-size: var(--hm-text-sm); font-weight: 500;
+  opacity: 0; transform: translateY(-8px);
+  transition: opacity var(--hm-duration-base) var(--hm-ease),
+              transform var(--hm-duration-base) var(--hm-ease);
+  max-width: 360px;
+}
+.hm-toast.is-visible { opacity: 1; transform: translateY(0); }
+.hm-toast--success { background: #065F46; }
+.hm-toast--danger  { background: #991B1B; }
+.hm-toast--warning { background: #92400E; }
+.hm-toast--info    { background: var(--hm-secondary-600); }
+
+.hm-loader-overlay {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, 0.32);
+  backdrop-filter: blur(2px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1090;
+}
+.hm-loader {
+  display: flex; flex-direction: column; align-items: center; gap: var(--hm-space-3);
+  padding: var(--hm-space-5) var(--hm-space-6);
+  background: var(--hm-surface);
+  border-radius: var(--hm-radius-lg);
+  box-shadow: var(--hm-shadow-lg);
+  min-width: 200px;
+}
+.hm-loader__spinner {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 3px solid var(--hm-surface-2);
+  border-top-color: var(--hm-primary);
+  animation: hm-spin 0.9s linear infinite;
+}
+.hm-loader__label { font-size: var(--hm-text-sm); color: var(--hm-text-muted); }
+@keyframes hm-spin { to { transform: rotate(360deg); } }
+
+/* Skeleton placeholders for data-loading states. */
+.hm-skeleton {
+  background: linear-gradient(90deg, var(--hm-surface-2) 0%, #e8eef5 50%, var(--hm-surface-2) 100%);
+  background-size: 200% 100%;
+  animation: hm-shimmer 1.4s infinite;
+  border-radius: var(--hm-radius-sm);
+}
+@keyframes hm-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ── Exam category selector (landing page) ────────────────────────────────── */
+
+/* Wrapper: pull it flush with the bottom of the page's top padding */
+.hm-exam-selector-wrap {
+  padding-top: var(--hm-space-4);
+  padding-bottom: var(--hm-space-6);
+}
+
+/* Pill row: centered on desktop, horizontally scrollable on mobile */
+.hm-exam-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hm-space-2);
+  justify-content: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Individual exam pill */
+.hm-exam-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 18px;
+  border-radius: var(--hm-radius-pill);
+  border: 1.5px solid var(--hm-border);
+  background: var(--hm-surface);
+  color: var(--hm-text-muted);
+  font-size: var(--hm-text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--hm-duration-fast) var(--hm-ease),
+              border-color var(--hm-duration-fast) var(--hm-ease),
+              color var(--hm-duration-fast) var(--hm-ease);
+}
+.hm-exam-pill:hover {
+  background: var(--hm-primary-100);
+  border-color: var(--hm-primary);
+  color: var(--hm-primary);
+  text-decoration: none;
+}
+.hm-exam-pill:focus-visible {
+  outline: 2px solid var(--hm-primary);
+  outline-offset: 2px;
+}
+
+/* Active pill — HallMate orange, for the currently supported exam */
+.hm-exam-pill--active {
+  background: var(--hm-primary);
+  border-color: var(--hm-primary);
+  color: #fff;
+}
+.hm-exam-pill--active:hover {
+  background: var(--hm-primary-600);
+  border-color: var(--hm-primary-600);
+  color: #fff;
+}
+
+/* Mobile: switch to a single scrollable row to prevent wrapping/overflow */
+@media (max-width: 479px) {
+  .hm-exam-selector {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px; /* breathing room above scroll shadow */
+  }
+  .hm-exam-selector::-webkit-scrollbar { display: none; }
+}
+
+/* ── Zenter Plus reveal usage banner ──────────────────────────────────────── */
+.hm-reveal-banner {
+  background: #fff3ed;
+  border: 1px solid #fed7aa;
+  border-radius: var(--hm-radius-lg);
+  padding: 10px 16px;
+  margin-bottom: var(--hm-space-3);
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text);
+}
+.hm-reveal-banner__text--limit {
+  color: var(--hm-danger, #dc2626);
+}
+.hm-reveal-banner__link {
+  color: var(--hm-primary);
+  font-weight: 600;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+/* Plus item in navbar dropdown */
+.hm-nav-profile__item--plus {
+  color: var(--hm-primary) !important;
+  font-weight: 600;
+}
+
+/* ── Announcement ticker bar ────────────────────────────────────────────────
+   Appears below the navbar on public + dashboard pages.
+   Admin-managed via /admin.html → Settings → Announcements. */
+.hm-announcement-bar {
+  background: var(--hm-primary);
+  color: #fff;
+  height: 36px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 99;
+  font-size: 13px;
+  font-weight: 500;
+}
+.hm-announcement-bar__ticker {
+  display: flex;
+  white-space: nowrap;
+  animation: hm-ticker-scroll 28s linear infinite;
+  will-change: transform;
+}
+.hm-announcement-bar__ticker:hover { animation-play-state: paused; }
+.hm-announcement-bar__text {
+  /* No padding — the separator "   ·   " is baked into the text itself,
+     so the gap between loop repetitions is just the character width. */
+  padding: 0;
+  flex-shrink: 0;
+}
+@keyframes hm-ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@media (max-width: 480px) {
+  .hm-announcement-bar { font-size: 12px; height: 32px; }
+  .hm-announcement-bar__ticker { animation-duration: 20s; }
+}

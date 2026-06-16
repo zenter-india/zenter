@@ -11,6 +11,10 @@
     "test:e2e:report": "playwright show-report"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.4.0",
+    "@capacitor/core": "^8.4.0",
     "@playwright/test": "^1.49.0"
   },
   "dependencies": {

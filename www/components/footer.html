@@ -1,0 +1,52 @@
+<footer class="hm-footer">
+  <div class="hm-container">
+    <div class="hm-footer__grid">
+      <div class="hm-footer__col">
+        <a href="/index.html" class="hm-brand" aria-label="Zenter home">
+          <span class="hm-brand__mark">Z</span>
+          <span>Zenter</span>
+        </a>
+        <p class="hm-text-muted" style="margin-top: 12px; max-width: 320px;">
+          Find your centre mates. Travel, stay, and walk into the hall together - safely.
+        </p>
+      </div>
+
+      <div class="hm-footer__col">
+        <h5>Product</h5>
+        <ul>
+          <li><a href="/index.html#how-it-works">How it works</a></li>
+          <li><a href="/index.html#safety">Safety</a></li>
+          <li><a href="/dashboard.html">Find mates</a></li>
+        </ul>
+      </div>
+
+      <div class="hm-footer__col">
+        <h5>Company</h5>
+        <ul>
+          <li><a href="/contact.html">Contact us</a></li>
+          <li><a href="/faq.html">FAQ</a></li>
+        </ul>
+      </div>
+
+      <div class="hm-footer__col">
+        <h5>Legal</h5>
+        <ul>
+          <li><a href="/privacy.html">Privacy Policy</a></li>
+          <li><a href="/terms.html">Terms and Conditions</a></li>
+          <li><a href="/community.html">Community Guidelines</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="hm-footer__legal">
+      <span>© <span id="hm-year"></span> Zenter. Built for Exam aspirants.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var y = document.getElementById('hm-year');
+    if (y) y.textContent = new Date().getFullYear();
+  })();
+</script>

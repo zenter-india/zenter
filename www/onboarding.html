@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#FF6B35" />
+  <title>Set up your profile - Zenter</title>
+  <meta name="description" content="Complete your Zenter profile to start matching with exam centre mates." />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="canonical" href="https://zenter.in/onboarding.html" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="/css/style.css" rel="stylesheet" />
+  <link href="/css/components.css" rel="stylesheet" />
+  <link href="/css/auth.css" rel="stylesheet" />
+  <link href="/css/responsive.css" rel="stylesheet" />
+
+  <link rel="icon" href="/assets/logos/favicon.svg?v=2" type="image/svg+xml" />
+</head>
+<body>
+  <div data-include="navbar"></div>
+
+  <main class="hm-page" id="hm-main">
+    <div class="hm-container" style="max-width: 680px;">
+      <div class="hm-card" style="padding: var(--hm-space-6);">
+
+        <!-- Progress -->
+        <div class="hm-step-meta">
+          <span>Set up profile</span>
+          <span><span id="hm-step-current">1</span> / 4</span>
+        </div>
+        <div class="hm-steps" aria-label="Onboarding progress">
+          <span class="hm-steps__dot is-active" data-step="1"></span>
+          <span class="hm-steps__dot" data-step="2"></span>
+          <span class="hm-steps__dot" data-step="3"></span>
+          <span class="hm-steps__dot" data-step="4"></span>
+        </div>
+
+        <!-- STEP 1 — Name & gender -->
+        <section data-step-panel="1">
+          <h1 class="hm-auth__title">Tell us about yourself</h1>
+          <p class="hm-auth__subtitle">This is how aspirants going to your centre will recognise you.</p>
+          <form id="hm-form-step1" novalidate>
+            <div class="row g-3">
+              <div class="col-12">
+                <div class="hm-field">
+                  <label class="hm-label" for="hm-name">Full name <span class="text-danger">*</span></label>
+                  <input class="hm-input" id="hm-name" type="text" autocomplete="name" placeholder="As it appears on your hall ticket" required />
+                  <span class="hm-help">Name as mentioned in your hall ticket / Roll No record</span>
+                  <p class="text-danger small mt-1" id="hm-err-name" hidden></p>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="hm-field">
+                  <label class="hm-label" for="hm-gender">Gender <span class="text-danger">*</span></label>
+                  <select class="hm-select" id="hm-gender" required>
+                    <option value="">Select…</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <p class="text-danger small mt-1" id="hm-err-gender" hidden></p>
+                </div>
+              </div>
+            </div>
+            <div class="d-flex justify-content-end mt-4">
+              <button class="hm-btn hm-btn--primary" type="submit">Continue →</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- STEP 2 — Location -->
+        <section data-step-panel="2" hidden>
+          <h1 class="hm-auth__title">Where are you from?</h1>
+          <p class="hm-auth__subtitle">So aspirants near you can plan travel together.</p>
+          <form id="hm-form-step2" novalidate>
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <div class="hm-field">
+                  <label class="hm-label" for="hm-state">State <span class="text-danger">*</span></label>
+                  <select class="hm-select" id="hm-state" required>
+                    <option value="">Select state…</option>
+                  </select>
+                  <p class="text-danger small mt-1" id="hm-err-state" hidden></p>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="hm-field">
+                  <label class="hm-label" for="hm-district">District <span class="text-danger">*</span></label>
+                  <select class="hm-select" id="hm-district" required disabled>
+                    <option value="">Select state first…</option>
+                  </select>
+                  <p class="text-danger small mt-1" id="hm-err-district" hidden></p>
+                </div>
+              </div>
+            </div>
+            <div class="d-flex justify-content-between mt-4">
+              <button class="hm-btn hm-btn--ghost" type="button" data-go-step="1">← Back</button>
+              <button class="hm-btn hm-btn--primary" type="submit">Continue →</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- STEP 3 — Exam details -->
+        <section data-step-panel="3" hidden>
+          <h1 class="hm-auth__title">Your exam centre</h1>
+          <p class="hm-auth__subtitle">The centre that matters most. We match you with others going there.</p>
+          <form id="hm-form-step3" novalidate>
+            <div class="row g-3">
+              <!-- Row 1: Exam type (required) · Exam centre state (required) -->
+              <div class="col-sm-6">
+                <div class="hm-field">
+                  <label class="hm-label" for="hm-exam-type">Exam type <span class="text-danger">*</span></label>
+                  <select class="hm-select" id="hm-exam-type" required>
+                    <option value="">Select exam…</option>
+                    <option value="NEET UG">NEET UG 2026</option>
+                    <option value="NEET PG">NEET PG 2026</option>
+                    <option value="INICET">INICET</option>
+                    <option value="NEET MDS">NEET MDS</option>
+                    <option value="NEET SS">NEET SS</option>
+                    <option value="UPSC CMS">UPSC CMS 2026</option>
+                  </select>
+                  <p class="text-danger small mt-1" id="hm-err-exam-type" hidden></p>
+                </div>
+              </div>
+              <!-- NEET: state + district cascade -->
+              <div class="col-sm-6" id="hm-exam-state-wrap">
+                <div class="hm-field">
+                  <label class="hm-label" for="hm-exam-state">Exam centre state <span class="text-danger">*</span></label>
+                  <select class="hm-select" id="hm-exam-state" required>
+                    <option value="">Select state…</option>
+                  </select>
+                  <p class="text-danger small mt-1" id="hm-err-exam-state" hidden></p>
+                </div>
+              </div>
+              <div class="col-sm-6" id="hm-exam-district-wrap">
+                <div class="hm-field">
+                  <label class="hm-label" for="hm-exam-district">Exam centre district <span class="text-danger">*</span></label>
+                  <select class="hm-select" id="hm-exam-district" required disabled>
+                    <option value="">Select state first…</option>
+                  </select>
+                  <p class="text-danger small mt-1" id="hm-err-exam-district" hidden></p>
+                </div>
+              </div>
+              <div class="col-sm-6" id="hm-exam-center-wrap">
+                <div class="hm-field">
+                  <label class="hm-label" for="hm-exam-center">Exam centre name</label>
+                  <input class="hm-input" id="hm-exam-center" type="text" placeholder="Enter exam centre name" />
+                </div>
+              </div>
+
+              <!-- UPSC CMS: single centre dropdown (hidden by default) -->
+              <div class="col-sm-6" id="hm-cms-centre-wrap" hidden>
+                <div class="hm-field">
+                  <label class="hm-label" for="hm-cms-centre">Exam centre <span class="text-danger">*</span></label>
+                  <select class="hm-select" id="hm-cms-centre" required>
+                    <option value="">Select exam centre…</option>
+                  </select>
+                  <p class="text-danger small mt-1" id="hm-err-cms-centre" hidden></p>
+                </div>
+              </div>
+            </div>
+            <div class="d-flex justify-content-between mt-4">
+              <button class="hm-btn hm-btn--ghost" type="button" data-go-step="2">← Back</button>
+              <button class="hm-btn hm-btn--primary" type="submit">Continue →</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- STEP 4 — Travel & stay -->
+        <section data-step-panel="4" hidden>
+          <h1 class="hm-auth__title">Travel &amp; stay</h1>
+          <p class="hm-auth__subtitle">Share this to help others coordinate with you. You can update it anytime.</p>
+          <form id="hm-form-step4" novalidate>
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <div class="hm-field">
+                  <label class="hm-label" for="hm-travel-mode">Travel mode</label>
+                  <select class="hm-select" id="hm-travel-mode">
+                    <option value="">Select travel mode</option>
+                    <option value="By train">🚂 Train</option>
+                    <option value="By flight">✈️ Flight</option>
+                    <option value="By bus">🚌 Bus</option>
+                    <option value="Self-drive">🚗 Self Drive</option>
+                    <option value="Shared Cab">🚕 Shared Cab</option>
+                    <option value="Other">Yet to Decide</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="hm-field">
+                  <label class="hm-label" for="hm-stay-plan">Stay plan</label>
+                  <select class="hm-select" id="hm-stay-plan">
+                    <option value="">Select stay plan</option>
+                    <option value="Need accommodation">🏨 Need accommodation</option>
+                    <option value="Have accommodation">🏠 Have accommodation</option>
+                    <option value="Looking for room share">🛏️ Room share</option>
+                    <option value="Other">Yet to Decide</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <p id="hm-save-error" class="text-danger small mt-3" hidden></p>
+
+            <div class="d-flex justify-content-between mt-4">
+              <button class="hm-btn hm-btn--ghost" type="button" data-go-step="3">← Back</button>
+              <button class="hm-btn hm-btn--primary" type="submit" id="hm-finish-btn">Finish &amp; find mates</button>
+            </div>
+          </form>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <div data-include="footer"></div>
+
+  <!-- Age confirmation modal — shown before final profile submit -->
+  <div id="hm-age-modal" class="hm-age-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="hm-age-title">
+    <div class="hm-age-modal">
+      <h3 id="hm-age-title" class="hm-age-modal__title">Age confirmation (18+)</h3>
+      <p class="hm-age-modal__text">
+        By continuing, you confirm that you are 18 years of age or older.
+        If you are under 18 years of age, please access Zenter only under the
+        supervision and guidance of your parent or legal guardian.
+      </p>
+      <label class="hm-age-modal__checkbox">
+        <input type="checkbox" id="hm-age-confirm-checkbox" />
+        <span>I have read and agree to the above.</span>
+      </label>
+      <div class="hm-age-modal__actions">
+        <button type="button" class="hm-btn hm-btn--ghost" id="hm-age-cancel">Cancel</button>
+        <button type="button" class="hm-btn hm-btn--primary" id="hm-age-confirm" disabled>Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .hm-age-modal-overlay {
+      position: fixed; inset: 0; z-index: 1100;
+      background: rgba(15, 23, 42, 0.52);
+      display: none;
+      align-items: center; justify-content: center;
+      padding: var(--hm-space-4);
+    }
+    .hm-age-modal-overlay.is-open { display: flex; }
+    .hm-age-modal {
+      width: 100%; max-width: 440px;
+      background: var(--hm-surface);
+      border-radius: var(--hm-radius-lg);
+      box-shadow: var(--hm-shadow-lg, 0 24px 60px rgba(0,0,0,.25));
+      padding: var(--hm-space-5);
+    }
+    .hm-age-modal__title {
+      font-size: var(--hm-text-lg);
+      font-weight: 700;
+      margin: 0 0 var(--hm-space-3);
+    }
+    .hm-age-modal__text {
+      font-size: var(--hm-text-sm);
+      color: var(--hm-text-muted);
+      line-height: 1.6;
+      margin: 0 0 var(--hm-space-4);
+    }
+    .hm-age-modal__checkbox {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: var(--hm-text-sm);
+      color: var(--hm-text);
+      cursor: pointer;
+      margin-bottom: var(--hm-space-4);
+    }
+    .hm-age-modal__checkbox input { margin-top: 3px; cursor: pointer; }
+    .hm-age-modal__actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: var(--hm-space-2);
+    }
+  </style>
+
+  <script type="module" src="/js/app.js"></script>
+  <script type="module" src="/js/onboarding.js"></script>
+  <script defer src="https://cdn.vercel-insights.com/v1/script.js"></script>
+  <script>
+    window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/speed-insights/script.js"></script>
+</body>
+</html>
