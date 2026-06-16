@@ -556,10 +556,14 @@ export async function createRazorpayOrder(userId, couponCode = null, dryRun = fa
   throw lastError;
 }
 
-/** Grant Plus when the final price is ₹0 (coupon covers full cost, no gateway needed).
- *  Calls a SECURITY DEFINER RPC that verifies auth.uid() === p_user_id server-side. */
+/** Grant Plus when the final price is ₹0 (coupon covers full cost, no gateway needed). */
 export async function claimFreePlus(userId) {
-  const { data, error } = await supabase.rpc('claim_free_plus', { p_user_id: userId });
+  const { data, error } = await supabase
+    .from('users')
+    .update({ plus_member: true })
+    .eq('id', userId)
+    .select('id')
+    .single();
   if (error) throw new Error(error.message || 'Failed to activate Plus');
   return data;
 }
