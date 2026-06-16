@@ -698,6 +698,11 @@ async function loadAnalytics() {
         <div style="font-size:28px;font-weight:700;color:#f59e0b;">${a.acceptedConnections ?? '—'}</div>
         <div style="font-size:12px;color:var(--adm-text-muted);margin-top:4px;">Accepted Connections</div>
       </div>
+      <div class="adm-card" style="text-align:center;padding:20px 16px;">
+        <div style="font-size:28px;font-weight:700;color:#a855f7;">${s.plusUsers ?? '—'}</div>
+        <div style="font-size:12px;color:var(--adm-text-muted);margin-top:4px;">⭐ Zenter Plus Members</div>
+        <div style="font-size:11px;color:var(--adm-text-dim);margin-top:2px;">${s.totalUsers ? Math.round((s.plusUsers/s.totalUsers)*100) : 0}% of users</div>
+      </div>
     </div>
     <!-- Breakdowns -->
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">

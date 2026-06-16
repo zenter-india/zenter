@@ -58,7 +58,7 @@ export async function getAdminStats() {
     const q = from(table).select('*', { count: 'exact', head: true });
     return predicate ? predicate(q) : q;
   };
-  const [usersR, activeR, conxR, feedbackR, reportsR] = await Promise.all([
+  const [usersR, activeR, conxR, feedbackR, reportsR, plusR] = await Promise.all([
     // seeded_users is now a separate table — users table contains only real users
     headCount('users'),
     // Active users: online in the last 15 minutes (real users only)
@@ -66,6 +66,7 @@ export async function getAdminStats() {
     headCount('connections', q => q.eq('status', 'accepted')),
     headCount('feedbacks'),
     headCount('blocked_users'),
+    headCount('users', q => q.eq('plus_member', true)),
   ]);
   return {
     data: {
@@ -74,6 +75,7 @@ export async function getAdminStats() {
       connections: conxR.count     ?? 0,
       feedback:    feedbackR.count ?? 0,
       reports:     reportsR.count  ?? 0,
+      plusUsers:   plusR.count     ?? 0,
     },
     error: usersR.error || activeR.error || conxR.error || feedbackR.error || reportsR.error || null,
   };
