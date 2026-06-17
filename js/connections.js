@@ -25,7 +25,7 @@ import {
   requestContactExchange,
   trackEvent,
 }                                from './supabase.js';
-import { formatPhonePretty }     from './utils.js';
+import { formatPhonePretty, checkSuspended } from './utils.js';
 
 let _myUserId = null;
 let _myVerified = false; // whether current user has verified Roll No
@@ -55,6 +55,7 @@ export async function runConnections(root, firebaseUser) {
     renderError(root, 'Could not load your profile. Please sign in again.');
     return;
   }
+  if (checkSuspended(me)) return;
 
   const LIVE_EXAMS = ['NEET UG', 'NEET PG', 'UPSC CMS', 'INICET', 'NEET MDS', 'NEET SS', 'FMGE'];
   if (me.exam_type && !LIVE_EXAMS.includes(me.exam_type)) {

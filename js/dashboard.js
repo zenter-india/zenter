@@ -6,7 +6,7 @@ import { getAllUsers, getUserByPhone, getMyConnections,
          getBlockedUserIds, getBlockedByIds, getSeededUsers,
          getPlatformConfig, attemptReveal, trackEvent, flagRapidReveal, blockUser,
          deleteConnectionsBetween, createConversation, getActiveChatCount } from './supabase.js';
-import { debounce } from './utils.js';
+import { debounce, checkSuspended } from './utils.js';
 import { toast, setButtonBusy } from './ui.js';
 import * as Relationships from './relationships.js';
 import { populateStateSelect, wireDistrictCascade, DISTRICTS_BY_STATE, UPSC_CMS_CENTRES } from './location-data.js';
@@ -91,19 +91,7 @@ async function init() {
 
   const { data: me } = await getUserByPhone(firebaseUser.phoneNumber);
 
-  if (me?.account_status === 'suspended') {
-    document.body.innerHTML = `
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px;text-align:center;background:var(--hm-bg,#f8fafc);">
-        <div style="font-size:52px;margin-bottom:20px;">🚫</div>
-        <h2 style="font-size:20px;font-weight:700;color:var(--hm-text,#0f172a);margin-bottom:12px;">Account Suspended</h2>
-        <p style="color:var(--hm-text-muted,#64748b);font-size:15px;max-width:300px;line-height:1.7;margin:0;">
-          Your account has been suspended due to suspicious activity.<br><br>
-          If you think this is a mistake, contact us at<br>
-          <a href="mailto:support@zenter.in" style="color:var(--hm-primary,#2563eb);font-weight:600;">support@zenter.in</a>
-        </p>
-      </div>`;
-    return;
-  }
+  if (checkSuspended(me)) return;
 
   myUserId             = me?.id        || null;
   myExamType           = me?.exam_type || 'NEET UG';

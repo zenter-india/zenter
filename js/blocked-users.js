@@ -1,6 +1,7 @@
 // HallMate — Blocked users management page.
 
 import { requireOnboarded }                   from './auth.js';
+import { checkSuspended }                     from './utils.js';
 import { getBlockedList, getUsersByIds,
          unblockUser, deleteConnectionsBetween } from './supabase.js';
 import { setButtonBusy, toast }                from './ui.js';
@@ -17,6 +18,7 @@ async function init() {
   // Get myUserId from sessionStorage-cached profile or fetch fresh.
   const { getUserByPhone } = await import('./supabase.js');
   const { data: me } = await getUserByPhone(myPhone);
+  if (checkSuspended(me)) return;
   myUserId = me?.id || null;
   if (!myUserId) return;
 

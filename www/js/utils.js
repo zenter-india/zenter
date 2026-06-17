@@ -71,6 +71,21 @@ export function currentRoute() {
   return file.replace('.html', '') || 'index';
 }
 
+// Show a full-page suspension screen and return true if the account is suspended.
+export function checkSuspended(me) {
+  if (me?.account_status !== 'suspended') return false;
+  document.body.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px;text-align:center;background:var(--hm-bg,#f8fafc);">
+      <div style="font-size:52px;margin-bottom:20px;">🚫</div>
+      <h2 style="font-size:20px;font-weight:700;color:var(--hm-text,#0f172a);margin-bottom:12px;">Account Suspended</h2>
+      <p style="color:var(--hm-text-muted,#64748b);font-size:15px;max-width:320px;line-height:1.7;margin:0;">
+        Your account has been suspended due to suspicious activity.<br><br>
+        Appeal to <a href="mailto:support@zenter.in" style="color:var(--hm-primary,#2563eb);font-weight:600;">support@zenter.in</a>
+      </p>
+    </div>`;
+  return true;
+}
+
 // Build a query-string URL.
 export function buildUrl(path, params = {}) {
   const url = new URL(path, window.location.origin);
