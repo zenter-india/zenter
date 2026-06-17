@@ -82,7 +82,7 @@ export function checkSuspended(me) {
         <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
         <h2 style="font-size:20px;font-weight:700;color:var(--hm-text,#0f172a);margin:0 0 10px;">Appeal Reviewed</h2>
         <p style="color:var(--hm-text-muted,#64748b);font-size:14px;line-height:1.8;margin:0 0 24px;">
-          Dear Aspirant, Your matching function has been restored.<br>Please regulate your improper behavior and wish you a happy time here!
+          Dear Aspirant, Your matching function has been restored. Please regulate according to the guidelines and wish you a happy Zentering!
         </p>
         <button id="hm-warn-ack" style="display:block;width:100%;background:var(--hm-primary,#2563eb);color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;">
           I Understand
