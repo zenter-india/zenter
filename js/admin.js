@@ -1248,17 +1248,18 @@ document.addEventListener('click', async (e) => {
     }); return;
   }
 
-  // Dismiss a pending suspension appeal
+  // Dismiss appeal — unsuspends the user and sets a one-time warning they see on next login
   if (action === 'dismiss-appeal') {
-    btn.disabled = true;
-    const { adminClearAppeal } = await import('./supabase.js');
-    const { error } = await adminClearAppeal(id);
-    if (error) { toast('Error: ' + error.message, 'error'); btn.disabled = false; return; }
-    const u = allUsers.find(u => u.id === id);
-    if (u) u.appeal_submitted_at = null;
-    renderFilteredUsers();
-    toast('Appeal dismissed ✓', 'success');
-    return;
+    confirm_({ title: 'Dismiss appeal & restore access?', msg: 'User will be unsuspended and shown a behavior warning on next login.', danger: false }, async () => {
+      btn.disabled = true;
+      const { adminDismissAppeal } = await import('./supabase.js');
+      const { error } = await adminDismissAppeal(id, adminPhone);
+      if (error) { toast('Error: ' + error.message, 'error'); btn.disabled = false; return; }
+      const u = allUsers.find(u => u.id === id);
+      if (u) { u.appeal_submitted_at = null; u.account_status = 'active'; u.suspension_warning = true; }
+      renderFilteredUsers();
+      toast('Appeal dismissed — user restored with warning ✓', 'success');
+    }); return;
   }
 
   // Suspend / Unsuspend from Users panel (sets account_status — user sees suspension message)

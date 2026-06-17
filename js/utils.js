@@ -71,8 +71,32 @@ export function currentRoute() {
   return file.replace('.html', '') || 'index';
 }
 
-// Show a blurred-background suspension overlay and return true if account is suspended.
+// Show blurred overlay for suspended/warned accounts. Returns true if suspended (blocks page init).
 export function checkSuspended(me) {
+  // Non-blocking: show one-time warning overlay for users whose appeal was dismissed.
+  if (me?.suspension_warning) {
+    const warn = document.createElement('div');
+    warn.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);background:rgba(15,23,42,0.6);';
+    warn.innerHTML = `
+      <div style="background:var(--hm-surface,#fff);border-radius:20px;padding:36px 28px;max-width:340px;width:100%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.3);">
+        <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+        <h2 style="font-size:20px;font-weight:700;color:var(--hm-text,#0f172a);margin:0 0 10px;">Appeal Reviewed</h2>
+        <p style="color:var(--hm-text-muted,#64748b);font-size:14px;line-height:1.8;margin:0 0 24px;">
+          Dear Aspirant, Your matching function has been restored.<br>Please regulate your improper behavior and wish you a happy time here!
+        </p>
+        <button id="hm-warn-ack" style="display:block;width:100%;background:var(--hm-primary,#2563eb);color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;">
+          I Understand
+        </button>
+      </div>`;
+    document.body.appendChild(warn);
+    warn.querySelector('#hm-warn-ack').addEventListener('click', async () => {
+      warn.remove();
+      const { dismissSuspensionWarning } = await import('./supabase.js');
+      await dismissSuspensionWarning(me.id);
+    });
+  }
+
+  // Blocking: show suspension screen — page init should not continue.
   if (me?.account_status !== 'suspended') return false;
 
   const overlay = document.createElement('div');
@@ -83,11 +107,13 @@ export function checkSuspended(me) {
     <div style="background:var(--hm-surface,#fff);border-radius:20px;padding:36px 28px;max-width:340px;width:100%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.3);">
       <div style="font-size:48px;margin-bottom:16px;">🚫</div>
       <h2 style="font-size:20px;font-weight:700;color:var(--hm-text,#0f172a);margin:0 0 10px;">Account Suspended</h2>
-      <p style="color:var(--hm-text-muted,#64748b);font-size:14px;line-height:1.7;margin:0 0 24px;">Your account has been suspended due to suspicious activity.</p>
+      <p style="color:var(--hm-text-muted,#64748b);font-size:14px;line-height:1.8;margin:0 0 24px;">
+        Dear Aspirant, Our system has detected suspicious activity that your actions violate the Community Guidelines.
+      </p>
       ${me.appeal_submitted_at
         ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
              <p style="margin:0;font-size:14px;font-weight:600;color:#15803d;">✓ Appeal Submitted</p>
-             <p style="margin:4px 0 0;font-size:13px;color:#166534;">Waiting for review — we'll reach you at support@zenter.in</p>
+             <p style="margin:4px 0 0;font-size:13px;color:#166534;">We'll review and let you know.</p>
            </div>`
         : `<button id="hm-appeal-btn" style="display:block;width:100%;background:var(--hm-primary,#2563eb);color:#fff;border:none;border-radius:10px;padding:14px 24px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:12px;transition:opacity .15s;">
              Appeal to Support
@@ -101,8 +127,7 @@ export function checkSuspended(me) {
 
   document.body.appendChild(overlay);
 
-  const signout = overlay.querySelector('#hm-suspension-signout');
-  signout.addEventListener('click', async () => {
+  overlay.querySelector('#hm-suspension-signout').addEventListener('click', async () => {
     const { logout } = await import('./auth.js');
     await logout();
   });
@@ -121,7 +146,7 @@ export function checkSuspended(me) {
         btn.textContent = 'Appeal Submitted ✓';
         btn.style.background = '#16a34a';
         btn.style.opacity = '1';
-        msg.textContent = 'We\'ll review and reach you at support@zenter.in';
+        msg.textContent = 'We\'ll review and let you know.';
       } catch {
         btn.disabled = false;
         btn.style.opacity = '1';
