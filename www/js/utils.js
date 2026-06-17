@@ -108,7 +108,7 @@ export function checkSuspended(me) {
       <div style="font-size:48px;margin-bottom:16px;">🚫</div>
       <h2 style="font-size:20px;font-weight:700;color:var(--hm-text,#0f172a);margin:0 0 10px;">Account Suspended</h2>
       <p style="color:var(--hm-text-muted,#64748b);font-size:14px;line-height:1.8;margin:0 0 24px;">
-        Dear Aspirant, Our system has detected suspicious activity that your actions violate the Community Guidelines.
+        Dear Aspirant, Our system has detected an suspicious activity that your actions violate the Community Guidelines.
       </p>
       ${me.appeal_submitted_at
         ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
