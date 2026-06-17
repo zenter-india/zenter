@@ -668,7 +668,7 @@ async function loadExams() {
   </div>`;
 }
 
-const ALL_EXAM_TYPES = ['NEET UG', 'NEET PG', 'UPSC CMS', 'INICET', 'NEET MDS', 'NEET SS', 'FMG'];
+const ALL_EXAM_TYPES = ['NEET UG', 'NEET PG', 'UPSC CMS', 'INICET', 'NEET MDS', 'NEET SS', 'FMGE'];
 
 async function loadAnalytics() {
   const el = document.getElementById('adm-analytics-content');

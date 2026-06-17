@@ -143,7 +143,7 @@ async function init() {
   if (plusNavItem) plusNavItem.hidden = myPlusMember;
 
   // Only NEET UG, NEET PG, and UPSC CMS are live; other exam types → maintenance page.
-  const LIVE_EXAMS = ['NEET UG', 'NEET PG', 'UPSC CMS', 'INICET', 'NEET MDS', 'NEET SS', 'FMG'];
+  const LIVE_EXAMS = ['NEET UG', 'NEET PG', 'UPSC CMS', 'INICET', 'NEET MDS', 'NEET SS', 'FMGE'];
   if (!LIVE_EXAMS.includes(myExamType)) {
     window.location.replace('/maintenance.html');
     return;
@@ -156,7 +156,7 @@ async function init() {
   const examLabel = document.getElementById('hm-exam-label');
   const examYearDisplay = {
     'NEET UG': 'NEET UG 2026', 'NEET PG': 'NEET PG 2026', 'UPSC CMS': 'UPSC CMS 2026',
-    'INICET': 'INICET 2026', 'NEET MDS': 'NEET MDS 2026', 'NEET SS': 'NEET SS 2026', 'FMG': 'FMG 2026 Jun',
+    'INICET': 'INICET 2026', 'NEET MDS': 'NEET MDS 2026', 'NEET SS': 'NEET SS 2026', 'FMGE': 'FMGE 2026 Jun',
   };
   if (examLabel) examLabel.textContent = examYearDisplay[myExamType] || myExamType;
 

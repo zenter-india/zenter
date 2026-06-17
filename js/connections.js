@@ -56,7 +56,7 @@ export async function runConnections(root, firebaseUser) {
     return;
   }
 
-  const LIVE_EXAMS = ['NEET UG', 'NEET PG', 'UPSC CMS', 'INICET', 'NEET MDS', 'NEET SS', 'FMG'];
+  const LIVE_EXAMS = ['NEET UG', 'NEET PG', 'UPSC CMS', 'INICET', 'NEET MDS', 'NEET SS', 'FMGE'];
   if (me.exam_type && !LIVE_EXAMS.includes(me.exam_type)) {
     window.location.replace('/maintenance.html');
     return;
