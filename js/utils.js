@@ -87,13 +87,22 @@ export function checkSuspended(me) {
       <button id="hm-appeal-btn" style="display:block;width:100%;background:var(--hm-primary,#2563eb);color:#fff;border:none;border-radius:10px;padding:14px 24px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:12px;transition:opacity .15s;">
         Appeal to Support
       </button>
-      <p id="hm-appeal-msg" style="font-size:13px;color:var(--hm-text-muted,#64748b);margin:0;min-height:18px;"></p>
+      <p id="hm-appeal-msg" style="font-size:13px;color:var(--hm-text-muted,#64748b);margin:0 0 16px;min-height:18px;"></p>
+      <button id="hm-suspension-signout" style="background:none;border:none;color:var(--hm-text-muted,#64748b);font-size:13px;cursor:pointer;text-decoration:underline;padding:0;">
+        Sign out
+      </button>
     </div>`;
 
   document.body.appendChild(overlay);
 
-  const btn = overlay.querySelector('#hm-appeal-btn');
-  const msg = overlay.querySelector('#hm-appeal-msg');
+  const btn     = overlay.querySelector('#hm-appeal-btn');
+  const msg     = overlay.querySelector('#hm-appeal-msg');
+  const signout = overlay.querySelector('#hm-suspension-signout');
+
+  signout.addEventListener('click', async () => {
+    const { logout } = await import('./auth.js');
+    await logout();
+  });
 
   btn.addEventListener('click', async () => {
     btn.disabled = true;
