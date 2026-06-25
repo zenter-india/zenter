@@ -769,7 +769,7 @@ function updateCount(n) {
   if (!el) return;
   if (allUsers.length === 0) { el.textContent = ''; return; }
   const stateSuffix = myExamCentreState ? ` in ${myExamCentreState}` : '';
-  el.textContent = `${n} centre ${n === 1 ? 'mate' : 'mates'} found${stateSuffix}`;
+  el.textContent = `${n} ${n === 1 ? 'Aspirant' : 'Aspirants'} found${stateSuffix}`;
 }
 
 function updateNavBadge() {
@@ -1173,7 +1173,7 @@ function cardFooterHtml(user) {
   switch (rel.status) {
     case REL.NONE:
       cta = `<button class="hm-btn hm-btn--primary hm-btn--sm"
-               data-conn-action="connect" data-user-id="${uid}">Connect</button>`;
+               data-conn-action="connect" data-user-id="${uid}">Request</button>`;
       break;
     case REL.PENDING_OUT:
       cta = `<span class="hm-badge hm-badge--info" style="font-size:11px;">Sent</span>`;
