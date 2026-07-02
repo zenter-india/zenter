@@ -131,6 +131,30 @@
   .hm-tab { padding: var(--hm-space-2) var(--hm-space-2); font-size: var(--hm-text-xs, 0.75rem); flex: 1; min-width: 0; white-space: nowrap; }
 }
 
+/* Inner tabs (Aspirants / Chats) — compact segmented control, distinct from the
+   main underlined tab bar so it reads as "inside this district", not a peer
+   of Requests/Find Aspirants/Co-ordinations. */
+.hm-inner-tabs {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--hm-surface-2);
+  border-radius: var(--hm-radius-pill, 999px);
+  padding: 3px;
+}
+.hm-inner-tabs .hm-tab {
+  min-height: auto;
+  padding: 6px 16px;
+  font-size: var(--hm-text-sm);
+  border-bottom: none;
+  margin-bottom: 0;
+  border-radius: var(--hm-radius-pill, 999px);
+}
+.hm-inner-tabs .hm-tab.is-active {
+  background: var(--hm-surface);
+  color: var(--hm-primary);
+  box-shadow: var(--hm-shadow-xs);
+}
+
 .hm-dashboard {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -163,6 +187,9 @@
 
 /* Filter toggle — hidden on desktop (sidebar always visible), shown on mobile via responsive.css */
 .hm-filter-toggle { display: none; }
+/* District view: force-hide the toggle even on mobile, where responsive.css uses
+   !important to always show it. Higher specificity (id + attribute) wins. */
+#hm-filter-toggle[hidden] { display: none !important; }
 
 .hm-feed-header {
   display: flex; align-items: flex-end; justify-content: space-between;
@@ -187,6 +214,72 @@
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--hm-space-4);
 }
+
+/* ── District / exam-centre card (Find Aspirants landing view) ── */
+.hm-district-card {
+  display: flex;
+  align-items: center;
+  gap: var(--hm-space-4);
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  background: var(--hm-surface);
+  position: relative;
+}
+.hm-district-card--mine {
+  border: 1.5px solid var(--hm-primary);
+  background: linear-gradient(135deg, var(--hm-primary-100) 0%, var(--hm-surface) 65%);
+}
+.hm-district-card__mine-badge {
+  position: absolute;
+  top: 10px; right: 12px;
+  font-size: 10px;
+  height: 20px;
+  padding: 0 8px;
+}
+
+/* Icon bubble — same 44px scale as .hm-avatar--card for visual consistency
+   with mate cards elsewhere in the feed. */
+.hm-district-card__icon {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--hm-secondary-100);
+  color: var(--hm-secondary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.hm-district-card--mine .hm-district-card__icon {
+  background: var(--hm-primary);
+  color: #fff;
+}
+
+.hm-district-card__body {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.hm-district-card__name {
+  font-size: 16px; font-weight: 700; color: var(--hm-text); margin: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hm-district-card__count {
+  align-self: flex-start;
+  background: var(--hm-surface-2); color: var(--hm-text-muted);
+}
+.hm-district-card--mine .hm-district-card__count {
+  background: #fff; color: var(--hm-primary-600, var(--hm-primary));
+}
+
+.hm-district-card__arrow {
+  font-size: 24px; font-weight: 700; line-height: 1;
+  color: var(--hm-text-subtle); flex-shrink: 0;
+  transition: transform var(--hm-duration-fast, 140ms) var(--hm-ease, ease-out),
+              color var(--hm-duration-fast, 140ms) var(--hm-ease, ease-out);
+}
+.hm-district-card:hover .hm-district-card__arrow { transform: translateX(3px); color: var(--hm-primary); }
+
+.hm-district-card--skeleton { cursor: default; }
 
 /* ── Mate card ── */
 .hm-mate {
