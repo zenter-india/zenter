@@ -1,5 +1,8 @@
 {
   "appId": "in.zenter.app",
   "appName": "Zenter",
-  "webDir": "www"
+  "webDir": "www",
+  "server": {
+    "url": "https://www.zenter.in"
+  }
 }
