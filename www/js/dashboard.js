@@ -6,7 +6,7 @@ import { getAllUsers, getUserByPhone, getMyConnections,
          getBlockedUserIds, getBlockedByIds, getSeededUsers,
          getPlatformConfig, attemptReveal, trackEvent, flagRapidReveal, blockUser,
          deleteConnectionsBetween, createConversation, getActiveChatCount } from './supabase.js';
-import { debounce } from './utils.js';
+import { debounce, checkSuspended } from './utils.js';
 import { toast, setButtonBusy } from './ui.js';
 import * as Relationships from './relationships.js';
 import { populateStateSelect, wireDistrictCascade, DISTRICTS_BY_STATE, UPSC_CMS_CENTRES } from './location-data.js';
@@ -90,6 +90,9 @@ async function init() {
   wireTabs();
 
   const { data: me } = await getUserByPhone(firebaseUser.phoneNumber);
+
+  if (checkSuspended(me)) return;
+
   myUserId             = me?.id        || null;
   myExamType           = me?.exam_type || 'NEET UG';
   // Match only on exam_centre_state — where the exam is held.
@@ -143,7 +146,7 @@ async function init() {
   if (plusNavItem) plusNavItem.hidden = myPlusMember;
 
   // Only NEET UG, NEET PG, and UPSC CMS are live; other exam types → maintenance page.
-  const LIVE_EXAMS = ['NEET UG', 'NEET PG', 'UPSC CMS'];
+  const LIVE_EXAMS = ['NEET UG', 'NEET PG', 'UPSC CMS', 'INICET', 'NEET MDS', 'NEET SS', 'FMGE'];
   if (!LIVE_EXAMS.includes(myExamType)) {
     window.location.replace('/maintenance.html');
     return;
@@ -154,7 +157,10 @@ async function init() {
 
   // Reflect the user's permanent exam type in the header label.
   const examLabel = document.getElementById('hm-exam-label');
-  const examYearDisplay = { 'NEET UG': 'NEET UG 2026', 'NEET PG': 'NEET PG 2026', 'UPSC CMS': 'UPSC CMS 2026' };
+  const examYearDisplay = {
+    'NEET UG': 'NEET UG 2026', 'NEET PG': 'NEET PG 2026', 'UPSC CMS': 'UPSC CMS 2026',
+    'INICET': 'INICET 2026', 'NEET MDS': 'NEET MDS 2026', 'NEET SS': 'NEET SS 2026', 'FMGE': 'FMGE 2026 Jun',
+  };
   if (examLabel) examLabel.textContent = examYearDisplay[myExamType] || myExamType;
 
   // Load both block directions so neither side sees the other while blocked.
@@ -744,7 +750,7 @@ function updateCount(n) {
   if (!el) return;
   if (allUsers.length === 0) { el.textContent = ''; return; }
   const stateSuffix = myExamCentreState ? ` in ${myExamCentreState}` : '';
-  el.textContent = `${n} centre ${n === 1 ? 'mate' : 'mates'} found${stateSuffix}`;
+  el.textContent = `${n} ${n === 1 ? 'Aspirant' : 'Aspirants'} found${stateSuffix}`;
 }
 
 function updateNavBadge() {
@@ -782,7 +788,7 @@ function renderRequests() {
       ? `<div class="hm-empty" style="grid-column:1/-1;">
            <div class="hm-empty__icon" aria-hidden="true">🤝</div>
            <h3>No pending requests</h3>
-           <p class="hm-text-muted">When HallMates send you connection requests, they'll appear here.</p>
+           <p class="hm-text-muted">When Zenter Aspirants send you Co-ordination requests, they'll appear here.</p>
          </div>`
       : `<div style="grid-column:1/-1;text-align:center;padding:var(--hm-space-7) 0;">
            <div class="hm-loader__spinner" style="margin:0 auto;"></div>
@@ -1148,7 +1154,7 @@ function cardFooterHtml(user) {
   switch (rel.status) {
     case REL.NONE:
       cta = `<button class="hm-btn hm-btn--primary hm-btn--sm"
-               data-conn-action="connect" data-user-id="${uid}">Connect</button>`;
+               data-conn-action="connect" data-user-id="${uid}">Request</button>`;
       break;
     case REL.PENDING_OUT:
       cta = `<span class="hm-badge hm-badge--info" style="font-size:11px;">Sent</span>`;

@@ -123,7 +123,10 @@
       "Bash(node --check /Users/apple/HallMate/js/admin.js)",
       "mcp__cdf8ba1f-7903-4611-ac07-eaadc71ec6bd__deploy_edge_function",
       "Bash(node --check /Users/apple/HallMate/js/profile.js)",
-      "Bash(curl -s http://localhost:5173)"
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(git fetch *)",
+      "Bash(git show *)",
+      "Bash(unzip -l assets/logos/favicon.svg.zip)"
     ]
   }
 }

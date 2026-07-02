@@ -141,6 +141,7 @@ async function loadDashboard() {
     setStat('stat-active-users', statsRes.data.activeUsers);
     setStat('stat-feedback',     statsRes.data.feedback);
     setStat('stat-reports',      statsRes.data.reports);
+    setStat('stat-plus-users',   statsRes.data.plusUsers);
   }
   document.getElementById('adm-latest-users').innerHTML =
     usersRes.data?.length ? renderUsersTable(usersRes.data.slice(0,8), false) : emptyState('🌱','No users yet.');
@@ -153,7 +154,7 @@ async function loadUsers() {
   allUsers = data;
   renderFilteredUsers();
   const rerender = debounce(renderFilteredUsers, 180);
-  ['adm-user-search','adm-user-filter-exam','adm-user-filter-gender']
+  ['adm-user-search','adm-user-filter-exam','adm-user-filter-gender','adm-user-filter-status']
     .forEach(id => document.getElementById(id)?.addEventListener('input', rerender));
 }
 
@@ -161,10 +162,12 @@ function renderFilteredUsers() {
   const search  = (document.getElementById('adm-user-search')?.value || '').toLowerCase();
   const exam    = document.getElementById('adm-user-filter-exam')?.value    || '';
   const gender  = document.getElementById('adm-user-filter-gender')?.value  || '';
+  const status  = document.getElementById('adm-user-filter-status')?.value  || '';
   const filtered = allUsers.filter(u => {
     if (search && !`${u.full_name} ${u.phone}`.toLowerCase().includes(search)) return false;
     if (exam   && u.exam_type !== exam)  return false;
     if (gender && u.gender   !== gender) return false;
+    if (status === 'suspended' && u.account_status !== 'suspended') return false;
     return true;
   });
   const el = document.getElementById('adm-users-list');
@@ -667,12 +670,16 @@ async function loadExams() {
   </div>`;
 }
 
+const ALL_EXAM_TYPES = ['NEET UG', 'NEET PG', 'UPSC CMS', 'INICET', 'NEET MDS', 'NEET SS', 'FMGE'];
+
 async function loadAnalytics() {
   const el = document.getElementById('adm-analytics-content');
   const { getAnalyticsData, getAdminStats } = await import('./supabase.js');
   const [statsRes, analyticsRes] = await Promise.all([getAdminStats(), getAnalyticsData()]);
   const s = statsRes.data || {};
   const a = analyticsRes.data || {};
+  // Ensure all known exam types appear (0 when no users exist yet)
+  a.byExam = { ...Object.fromEntries(ALL_EXAM_TYPES.map(t => [t, 0])), ...a.byExam };
   el.innerHTML = `
     <!-- Key metrics row -->
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px;">
@@ -1240,6 +1247,27 @@ document.addEventListener('click', async (e) => {
     }); return;
   }
 
+  // Suspend / Unsuspend from Users panel (sets account_status — user sees suspension message)
+  if (action === 'suspend-user' || action === 'unsuspend-user') {
+    const suspending = action === 'suspend-user';
+    confirm_(suspending
+      ? { title: 'Suspend this user?', msg: 'They will be locked out and shown a suspension message.', danger: true }
+      : { title: 'Unsuspend this user?', msg: 'Restores their full access to the app.', danger: false },
+    async () => {
+      btn.disabled = true;
+      const { adminSetUserStatus } = await import('./supabase.js');
+      const { error } = await adminSetUserStatus(id, adminPhone, suspending ? 'suspended' : 'active');
+      if (error) { toast('Error: ' + error.message, 'error'); btn.disabled = false; return; }
+      const u = allUsers.find(u => u.id === id);
+      if (u) {
+        u.account_status = suspending ? 'suspended' : 'active';
+        if (!suspending) u.appeal_submitted_at = null;
+      }
+      renderFilteredUsers();
+      toast(suspending ? 'User suspended ✓' : 'User unsuspended ✓', 'success');
+    }); return;
+  }
+
   // Suspend reported user directly from Reports page
   if (action === 'suspend-reported' || action === 'reactivate-reported') {
     const pausing = action === 'suspend-reported';
@@ -1554,7 +1582,11 @@ function renderUsersTable(users, withActions = false) {
              </button>`
           : ''}
         ${!isPrivileged
-          ? `<button class="adm-btn adm-btn--sm adm-btn--danger"
+          ? `<button class="adm-btn adm-btn--sm ${u.account_status === 'suspended' ? 'adm-btn--ok' : 'adm-btn--warn'}"
+               data-action="${u.account_status === 'suspended' ? 'unsuspend-user' : 'suspend-user'}" data-id="${esc(u.id)}" data-name="${esc(u.full_name||'User')}">
+               ${u.account_status === 'suspended' ? 'Unsuspend' : 'Suspend'}
+             </button>
+             <button class="adm-btn adm-btn--sm adm-btn--danger"
                data-action="delete-user" data-id="${esc(u.id)}" data-name="${esc(u.full_name||'User')}">
                Delete
              </button>`
@@ -1593,7 +1625,9 @@ function renderUsersTable(users, withActions = false) {
                  ${u.nta_application_number ? `<div style="font-size:10px;color:var(--adm-text-dim);margin-top:2px;font-family:monospace;">${esc(u.nta_application_number)}</div>` : ''}`
               : '<span style="color:var(--adm-text-dim);">Phone only</span>'}
       </td>
-      <td><span class="adm-pill adm-pill--${esc(display)}">${esc(display)}</span></td>
+      <td>
+        <span class="adm-pill adm-pill--${esc(display)}">${esc(display)}</span>
+      </td>
       ${suspCell}
       <td style="font-size:11px">${esc(fmtDate(u.created_at))}</td>
       ${actions}

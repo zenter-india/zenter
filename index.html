@@ -45,13 +45,21 @@
     <!-- ── Exam category selector ───────────────────────────────────────── -->
     <div class="hm-container hm-exam-selector-wrap">
       <nav class="hm-exam-selector" aria-label="Browse by exam">
-        <a href="/login.html" class="hm-exam-pill hm-exam-pill--active">NEET UG</a>
+        <a href="/login.html" class="hm-exam-pill hm-exam-pill--active">NEET PG</a>
+        <a href="/login.html" class="hm-exam-pill">NEET UG</a>
         <a href="/login.html" class="hm-exam-pill">UPSC CMS</a>
-        <a href="/login.html" class="hm-exam-pill">NEET PG</a>
+        <a href="/login.html" class="hm-exam-pill">FMGE</a>
         <a href="/login.html" class="hm-exam-pill">INICET</a>
         <a href="/login.html" class="hm-exam-pill">NEET MDS</a>
         <a href="/login.html" class="hm-exam-pill">NEET SS</a>
       </nav>
+    </div>
+
+    <!-- ── Savings tagline ──────────────────────────────────────────────── -->
+    <div class="hm-container" style="text-align:center;">
+      <p class="hm-savings-tagline" style="display:inline-block; text-align:left; font-weight:600; font-style:italic; color:var(--hm-primary); margin:16px 0 0;">
+        “₹5 lakhs+ saved for<br>200+ aspirants by Zentering”
+      </p>
     </div>
 
     <!-- HERO -->
@@ -60,22 +68,23 @@
         <div class="row align-items-center g-5">
           <div class="col-lg-7">
             <span class="hm-eyebrow">For Exam aspirants</span>
+            <p id="hm-landing-count" class="hm-landing-count" style="margin:10px 0 0; font-weight:600; color:var(--hm-text-muted); min-height:1.2em;" aria-live="polite"></p>
             <h1 id="hero-title" style="font-size: var(--hm-text-4xl); margin-top: 16px;">
-              Find fellow aspirants travelling to <span style="color: var(--hm-primary);">your exam centre.</span>
+              Find verified aspirants travelling to <span style="color: var(--hm-primary);">your exam centre.</span>
             </h1>
             <p style="font-size: var(--hm-text-lg); max-width: 560px;">
-              No more wasting your last week prep time, fishing for a same centre aspirant!
+              You Focus on the exam; Zenter helps you get there!
               <br><br>
-              Connect with verified centre mates, coordinate travel and stay, and walk into the exam- stress free without worrying about travel and accommodation expenses!
+              Co-ordinate with verified exam centre aspirants, Share travel plans and reach your exam centre with confidence
             </p>
             <div class="d-flex flex-wrap gap-3 mt-4">
-              <button type="button" class="hm-btn hm-btn--primary hm-btn--lg" data-cta="primary">Find my centre mates</button>
+              <button type="button" class="hm-btn hm-btn--primary hm-btn--lg" data-cta="primary">Find my centre aspirants</button>
               <a href="#how-it-works" class="hm-btn hm-btn--ghost hm-btn--lg">How it works</a>
             </div>
             <div class="d-flex flex-wrap gap-2 mt-4">
               <span class="hm-chip">🔒 Phone verified</span>
-              <span class="hm-chip">🤝 Mutual consent</span>
-              <span class="hm-chip">📍 Centre-matched</span>
+              <span class="hm-chip">🤝 Mutual approval</span>
+              <span class="hm-chip">📍 Centre-Grouped</span>
               <span class="hm-chip" style="background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;">✓ Roll No verified</span>
             </div>
           </div>
@@ -172,15 +181,15 @@
       <div class="hm-container">
         <div class="text-center mb-5">
           <span class="hm-eyebrow">How it works</span>
-          <h2 id="how-title" class="mt-3">Three steps to find your centre mates.</h2>
-          <p class="hm-text-muted">No more wasting your last week prep time in random groups. Phone-verified. Matched by exam centre.</p>
+          <h2 id="how-title" class="mt-3">Three steps to find your Verified aspirants.</h2>
+          <p class="hm-text-muted">No more wasting your last week prep time in random groups. Phone-verified. Filtered by exam centre.</p>
         </div>
         <div class="row g-4">
           <div class="col-md-4">
             <div class="hm-card h-100">
               <div class="hm-empty__icon" aria-hidden="true">📱</div>
               <h3 class="hm-card__title">Sign in with OTP</h3>
-              <p>Verify your mobile number — your number is displayed only after mutual acceptance.</p>
+              <p>Verify your mobile number — your number is displayed only after Mutual approval.</p>
             </div>
           </div>
           <div class="col-md-4">
@@ -193,8 +202,8 @@
           <div class="col-md-4">
             <div class="hm-card h-100">
               <div class="hm-empty__icon" aria-hidden="true">🤝</div>
-              <h3 class="hm-card__title">Match &amp; connect</h3>
-              <p>Connect through chat on mutual acceptance. Exchange your number at one click.</p>
+              <h3 class="hm-card__title">Find &amp; co-ordinate</h3>
+              <p>Co-ordinate travel plans and reach your exam centre with confidence</p>
             </div>
           </div>
         </div>
@@ -211,14 +220,14 @@
             <p>Every profile is phone-verified. Phone numbers are only revealed after both students accept the request. You can withdraw or block any time.</p>
             <ul class="list-unstyled" style="display: grid; gap: 12px;">
               <li><span class="hm-badge hm-badge--success">✓</span> Phone-OTP verified accounts</li>
-              <li><span class="hm-badge hm-badge--success">✓</span> Mutual consent before contact</li>
+              <li><span class="hm-badge hm-badge--success">✓</span> Mutual approval before contact</li>
               <li><span class="hm-badge hm-badge--success">✓</span> Report &amp; block in one tap</li>
-              <li><span class="hm-badge hm-badge--success">✓</span> <strong>Get the Verified badge</strong> — verify your Roll Number to earn the green <span class="hm-badge hm-badge--verified-full" style="font-size:11px;padding:1px 6px;">✓ Verified</span> badge, unlock contact reveals, and gain trust from centre mates.</li>
+              <li><span class="hm-badge hm-badge--success">✓</span> <strong>Get the Verified badge</strong> — verify your Roll Number to earn the green <span class="hm-badge hm-badge--verified-full" style="font-size:11px;padding:1px 6px;">✓ Verified</span> badge and gain trust from centre mates.</li>
             </ul>
           </div>
           <div class="col-lg-6">
             <div class="hm-card hm-card--glass">
-              <h3 class="hm-card__title">Connection request</h3>
+              <h3 class="hm-card__title">Co-ordination request</h3>
               <p class="hm-mate__sub">Centre · Mumbai · NEET UG 2026</p>
               <hr class="hm-divider" />
               <div class="d-flex align-items-center gap-3">
@@ -244,7 +253,7 @@
         <div class="hm-card text-center" style="padding: var(--hm-space-7);">
           <h2 id="cta-title">No more wasting your last week prep time.</h2>
           <p class="hm-text-muted" style="max-width: 560px; margin: 0 auto var(--hm-space-4);">
-            Stop searching through random WhatsApp and Telegram groups with unverified users. Here at Zenter, we help you find someone who travels to the same exam centre as you, to share travel or accommodation expenses.
+            Stop searching through random WhatsApp and Telegram groups with unverified users. Here at Zenter, we help you find Aspirants who travel to the same exam centre as you, to share travel or accommodation expenses.
           </p>
           <div class="d-flex justify-content-center gap-3 flex-wrap">
             <button class="hm-btn hm-btn--primary hm-btn--lg" data-cta="primary">Get started - it's free</button>

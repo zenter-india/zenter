@@ -241,6 +241,20 @@ async function initLanding() {
   $$('[data-cta="primary"]').forEach((btn) => {
     on(btn, 'click', () => { window.location.href = ROUTES.login; });
   });
+
+  // Live aspirant count near the hero eyebrow — mirrors the Find Mates feed total.
+  const countEl = document.getElementById('hm-landing-count');
+  if (countEl) {
+    try {
+      const { getTotalAspirantCount } = await import('./supabase.js');
+      const { data: n, error } = await getTotalAspirantCount();
+      if (!error && n > 0) {
+        countEl.textContent = `${n.toLocaleString('en-IN')} aspirants found from all over India`;
+      }
+    } catch (err) {
+      console.warn('[landing] aspirant count unavailable', err);
+    }
+  }
 }
 
 async function initLogin() {

@@ -9,8 +9,8 @@
 import { requireOnboarded, logout }                    from './auth.js';
 import { getProfileByPhone, upsertUser,
          setPausedStatus, deleteUserData }              from './supabase.js';
-import { formatPhonePretty }                           from './utils.js';
-import { ROUTES }                                      from './config.js';
+import { formatPhonePretty, checkSuspended }           from './utils.js';
+import { STORAGE_KEYS, ROUTES }                        from './config.js';
 import { setButtonBusy, toast }                        from './ui.js';
 import { STATES, wireDistrictCascade, UPSC_CMS_CENTRES, getCmsCentreState } from './location-data.js';
 
@@ -148,6 +148,7 @@ async function init() {
   } else {
     profileData = data || {};
     writeProfileCache(profilePhone, profileData);
+    if (checkSuspended(data)) return;
     hydrateAll();
   }
 

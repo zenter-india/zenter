@@ -37,7 +37,7 @@ export function from(table) {
 export function getUserByPhone(phone) {
   return query(
     from('users')
-      .select('id, profile_completed, exam_type, role, state, exam_centre_state, plus_member, contact_reveals_used, is_verified_aspirant')
+      .select('id, profile_completed, exam_type, role, state, exam_centre_state, plus_member, contact_reveals_used, is_verified_aspirant, account_status, appeal_submitted_at, suspension_warning')
       .eq('phone', phone)
       .maybeSingle()
   );
@@ -58,7 +58,7 @@ export async function getAdminStats() {
     const q = from(table).select('*', { count: 'exact', head: true });
     return predicate ? predicate(q) : q;
   };
-  const [usersR, activeR, conxR, feedbackR, reportsR] = await Promise.all([
+  const [usersR, activeR, conxR, feedbackR, reportsR, plusR] = await Promise.all([
     // seeded_users is now a separate table — users table contains only real users
     headCount('users'),
     // Active users: online in the last 15 minutes (real users only)
@@ -66,6 +66,7 @@ export async function getAdminStats() {
     headCount('connections', q => q.eq('status', 'accepted')),
     headCount('feedbacks'),
     headCount('blocked_users'),
+    headCount('users', q => q.eq('plus_member', true)),
   ]);
   return {
     data: {
@@ -74,6 +75,7 @@ export async function getAdminStats() {
       connections: conxR.count     ?? 0,
       feedback:    feedbackR.count ?? 0,
       reports:     reportsR.count  ?? 0,
+      plusUsers:   plusR.count     ?? 0,
     },
     error: usersR.error || activeR.error || conxR.error || feedbackR.error || reportsR.error || null,
   };
@@ -82,7 +84,7 @@ export async function getAdminStats() {
 /** Recent users list for the admin Users section — includes moderation fields. */
 export function getRecentUsers(limit = 50, { seededOnly = false, excludeSeeded = false } = {}) {
   let q = from('users')
-    .select('id, full_name, gender, phone, exam_type, state, district, exam_centre_state, exam_centre_district, exam_center, profile_completed, is_profile_paused, account_status, role, is_seeded_user, plus_member, contact_reveals_used, is_verified_aspirant, verification_requested, verification_rejected, nta_application_number, suspicious_flags, device_fingerprint, created_at')
+    .select('id, full_name, gender, phone, exam_type, state, district, exam_centre_state, exam_centre_district, exam_center, profile_completed, is_profile_paused, account_status, appeal_submitted_at, suspension_warning, role, is_seeded_user, plus_member, contact_reveals_used, is_verified_aspirant, verification_requested, verification_rejected, nta_application_number, suspicious_flags, device_fingerprint, created_at')
     .order('created_at', { ascending: false })
     .limit(limit);
   if (seededOnly)    q = q.eq('is_seeded_user', true);
@@ -112,6 +114,18 @@ export function adminSetUserStatus(targetId, requesterPhone, status) {
       p_status:          status,
     })
   );
+}
+
+export function submitSuspensionAppeal(userId) {
+  return query(supabase.rpc('submit_suspension_appeal', { p_user_id: userId }));
+}
+
+export function adminDismissAppeal(targetId, requesterPhone) {
+  return query(supabase.rpc('admin_dismiss_appeal', { p_target_id: targetId, p_requester_phone: requesterPhone }));
+}
+
+export function dismissSuspensionWarning(userId) {
+  return query(supabase.rpc('dismiss_suspension_warning', { p_user_id: userId }));
 }
 
 export function adminSetUserPaused(targetId, requesterPhone, paused) {
@@ -160,7 +174,7 @@ export function getProfileByPhone(phone) {
         'id, phone, full_name, gender, state, district, ' +
         'exam_centre_state, exam_centre_district, exam_center, exam_type, ' +
         'college, travel_mode, stay_plan, bio, ' +
-        'profile_completed, is_profile_paused, plus_member, contact_reveals_used, is_verified_aspirant, verification_requested, verification_rejected, nta_application_number, created_at'
+        'profile_completed, is_profile_paused, account_status, appeal_submitted_at, suspension_warning, plus_member, contact_reveals_used, is_verified_aspirant, verification_requested, verification_rejected, nta_application_number, created_at'
       )
       .eq('phone', phone)
       .maybeSingle()
@@ -194,6 +208,29 @@ export function getAllUsers(examType = 'NEET UG') {
   }
 
   return query(q.order('created_at', { ascending: false }));
+}
+
+/**
+ * Total aspirant count for the public landing page — mirrors the Find Mates
+ * feed (real completed/active profiles + seeded profiles) across ALL exams.
+ * Uses HEAD counts so no row data is transferred. Returns { data: number }.
+ */
+export async function getTotalAspirantCount() {
+  const usersQ = from('users')
+    .select('id', { count: 'exact', head: true })
+    .eq('profile_completed', true)
+    .or('is_profile_paused.is.null,is_profile_paused.eq.false')
+    .or('account_status.is.null,account_status.eq.active');
+
+  const seededQ = from('seeded_users')
+    .select('id', { count: 'exact', head: true });
+
+  const [u, s] = await Promise.all([usersQ, seededQ]);
+  const err = u.error || s.error;
+  return {
+    data: (u.count || 0) + (s.count || 0),
+    error: err ? toUiError(err) : null,
+  };
 }
 
 // ─── Seeded / demo users (separate table) ────────────────────────────────────
@@ -554,6 +591,18 @@ export async function createRazorpayOrder(userId, couponCode = null, dryRun = fa
     }
   }
   throw lastError;
+}
+
+/** Grant Plus when the final price is ₹0 (coupon covers full cost, no gateway needed). */
+export async function claimFreePlus(userId) {
+  const { data, error } = await supabase
+    .from('users')
+    .update({ plus_member: true })
+    .eq('id', userId)
+    .select('id')
+    .single();
+  if (error) throw new Error(error.message || 'Failed to activate Plus');
+  return data;
 }
 
 /** Verify payment server-side and grant Plus. */

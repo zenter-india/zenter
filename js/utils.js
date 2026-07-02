@@ -71,6 +71,63 @@ export function currentRoute() {
   return file.replace('.html', '') || 'index';
 }
 
+// Show blurred overlay for suspended/warned accounts. Returns true if suspended (blocks page init).
+export function checkSuspended(me) {
+  // Non-blocking: show one-time warning overlay for users whose appeal was dismissed.
+  if (me?.suspension_warning) {
+    const warn = document.createElement('div');
+    warn.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);background:rgba(15,23,42,0.6);';
+    warn.innerHTML = `
+      <div style="background:var(--hm-surface,#fff);border-radius:20px;padding:36px 28px;max-width:340px;width:100%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.3);">
+        <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+        <h2 style="font-size:20px;font-weight:700;color:var(--hm-text,#0f172a);margin:0 0 10px;">Appeal Reviewed</h2>
+        <p style="color:var(--hm-text-muted,#64748b);font-size:14px;line-height:1.8;margin:0 0 24px;">
+          Dear Aspirant, Your matching function has been restored. Please regulate according to the guidelines and wish you a happy Zentering!
+        </p>
+        <button id="hm-warn-ack" style="display:block;width:100%;background:var(--hm-primary,#2563eb);color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;">
+          I Understand
+        </button>
+      </div>`;
+    document.body.appendChild(warn);
+    warn.querySelector('#hm-warn-ack').addEventListener('click', async () => {
+      warn.remove();
+      const { dismissSuspensionWarning } = await import('./supabase.js');
+      await dismissSuspensionWarning(me.id);
+    });
+  }
+
+  // Blocking: show suspension screen — page init should not continue.
+  if (me?.account_status !== 'suspended') return false;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'hm-suspension-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);background:rgba(15,23,42,0.6);';
+
+  overlay.innerHTML = `
+    <div style="background:var(--hm-surface,#fff);border-radius:20px;padding:36px 28px;max-width:340px;width:100%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.3);">
+      <div style="font-size:48px;margin-bottom:16px;">🚫</div>
+      <h2 style="font-size:20px;font-weight:700;color:var(--hm-text,#0f172a);margin:0 0 10px;">Account Suspended</h2>
+      <p style="color:var(--hm-text-muted,#64748b);font-size:14px;line-height:1.8;margin:0 0 24px;">
+        Dear Aspirant, Our system has detected an suspicious activity that your actions violate the Community Guidelines.
+      </p>
+      <a href="mailto:support@zenter.in" style="display:block;width:100%;background:var(--hm-primary,#2563eb);color:#fff;border:none;border-radius:10px;padding:14px 24px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:16px;text-decoration:none;box-sizing:border-box;">
+        Contact Support
+      </a>
+      <button id="hm-suspension-signout" style="background:none;border:none;color:var(--hm-text-muted,#64748b);font-size:13px;cursor:pointer;text-decoration:underline;padding:0;">
+        Sign out
+      </button>
+    </div>`;
+
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('#hm-suspension-signout').addEventListener('click', async () => {
+    const { logout } = await import('./auth.js');
+    await logout();
+  });
+
+  return true;
+}
+
 // Build a query-string URL.
 export function buildUrl(path, params = {}) {
   const url = new URL(path, window.location.origin);

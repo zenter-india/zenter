@@ -146,6 +146,18 @@
         <p class="plus-season">One-time for NEET UG 2026</p>
       </div>
 
+      <!-- ZenterFirst coupon banner -->
+      <div style="background:linear-gradient(135deg,#1e3a5f 0%,#0f2540 100%);border:1.5px solid #facc15;border-radius:14px;padding:18px 20px;margin-bottom:var(--hm-space-5);text-align:center;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#facc15;text-transform:uppercase;margin-bottom:6px;">🎉 Early Access Offer</div>
+        <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:12px;">Founding members get Zenter Plus <span style="color:#facc15;">absolutely free</span></div>
+        <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(250,204,21,0.12);border:1.5px dashed #facc15;border-radius:8px;padding:8px 18px;margin-bottom:10px;">
+          <span style="font-size:18px;font-weight:800;letter-spacing:3px;color:#facc15;font-family:monospace;">ZENTERFIRST</span>
+          <button onclick="(function(b){try{if(navigator.clipboard){navigator.clipboard.writeText('ZENTERFIRST').then(function(){b.textContent='✓ Copied';setTimeout(function(){b.textContent='Copy'},1500)})}else{var t=document.createElement('textarea');t.value='ZENTERFIRST';t.style.cssText='position:fixed;opacity:0';document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);b.textContent='✓ Copied';setTimeout(function(){b.textContent='Copy'},1500)}}catch(e){}})(this)"
+            style="background:none;border:1px solid #facc15;color:#facc15;font-size:11px;font-weight:700;border-radius:5px;padding:3px 8px;cursor:pointer;">Copy</button>
+        </div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.6);">Apply the code below and get Plus at ₹0</div>
+      </div>
+
       <!-- Card preview — side by side -->
       <div style="margin-bottom: var(--hm-space-5); text-align:center;">
         <p style="font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--hm-text-muted);margin-bottom:var(--hm-space-3);">How your card looks</p>
@@ -335,9 +347,10 @@
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script type="module">
     import { requireOnboarded } from '/js/auth.js';
-    import { getUserByPhone, trackEvent, createRazorpayOrder, verifyRazorpayPayment, query, from } from '/js/supabase.js';
+    import { getUserByPhone, trackEvent, createRazorpayOrder, verifyRazorpayPayment, claimFreePlus, query, from } from '/js/supabase.js';
 
     let appliedCoupon = null;
+    let finalPaise    = null; // tracks current final price in paise; null until probe resolves
 
     async function init() {
       const firebaseUser = await requireOnboarded();
@@ -369,13 +382,14 @@
         const probe = await createRazorpayOrder(me.id, null, true);
         const price = probe.original_paise / 100;
         basePrice = price;
+        finalPaise = probe.original_paise;
         document.querySelectorAll('.plus-price').forEach(el => {
           el.innerHTML = `₹${price} <span>/ exam season</span>`;
           el.style.visibility = 'visible';
         });
         if (priceFinal)   { priceFinal.textContent = `₹${price}`; priceFinal.style.visibility = 'visible'; }
         if (priceOriginal)  priceOriginal.textContent = `₹${price}`;
-        btn.textContent = `Get Zenter Plus — ₹${price}`;
+        btn.textContent = finalPaise === 0 ? 'Claim Zenter Plus — FREE' : `Get Zenter Plus — ₹${price}`;
         btn.style.visibility = 'visible';
       } catch {
         // Fallback: show hardcoded values
@@ -409,14 +423,17 @@
           const probe = await createRazorpayOrder(me.id, code, true);
           if (probe.coupon_applied) {
             appliedCoupon = code;
+            finalPaise = probe.final_paise;
             const discounted = probe.final_paise / 100;
             const original   = probe.original_paise / 100;
-            priceFinal.textContent    = `₹${discounted}`;
+            priceFinal.textContent    = finalPaise === 0 ? 'FREE' : `₹${discounted}`;
             priceOriginal.textContent = `₹${original}`;
             priceOriginal.style.display = 'inline';
-            btn.textContent = `Get Zenter Plus — ₹${discounted}`;
+            btn.textContent = finalPaise === 0 ? 'Claim Zenter Plus — FREE' : `Get Zenter Plus — ₹${discounted}`;
             couponStatus.style.color = '#16a34a';
-            couponStatus.textContent = `✓ Coupon applied! ${probe.coupon_label || ''}`;
+            couponStatus.textContent = finalPaise === 0
+              ? `✓ 100% off! ${probe.coupon_label || ''} — Zenter Plus is free for you!`
+              : `✓ Coupon applied! ${probe.coupon_label || ''}`;
             couponInput.disabled = true;
             couponApply.textContent = '✓';
             if (couponRemove) couponRemove.hidden = false;
@@ -442,6 +459,7 @@
       couponRemove?.addEventListener('click', () => {
         const prevCode = appliedCoupon;
         appliedCoupon = null;
+        finalPaise = basePrice != null ? basePrice * 100 : null;
         couponInput.value = '';
         couponInput.disabled = false;
         couponApply.disabled = false;
@@ -458,12 +476,32 @@
         trackEvent('coupon_removed', me.id, { coupon: prevCode });
       });
 
-      // Buy button — Razorpay checkout
+      // Buy button — free claim or Razorpay checkout
       btn.addEventListener('click', async () => {
         btn.disabled = true;
-        status.textContent = 'Creating order…';
         trackEvent('upgrade_cta_click', me.id, { source: 'plus_page', coupon: appliedCoupon });
 
+        // ── Zero-price path: skip payment gateway entirely ──────────────────
+        if (finalPaise === 0) {
+          status.textContent = 'Activating Zenter Plus…';
+          try {
+            await claimFreePlus(me.id);
+            btn.textContent = '⭐ Welcome to Zenter Plus!';
+            btn.style.background = '#16a34a';
+            status.style.color = '#16a34a';
+            status.textContent = '🎉 Zenter Plus activated! Redirecting…';
+            trackEvent('payment_success', me.id, { order_id: 'free', coupon: appliedCoupon });
+            setTimeout(() => { window.location.href = '/dashboard.html'; }, 2000);
+          } catch (err) {
+            status.style.color = '#dc2626';
+            status.textContent = '⚠️ ' + (err.message || 'Something went wrong. Please try again.');
+            btn.disabled = false;
+          }
+          return;
+        }
+
+        // ── Paid path: Razorpay checkout ─────────────────────────────────────
+        status.textContent = 'Creating order…';
         try {
           const order = await createRazorpayOrder(me.id, appliedCoupon);
 
