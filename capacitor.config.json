@@ -2,7 +2,21 @@
   "appId": "in.zenter.app",
   "appName": "Zenter",
   "webDir": "www",
-  "server": {
-    "url": "https://www.zenter.in"
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": true,
+      "providers": ["phone"]
+    }
+  },
+  "experimental": {
+    "ios": {
+      "spm": {
+        "packageOptions": {
+          "@capacitor-firebase/authentication": {
+            "symlink": true
+          }
+        }
+      }
+    }
   }
 }
