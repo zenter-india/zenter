@@ -30,6 +30,7 @@ let myUserId              = null;
 let myExamType            = null;   // permanent — set during onboarding
 let myExamTypeForFeed     = null;   // null for admins (all exams), else same as myExamType
 let myExamCentreState     = null;   // state-level matching boundary
+let myExamCentreDistrict  = null;   // user's own exam-centre district (feed priority sort)
 let myPlusMember          = false;  // Zenter Plus membership
 let myRevealsUsed         = 0;      // contact reveals used so far
 let myIsVerified          = false;  // whether current user has verified Roll No
@@ -104,6 +105,9 @@ async function init() {
   myExamCentreState = (myRole === 'admin' || myRole === 'superadmin')
     ? null
     : (me?.exam_centre_state || null);
+  myExamCentreDistrict = (myRole === 'admin' || myRole === 'superadmin')
+    ? null
+    : (me?.exam_centre_district || null);
 
   // Zenter Plus state
   myPlusMember  = me?.plus_member === true;
@@ -269,11 +273,18 @@ async function loadData() {
     return true;
   });
 
-  // Sort Plus members to top — featured profile benefit
-  // Within each group (Plus / Free) keep the original created_at order
+  // Feed ordering (stable sort keeps original created_at order within ties):
+  //   1. Plus members first — paid "priority visibility" benefit.
+  //   2. Then aspirants in the signed-in user's OWN exam-centre district —
+  //      most relevant matches surface to the top without hiding the rest.
+  //   3. Then everyone else (existing created_at order).
   allUsers.sort((a, b) => {
-    if (a.plus_member && !b.plus_member) return -1;
-    if (!a.plus_member && b.plus_member) return  1;
+    if (a.plus_member !== b.plus_member) return a.plus_member ? -1 : 1;
+    if (myExamCentreDistrict) {
+      const aSame = a.exam_centre_district === myExamCentreDistrict;
+      const bSame = b.exam_centre_district === myExamCentreDistrict;
+      if (aSame !== bSame) return aSame ? -1 : 1;
+    }
     return 0;
   });
 
