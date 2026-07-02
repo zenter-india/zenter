@@ -654,7 +654,7 @@ function renderRevealBanner(plusEnabled) {
          <a href="/plus.html" class="hm-reveal-banner__link">Get Zenter Plus for unlimited chats →</a>
        </span>`
     : `<span class="hm-reveal-banner__text hm-reveal-banner__text--limit">
-         Aspirants! Break the barriers 🚧
+         <strong style="font-weight:600;">Aspirants! Break the barriers 🚧</strong>
          <a href="/plus.html" class="hm-reveal-banner__link">Upgrade to Zenter Plus →</a>
        </span>`;
 }
