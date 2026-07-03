@@ -2,8 +2,11 @@
 
 /* Remove default page padding at top only on dashboard (tabs start immediately).
    :has(.hm-tabs) scopes this to the dashboard main element so it doesn't strip
-   padding from the landing page (which shares id="hm-main"). */
-#hm-main:has(.hm-tabs) { padding-top: 0; }
+   padding from the landing page (which shares id="hm-main"). Only applies while
+   the tab bar is actually VISIBLE — on the district-picker landing screen the
+   tab bar is hidden (see updateTabBarVisibility() in dashboard.js), and without
+   this guard the page content sits flush against the promo ticker with no gap. */
+#hm-main:has(.hm-tabs:not([hidden])) { padding-top: 0; }
 
 /* ── Connections page — received requests link banner ───────────────────── */
 .hm-conn-requests-link {
@@ -131,30 +134,6 @@
   .hm-tab { padding: var(--hm-space-2) var(--hm-space-2); font-size: var(--hm-text-xs, 0.75rem); flex: 1; min-width: 0; white-space: nowrap; }
 }
 
-/* Inner tabs (Aspirants / Chats) — compact segmented control, distinct from the
-   main underlined tab bar so it reads as "inside this district", not a peer
-   of Requests/Find Aspirants/Co-ordinations. */
-.hm-inner-tabs {
-  display: inline-flex;
-  gap: 2px;
-  background: var(--hm-surface-2);
-  border-radius: var(--hm-radius-pill, 999px);
-  padding: 3px;
-}
-.hm-inner-tabs .hm-tab {
-  min-height: auto;
-  padding: 6px 16px;
-  font-size: var(--hm-text-sm);
-  border-bottom: none;
-  margin-bottom: 0;
-  border-radius: var(--hm-radius-pill, 999px);
-}
-.hm-inner-tabs .hm-tab.is-active {
-  background: var(--hm-surface);
-  color: var(--hm-primary);
-  box-shadow: var(--hm-shadow-xs);
-}
-
 .hm-dashboard {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -239,21 +218,9 @@
   padding: 0 8px;
 }
 
-/* Icon bubble — same 44px scale as .hm-avatar--card for visual consistency
-   with mate cards elsewhere in the feed. */
-.hm-district-card__icon {
-  width: 44px; height: 44px;
-  border-radius: 50%;
-  background: var(--hm-secondary-100);
-  color: var(--hm-secondary);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px;
-  flex-shrink: 0;
-}
-.hm-district-card--mine .hm-district-card__icon {
-  background: var(--hm-primary);
-  color: #fff;
-}
+/* Icon now reuses .hm-avatar.hm-avatar--card directly (first-letter avatar,
+   same component as aspirant name cards) — no bespoke icon-bubble styling
+   needed here. */
 
 .hm-district-card__body {
   flex: 1; min-width: 0;

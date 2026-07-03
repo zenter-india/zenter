@@ -41,7 +41,6 @@ let firebaseUser    = null;   // stored for lazy connections load
 let connectionsLoaded = false;
 let chatsLoaded       = false;
 let _pendingChatUserId = null;  // deep-link: open specific user's chat
-let _pendingChatsView  = false; // deep-link: land on the Chats sub-tab inside a district
 let _connectionsDirty  = false; // true when connections data changed but tab not re-rendered yet
 let _chatsDirty        = false; // true when chats data changed but not refreshed yet
 let blockedUserIds  = new Set(); // users the current user has blocked
@@ -156,7 +155,6 @@ async function init() {
 
   wireFilters();
   wireDistrictView();
-  wireInnerTabs();
   wireModal();
   wireConnectionActions();
   wireBlockModal();
@@ -308,21 +306,21 @@ async function loadData() {
     } catch {}
   }
 
-  // If page loaded with a #connections hash, re-activate now that data is ready.
-  // #chats/#chats:userId hashes are handled by routeToChatsView() below —
-  // they need allUsers populated (via groupByDistrict()) to pick a landing district.
+  // If page loaded with a #chats or #chats:userId hash, re-activate now that data is ready
   const currentHash = parseHash(location.hash);
-  if (currentHash === 'connections') activateTab(currentHash);
-  if (_pendingChatsView) await routeToChatsView();
+  if (currentHash === 'chats' || currentHash === 'connections') {
+    activateTab(currentHash);
+  }
 }
 
 // ─── Tab switching ────────────────────────────────────────────────────────────
 
-const VALID_TABS = ['requests', 'find-mates', 'connections'];
+const VALID_TABS = ['requests', 'find-mates', 'chats', 'connections'];
 
 const TAB_PANELS = () => ({
   'requests':    document.getElementById('hm-panel-requests'),
   'find-mates':  document.getElementById('hm-panel-find-mates'),
+  'chats':       document.getElementById('hm-panel-chats'),
   'connections': document.getElementById('hm-panel-connections'),
 });
 
@@ -345,17 +343,10 @@ function applyInitialTabFromHash() {
 
 function parseHash(hash) {
   const h = (hash || '').slice(1); // remove #
-  // Chats no longer has its own top-level tab — it's an inner sub-tab reached
-  // by drilling into a district (see routeToChatsView()). #chats/#chats:userId
-  // land on the find-mates tab and flag that we should route into Chats there.
+  // Support #chats:userId deep links
   if (h.startsWith('chats:')) {
     _pendingChatUserId = h.split(':')[1] || null;
-    _pendingChatsView = true;
-    return 'find-mates';
-  }
-  if (h === 'chats') {
-    _pendingChatsView = true;
-    return 'find-mates';
+    return 'chats';
   }
   return VALID_TABS.includes(h) ? h : 'find-mates';
 }
@@ -375,7 +366,6 @@ function wireTabs() {
   window.addEventListener('hashchange', () => {
     const tab = parseHash(location.hash);
     activateTab(tab);
-    if (_pendingChatsView) routeToChatsView();
   });
 }
 
@@ -403,9 +393,53 @@ async function activateTab(name) {
 
   const panels = TAB_PANELS();
   Object.entries(panels).forEach(([key, el]) => { if (el) el.hidden = key !== tab; });
+  updateTabBarVisibility();
 
   // Render Requests tab content (derived from in-memory data — no extra fetch)
   if (tab === 'requests') renderRequests();
+
+  // Lazy-load Chats — mount once, refresh if data changed
+  if (tab === 'chats' && myUserId) {
+    if (!chatsLoaded) {
+      chatsLoaded = true;
+      const root = document.getElementById('hm-chats-root');
+      if (root) {
+        const usersMap = new Map();
+        allUsers.forEach(u => usersMap.set(u.id, u));
+        rawUserMap.forEach((u, id) => { if (!usersMap.has(id)) usersMap.set(id, u); });
+
+        const { mountChat } = await import('./chat.js');
+        await mountChat(root, myUserId, usersMap, (unread) => {
+          const badge = document.getElementById('hm-chats-tab-badge');
+          if (badge) {
+            badge.textContent = unread;
+            badge.hidden = unread === 0;
+          }
+        }, {
+          isVerified: myIsVerified,
+          isPlus: myPlusMember,
+          freeLimit: myFreeLimit,
+        });
+      }
+    } else if (_chatsDirty) {
+      _chatsDirty = false;
+      const { refreshConversations } = await import('./chat.js');
+      refreshConversations();
+    }
+
+    // Deep-link: open a specific user's chat if pending
+    if (_pendingChatUserId) {
+      const uid = _pendingChatUserId;
+      _pendingChatUserId = null;
+      const { openChatByUserId } = await import('./chat.js');
+      openChatByUserId(uid);
+    }
+
+    // Re-assert scroll position after the chat panel finishes rendering —
+    // the layout shift from mounting/opening a conversation can otherwise
+    // leave the page scrolled to the composer/footer.
+    requestAnimationFrame(scrollPageToTop);
+  }
 
   // Lazy-load Connections — mount once, re-render if data changed
   if (tab === 'connections' && firebaseUser) {
@@ -425,6 +459,17 @@ async function activateTab(name) {
       }
     }
   }
+}
+
+/** Top tab bar (Requests / Find Aspirants / Co-ordinations / Chats) is only
+ *  shown once the user is inside a district — hidden on the bare "choose your
+ *  district" landing screen so that first screen stays uncluttered. */
+function updateTabBarVisibility() {
+  const tabBar = document.querySelector('.hm-tabs[role="tablist"]');
+  if (!tabBar) return;
+  const findMatesPanel = document.getElementById('hm-panel-find-mates');
+  const onFindMatesTab = findMatesPanel && !findMatesPanel.hidden;
+  tabBar.hidden = onFindMatesTab && !activeDistrict;
 }
 
 // ─── Filtering ────────────────────────────────────────────────────────────────
@@ -505,8 +550,7 @@ function clearFilters() {
 // that exam type). Clicking a card drills into that district's aspirants,
 // where the remaining filters (gender / exam centre / travel / stay) apply.
 
-function districtLabel()       { return myExamType === 'UPSC CMS' ? 'exam centre'  : 'district';  }
-function districtLabelPlural() { return myExamType === 'UPSC CMS' ? 'exam centres' : 'districts'; }
+function districtLabel() { return myExamType === 'UPSC CMS' ? 'exam centre' : 'district'; }
 
 /** Group the loaded feed by exam_centre_district, with counts. Own district
  *  first, then the rest ordered by aspirant count (most first). */
@@ -534,7 +578,7 @@ function districtCard({ name, count }) {
   return `
     <button type="button" class="hm-card hm-card--interactive hm-district-card${mine ? ' hm-district-card--mine' : ''}" data-district="${esc(name)}">
       ${mine ? `<span class="hm-badge hm-badge--success hm-district-card__mine-badge">✓ Your ${districtLabel()}</span>` : ''}
-      <span class="hm-district-card__icon" aria-hidden="true">📍</span>
+      <div class="hm-avatar hm-avatar--card" style="background:${avatarColor(name)};color:#fff;" aria-hidden="true">${avatarInitials(name)}</div>
       <span class="hm-district-card__body">
         <span class="hm-district-card__name">${esc(name)}</span>
         <span class="hm-badge hm-district-card__count">👥 ${count} ${count === 1 ? 'aspirant' : 'aspirants'}</span>
@@ -556,7 +600,7 @@ function skeletonDistrictCard() {
 
 function renderDistrictCards(searchTerm = '') {
   let list = groupByDistrict();
-  updateDistrictCount(list.length);
+  updateDistrictCount();
 
   const q = searchTerm.trim().toLowerCase();
   if (q) list = list.filter((d) => d.name.toLowerCase().includes(q));
@@ -601,6 +645,7 @@ function showDistrictView() {
   document.getElementById('hm-students-view').hidden  = true;
   document.getElementById('hm-filter-toggle').hidden  = true;
   relocateRefreshButton('hm-district-search-row');
+  updateTabBarVisibility();
   updateFeedHeader();
   renderDistrictCards(document.getElementById('hm-district-search')?.value || '');
   scrollPageToTop();
@@ -610,10 +655,11 @@ function showStudentsView(name) {
   activeDistrict = name;
   document.getElementById('hm-district-view').hidden  = true;
   document.getElementById('hm-students-view').hidden  = false;
+  document.getElementById('hm-filter-toggle').hidden  = false;
   relocateRefreshButton('hm-students-refresh-slot');
+  updateTabBarVisibility();
   updateFeedHeader();
   applyFilters();
-  selectInnerTab('aspirants'); // always land on Aspirants when picking a (new) district
   scrollPageToTop();
 }
 
@@ -630,92 +676,6 @@ function wireDistrictView() {
   );
 
   document.getElementById('hm-back-to-districts')?.addEventListener('click', showDistrictView);
-}
-
-// ─── Inner tabs (Aspirants / Chats) — only reachable once inside a district ────
-// Chats has no top-level tab; it lives here so it's "only shown inside the
-// district card" per the product decision, reached by drilling into a district
-// first. Deep links (#chats, #chats:userId) route in via routeToChatsView().
-
-function wireInnerTabs() {
-  document.querySelectorAll('.hm-inner-tabs .hm-tab[data-inner-tab]').forEach((btn) => {
-    btn.addEventListener('click', () => selectInnerTab(btn.dataset.innerTab));
-  });
-}
-
-async function selectInnerTab(name) {
-  const tab = name === 'chats' ? 'chats' : 'aspirants';
-
-  document.querySelectorAll('.hm-inner-tabs .hm-tab[data-inner-tab]').forEach((btn) => {
-    const active = btn.dataset.innerTab === tab;
-    btn.classList.toggle('is-active', active);
-    btn.setAttribute('aria-selected', String(active));
-  });
-
-  const aspirantsPanel = document.getElementById('hm-inner-panel-aspirants');
-  const chatsPanel     = document.getElementById('hm-inner-panel-chats');
-  if (aspirantsPanel) aspirantsPanel.hidden = tab !== 'aspirants';
-  if (chatsPanel)     chatsPanel.hidden     = tab !== 'chats';
-
-  // Filters only apply to the Aspirants sub-view.
-  const filterToggle = document.getElementById('hm-filter-toggle');
-  if (filterToggle) filterToggle.hidden = tab !== 'aspirants';
-
-  scrollPageToTop();
-
-  if (tab !== 'chats' || !myUserId) return;
-
-  // Lazy-load Chats — mount once, refresh if data changed since the last mount.
-  if (!chatsLoaded) {
-    chatsLoaded = true;
-    const root = document.getElementById('hm-chats-root');
-    if (root) {
-      const usersMap = new Map();
-      allUsers.forEach(u => usersMap.set(u.id, u));
-      rawUserMap.forEach((u, id) => { if (!usersMap.has(id)) usersMap.set(id, u); });
-
-      const { mountChat } = await import('./chat.js');
-      await mountChat(root, myUserId, usersMap, (unread) => {
-        const badge = document.getElementById('hm-chats-tab-badge');
-        if (badge) { badge.textContent = unread; badge.hidden = unread === 0; }
-      }, {
-        isVerified: myIsVerified,
-        isPlus: myPlusMember,
-        freeLimit: myFreeLimit,
-      });
-    }
-  } else if (_chatsDirty) {
-    _chatsDirty = false;
-    const { refreshConversations } = await import('./chat.js');
-    refreshConversations();
-  }
-
-  // Deep-link: open a specific user's chat if pending
-  if (_pendingChatUserId) {
-    const uid = _pendingChatUserId;
-    _pendingChatUserId = null;
-    const { openChatByUserId } = await import('./chat.js');
-    openChatByUserId(uid);
-  }
-
-  // Re-assert scroll position after the chat panel finishes rendering —
-  // the layout shift from mounting/opening a conversation can otherwise
-  // leave the page scrolled to the composer/footer.
-  requestAnimationFrame(scrollPageToTop);
-}
-
-/** Deep-link landing: enter the user's own district (or the busiest one, as a
- *  fallback) and switch straight to its Chats sub-tab. Chats aren't tied to any
- *  one district — this just gives a #chats link somewhere to land. */
-async function routeToChatsView() {
-  if (!_pendingChatsView) return;
-  _pendingChatsView = false;
-  const list = groupByDistrict();
-  const landing = list.find(d => d.name === myExamCentreDistrict) || list[0];
-  if (!landing) return; // no districts at all yet — nothing to land on
-  await activateTab('find-mates'); // Chats lives inside Find Aspirants — surface that top tab too
-  showStudentsView(landing.name);
-  await selectInnerTab('chats');
 }
 
 function wireModal() {
@@ -892,8 +852,7 @@ function showSafetyConsent() {
 /** Navigate to Chats tab and open a specific user's conversation. */
 function openChatWithUser(userId) {
   _pendingChatUserId = userId;
-  _pendingChatsView = true;
-  routeToChatsView();
+  activateTab('chats');
   history.replaceState(null, '', `#chats:${userId}`);
 }
 
@@ -949,10 +908,16 @@ function updateCount(n) {
   el.textContent = `${n} ${n === 1 ? 'Aspirant' : 'Aspirants'} found in ${activeDistrict}`;
 }
 
-function updateDistrictCount(n) {
+/** District-list landing screen shows the total aspirant count for the whole
+ *  state (same wording as the old pre-district feed count), not the number
+ *  of district cards — the cards are just a way to narrow down from there. */
+function updateDistrictCount() {
   const el = document.getElementById('hm-results-count');
   if (!el) return;
-  el.textContent = n ? `${n} ${n === 1 ? districtLabel() : districtLabelPlural()} found` : '';
+  const n = allUsers.length;
+  if (n === 0) { el.textContent = ''; return; }
+  const stateSuffix = myExamCentreState ? ` in ${myExamCentreState}` : '';
+  el.textContent = `${n} ${n === 1 ? 'Aspirant' : 'Aspirants'} found${stateSuffix}`;
 }
 
 function updateNavBadge() {
