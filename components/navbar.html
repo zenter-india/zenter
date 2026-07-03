@@ -16,10 +16,12 @@
     -->
     <div class="hm-nav-right">
 
-      <!-- ← Back button — hidden by default, shown on secondary pages via app.js -->
+      <!-- ← Back button — hidden by default, shown on secondary pages via app.js.
+           Always goes to the district picker (dashboard.html), matching the
+           "Back to districts" button used inside Find Aspirants itself. -->
       <button type="button" id="hm-nav-back" aria-label="Go back"
-        onclick="history.length>1?history.back():window.location.href='/dashboard.html'"
-        hidden>← Back to Home</button>
+        onclick="window.location.href='/dashboard.html'"
+        hidden>← Back to districts</button>
 
       <!-- 1. Mobile CTA (logged-out, always visible on mobile) -->
       <div class="hm-nav-cta" data-auth="logged-out">

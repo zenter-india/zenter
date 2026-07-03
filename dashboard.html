@@ -81,11 +81,11 @@
       </div>
 
       <!-- ── STUDENT LIST (shown after a district card is picked) ─────────── -->
+      <!-- Back navigation now uses the navbar's ← Back to Home button (shown
+           while inside a district, wired in dashboard.js to return to the
+           district list instead of literally leaving the page). -->
       <div id="hm-students-view" hidden>
         <div class="d-flex align-items-center gap-2" style="margin-bottom: var(--hm-space-4);">
-          <button type="button" class="hm-btn hm-btn--ghost hm-btn--sm" id="hm-back-to-districts">
-            ← Back to districts
-          </button>
           <div id="hm-students-refresh-slot"></div>
         </div>
 

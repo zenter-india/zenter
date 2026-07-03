@@ -269,9 +269,9 @@ async function loadData() {
   renderRequests();
   updateNavBadge();
 
-  // Refreshing while drilled into a district: stay there (with fresh data)
-  // unless that district no longer has anyone in it, then bounce back to the list.
   if (activeDistrict && allUsers.some(u => u.exam_centre_district === activeDistrict)) {
+    // Refreshing while drilled into a district: stay there (with fresh data)
+    // unless that district no longer has anyone in it, then bounce back to the list.
     applyFilters();
   } else {
     showDistrictView();
@@ -639,12 +639,30 @@ function relocateRefreshButton(targetId) {
   if (btn && target && btn.parentElement !== target) target.appendChild(btn);
 }
 
+/** The navbar's ← Back to Home button is reused here while inside a district —
+ *  shown and repointed to return to the district list (instead of its default
+ *  history.back()/dashboard redirect), then hidden again on the district list
+ *  itself (where NO_BACK_PAGES already keeps it hidden by default). */
+function setNavBackTarget(active) {
+  const btn = document.getElementById('hm-nav-back');
+  if (!btn) return;
+  btn.hidden = !active;
+  if (active) {
+    btn.textContent = '← Back to districts';
+    btn.onclick = (e) => { e.preventDefault(); showDistrictView(); };
+  } else {
+    btn.textContent = '← Back to districts'; // restore default label (same as navbar.html)
+    btn.onclick = null;
+  }
+}
+
 function showDistrictView() {
   activeDistrict = null;
   document.getElementById('hm-district-view').hidden  = false;
   document.getElementById('hm-students-view').hidden  = true;
   document.getElementById('hm-filter-toggle').hidden  = true;
   relocateRefreshButton('hm-district-search-row');
+  setNavBackTarget(false);
   updateTabBarVisibility();
   updateFeedHeader();
   renderDistrictCards(document.getElementById('hm-district-search')?.value || '');
@@ -657,6 +675,7 @@ function showStudentsView(name) {
   document.getElementById('hm-students-view').hidden  = false;
   document.getElementById('hm-filter-toggle').hidden  = false;
   relocateRefreshButton('hm-students-refresh-slot');
+  setNavBackTarget(true);
   updateTabBarVisibility();
   updateFeedHeader();
   applyFilters();
@@ -674,8 +693,6 @@ function wireDistrictView() {
     'input',
     debounce((e) => renderDistrictCards(e.target.value), 200)
   );
-
-  document.getElementById('hm-back-to-districts')?.addEventListener('click', showDistrictView);
 }
 
 function wireModal() {
