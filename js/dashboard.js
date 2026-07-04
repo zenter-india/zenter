@@ -269,7 +269,19 @@ async function loadData() {
   renderRequests();
   updateNavBadge();
 
-  if (activeDistrict && allUsers.some(u => u.exam_centre_district === activeDistrict)) {
+  // "Back to districts" from Profile (etc.) lands directly on the user's own
+  // district's student list, skipping the picker. One-shot — the hash is
+  // consumed here so a later manual refresh doesn't keep re-triggering it.
+  // Falls back to the picker if the user has no district set or it has no
+  // aspirants yet.
+  const wantsOwnDistrict = !activeDistrict && location.hash === '#my-district';
+  if (wantsOwnDistrict) history.replaceState(null, '', location.pathname);
+  const ownDistrictHasAspirants = myExamCentreDistrict
+    && allUsers.some(u => u.exam_centre_district === myExamCentreDistrict);
+
+  if (wantsOwnDistrict && ownDistrictHasAspirants) {
+    showStudentsView(myExamCentreDistrict);
+  } else if (activeDistrict && allUsers.some(u => u.exam_centre_district === activeDistrict)) {
     // Refreshing while drilled into a district: stay there (with fresh data)
     // unless that district no longer has anyone in it, then bounce back to the list.
     applyFilters();
@@ -1424,7 +1436,7 @@ function esc(str) {
 
 // ─── Block ────────────────────────────────────────────────────────────────────
 
-const MIN_BLOCK_REASON_LEN = 5;
+const MIN_BLOCK_REASON_LEN = 4;
 
 function openBlockModal(userId) {
   const modal = document.getElementById('hm-block-modal');

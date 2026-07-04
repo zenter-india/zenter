@@ -17,10 +17,14 @@
     <div class="hm-nav-right">
 
       <!-- ← Back button — hidden by default, shown on secondary pages via app.js.
-           Always goes to the district picker (dashboard.html), matching the
-           "Back to districts" button used inside Find Aspirants itself. -->
+           From here (Profile etc.) it lands directly on the user's own
+           district's aspirant list (the #my-district hash — see loadData()
+           in dashboard.js), NOT the picker. Inside Find Aspirants itself,
+           dashboard.js overrides this button's onclick to go to the picker
+           instead (see setNavBackTarget()) — same button, different meaning
+           depending on where it's clicked from. -->
       <button type="button" id="hm-nav-back" aria-label="Go back"
-        onclick="window.location.href='/dashboard.html'"
+        onclick="window.location.href='/dashboard.html#my-district'"
         hidden>← Back to districts</button>
 
       <!-- 1. Mobile CTA (logged-out, always visible on mobile) -->
