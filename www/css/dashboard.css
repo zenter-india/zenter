@@ -640,8 +640,11 @@
 }
 .hm-profile-card { text-align: left; position: relative; }
 /* Plus badge/upgrade-link floats independently in the corner — kept out of
-   the identity row's flex flow so it never squeezes the name/phone. */
-.hm-profile-card__plus-slot { position: absolute; top: 0; right: 0; }
+   the identity row's flex flow so it never squeezes the name/phone. z-index
+   ensures it visually sits on top if a long name's ellipsis point ever
+   reaches this far (its background is opaque, so it cleanly covers the
+   trailing edge rather than looking like a broken overlap). */
+.hm-profile-card__plus-slot { position: absolute; top: var(--hm-space-3); right: var(--hm-space-3); z-index: 1; }
 .hm-profile-card__identity {
   display: flex;
   align-items: center;
@@ -654,10 +657,6 @@
   font-size: var(--hm-text-lg);
   margin-bottom: 2px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  padding-right: 92px; /* reserve room on this line only, so a long name
-                          doesn't run under the badge — the phone number
-                          below isn't vertically under the badge, so it
-                          keeps the full card width. */
 }
 .hm-profile-card__phone {
   color: var(--hm-text-subtle); font-size: var(--hm-text-sm); margin-bottom: 0;
