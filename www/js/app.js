@@ -29,7 +29,6 @@ async function bootstrap() {
   highlightActiveNav(route);
   wireGlobalNav();
   wireBrandNavigation();
-  wireBackButton(route);
   loadAnnouncementBar(route);
 
   // Reflect auth state into the navbar (login button <-> avatar/logout).
@@ -39,18 +38,6 @@ async function bootstrap() {
   if (init) {
     try { await init(); }
     catch (err) { console.error(`[app] init error on ${route}`, err); }
-  }
-}
-
-// ─── Back button ─────────────────────────────────────────────────────────────
-// Pages where ← Back is hidden (no meaningful "back" concept).
-const NO_BACK_PAGES = ['login', 'onboarding', 'dashboard', 'index'];
-
-function wireBackButton(route) {
-  const btn = document.getElementById('hm-nav-back');
-  if (!btn) return;
-  if (!NO_BACK_PAGES.includes(route)) {
-    btn.hidden = false;
   }
 }
 
@@ -170,8 +157,6 @@ async function renderNavAuthState(user) {
   $$('.hm-brand').forEach((el) => { el.href = targetHref; });
 
   if (user) {
-    updateNavbarAvatar();
-
     // Hide the profile avatar/dropdown during onboarding.
     const navProfile = document.querySelector('.hm-nav-profile');
     if (navProfile) {
@@ -218,19 +203,6 @@ function wireBrandNavigation() {
     const isAuthed = !!getCurrentUser() || !!sessionStorage.getItem(STORAGE_KEYS.authUser);
     window.location.href = isAuthed ? ROUTES.dashboard : ROUTES.landing;
   });
-}
-
-// Reads cached initials written by profile.js (STORAGE_KEYS.profile) so the
-// avatar shows real initials on every page — no extra Supabase call needed.
-function updateNavbarAvatar() {
-  const el = document.getElementById('hm-navbar-avatar');
-  if (!el) return;
-  try {
-    const cached = JSON.parse(sessionStorage.getItem(STORAGE_KEYS.profile) || 'null');
-    if (cached?.initials) { el.textContent = cached.initials; return; }
-  } catch { /* ignore malformed cache */ }
-  // Fallback: "Me" renders until the user visits their profile page.
-  // el.textContent is already "Me" from the navbar HTML default.
 }
 
 // --- Page initializers (shells) ----------------------------------------------

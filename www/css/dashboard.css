@@ -101,39 +101,6 @@
   animation: hm-panel-enter 180ms ease-out both;
 }
 
-/* ── Dashboard tab bar ─────────────────────────────────────────────────────── */
-.hm-tabs {
-  display: flex;
-  justify-content: center;
-  gap: var(--hm-space-2);
-  border-bottom: 1px solid var(--hm-border);
-  margin-bottom: var(--hm-space-5);
-}
-.hm-tab {
-  padding: var(--hm-space-3) var(--hm-space-6);
-  font-size: var(--hm-text-base);
-  font-weight: 600;
-  color: var(--hm-text-subtle);
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  cursor: pointer;
-  min-height: 48px;
-  white-space: nowrap;
-  transition: color var(--hm-duration-fast) var(--hm-ease),
-              border-color var(--hm-duration-fast) var(--hm-ease);
-}
-.hm-tab:hover { color: var(--hm-text); }
-.hm-tab.is-active {
-  color: var(--hm-primary);
-  border-bottom-color: var(--hm-primary);
-}
-@media (max-width: 479px) {
-  .hm-tabs { gap: 0; }
-  .hm-tab { padding: var(--hm-space-2) var(--hm-space-2); font-size: var(--hm-text-xs, 0.75rem); flex: 1; min-width: 0; white-space: nowrap; }
-}
-
 .hm-dashboard {
   display: grid;
   grid-template-columns: 280px 1fr;

@@ -180,9 +180,6 @@ function hydrateAll() {
   setText('hm-profile-name', name || 'Your name');
   setAvatar(name);
 
-  // Cache initials for the navbar avatar across all pages
-  cacheInitials(name);
-
   // Gap 5: show Plus badge or upgrade link
   const plusStatus  = document.getElementById('hm-plus-status');
   const plusUpgrade = document.getElementById('hm-plus-upgrade-link');
@@ -324,7 +321,6 @@ async function saveAll(saveBtn) {
     const name = trimOrNull(profileData.full_name);
     setText('hm-profile-name', name || 'Your name');
     setAvatar(name);
-    cacheInitials(name);
   }
 
   exitEditAll();
@@ -482,7 +478,6 @@ async function saveSection(sectionKey, saveBtn) {
     const name = trimOrNull(profileData.full_name);
     setText('hm-profile-name', name || 'Your name');
     setAvatar(name);
-    cacheInitials(name);
   }
 
   exitEditMode(sectionKey);
@@ -525,15 +520,6 @@ function setText(id, text) {
 function setAvatar(name) {
   const el = document.getElementById('hm-profile-avatar');
   if (el) el.textContent = avatarInitials(name);
-}
-
-function cacheInitials(name) {
-  try {
-    const initials = avatarInitials(name);
-    sessionStorage.setItem(STORAGE_KEYS.profile, JSON.stringify({ initials }));
-    const navAvatar = document.getElementById('hm-navbar-avatar');
-    if (navAvatar && initials !== 'Z') navAvatar.textContent = initials;
-  } catch { /* ignore — storage may be unavailable in private mode */ }
 }
 
 function trimOrNull(v) {

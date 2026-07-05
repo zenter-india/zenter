@@ -11,21 +11,9 @@
       ── RIGHT: hm-nav-right ────────────────────────────────────────────────
       1. hm-nav-cta      — mobile-only; logged-out Sign in
       2. hm-nav-actions  — desktop-only; logged-out Sign in
-      3. hm-nav-profile  — all viewports; logged-in avatar + dropdown
-         (all secondary actions live in this dropdown — no hamburger menu)
+      3. hm-nav-profile  — all viewports; logged-in avatar opens the account drawer
     -->
     <div class="hm-nav-right">
-
-      <!-- ← Back button — hidden by default, shown on secondary pages via app.js.
-           From here (Profile etc.) it lands directly on the user's own
-           district's aspirant list (the #my-district hash — see loadData()
-           in dashboard.js), NOT the picker. Inside Find Aspirants itself,
-           dashboard.js overrides this button's onclick to go to the picker
-           instead (see setNavBackTarget()) — same button, different meaning
-           depending on where it's clicked from. -->
-      <button type="button" id="hm-nav-back" aria-label="Go back"
-        onclick="window.location.href='/dashboard.html#my-district'"
-        hidden>← Aspirants</button>
 
       <!-- 1. Mobile CTA (logged-out, always visible on mobile) -->
       <div class="hm-nav-cta" data-auth="logged-out">
@@ -37,65 +25,71 @@
         <a href="/login.html" class="hm-btn hm-btn--primary hm-btn--sm" style="white-space:nowrap;">Signup / Login</a>
       </div>
 
-      <!-- 3. Logged-in avatar + dropdown (all viewports) -->
+      <!-- 3. Menu toggle — opens the account drawer (all viewports) -->
       <div class="hm-nav-profile" data-auth="logged-in" hidden>
         <button
           class="hm-nav-profile__btn"
           id="hm-avatar-btn"
           type="button"
-          aria-haspopup="true"
+          aria-haspopup="dialog"
           aria-expanded="false"
+          aria-controls="hm-account-drawer"
           aria-label="Account menu"
         >
-          <div class="hm-avatar hm-avatar--sm" id="hm-navbar-avatar" aria-hidden="true">Me</div>
-          <span class="hm-nav-profile__chevron" aria-hidden="true">▾</span>
+          <span class="hm-nav-profile__bar" aria-hidden="true"></span>
         </button>
-
-        <ul class="hm-nav-profile__dropdown" id="hm-avatar-dropdown" role="menu">
-          <!-- Admin link — shown only when role=admin is cached (set by dashboard.js) -->
-          <li role="none" id="hm-admin-nav-item" hidden>
-            <a href="/admin.html" class="hm-nav-profile__item" role="menuitem">⚙️ Admin panel</a>
-          </li>
-          <li role="none">
-            <a href="/profile.html" class="hm-nav-profile__item" role="menuitem">Profile</a>
-          </li>
-          <li role="none">
-            <a href="/dashboard.html#requests" class="hm-nav-profile__item" role="menuitem">Requests</a>
-          </li>
-          <li role="none">
-            <a href="/dashboard.html#my-district" class="hm-nav-profile__item" role="menuitem">Find aspirants</a>
-          </li>
-          <li role="none">
-            <a href="/dashboard.html" class="hm-nav-profile__item" role="menuitem">Districts</a>
-          </li>
-          <li role="none">
-            <a href="/dashboard.html#connections" class="hm-nav-profile__item" role="menuitem">Co-ordinations</a>
-          </li>
-          <li role="none">
-            <a href="/dashboard.html#chats" class="hm-nav-profile__item" role="menuitem">Chats</a>
-          </li>
-          <li role="none">
-            <a href="/contact.html" class="hm-nav-profile__item" role="menuitem">Contact us</a>
-          </li>
-          <li role="none">
-            <button type="button" class="hm-nav-profile__item" role="menuitem"
-                    data-action="feedback">Feedback</button>
-          </li>
-          <li role="none">
-            <button
-              type="button"
-              class="hm-nav-profile__item hm-nav-profile__item--danger"
-              role="menuitem"
-              data-action="logout"
-            >Log out</button>
-          </li>
-        </ul>
       </div>
 
     </div><!-- /.hm-nav-right -->
 
   </div><!-- /.hm-navbar__inner -->
 </nav>
+
+<!-- ── Account drawer — slide-out panel with account + all footer links ── -->
+<div class="hm-account-backdrop" id="hm-account-backdrop" aria-hidden="true"></div>
+<aside class="hm-account-drawer" id="hm-account-drawer" role="dialog" aria-modal="true" aria-label="Account menu">
+  <div class="hm-account-drawer__header">
+    <span class="hm-account-drawer__title">Account</span>
+    <button type="button" class="hm-account-drawer__close" id="hm-account-drawer-close" aria-label="Close menu">✕</button>
+  </div>
+
+  <nav class="hm-account-drawer__body">
+    <div class="hm-account-drawer__section">
+      <a href="/profile.html" class="hm-account-drawer__link">Profile</a>
+      <a href="/plus.html" class="hm-account-drawer__link hm-account-drawer__link--plus" id="hm-plus-nav-item">⭐ Get Zenter Plus</a>
+      <a href="/admin.html" class="hm-account-drawer__link" id="hm-admin-nav-item" hidden>⚙️ Admin panel</a>
+    </div>
+
+    <div class="hm-account-drawer__section">
+      <p class="hm-account-drawer__section-title">Product</p>
+      <a href="/index.html#how-it-works" class="hm-account-drawer__link">How it works</a>
+      <a href="/index.html#safety" class="hm-account-drawer__link">Safety</a>
+      <a href="/dashboard.html" class="hm-account-drawer__link">Find mates</a>
+    </div>
+
+    <div class="hm-account-drawer__section">
+      <p class="hm-account-drawer__section-title">Company</p>
+      <a href="/contact.html" class="hm-account-drawer__link">Contact us</a>
+      <a href="/faq.html" class="hm-account-drawer__link">FAQ</a>
+      <button type="button" class="hm-account-drawer__link" data-action="feedback">Feedback</button>
+    </div>
+
+    <div class="hm-account-drawer__section">
+      <p class="hm-account-drawer__section-title">Legal</p>
+      <a href="/privacy.html" class="hm-account-drawer__link">Privacy Policy</a>
+      <a href="/terms.html" class="hm-account-drawer__link">Terms and Conditions</a>
+      <a href="/community.html" class="hm-account-drawer__link">Community Guidelines</a>
+    </div>
+
+    <div class="hm-account-drawer__section">
+      <button type="button" class="hm-account-drawer__link hm-account-drawer__link--danger" data-action="logout">Log out</button>
+    </div>
+  </nav>
+
+  <div class="hm-account-drawer__footer">
+    © <span id="hm-year"></span> Zenter. Built for Exam aspirants.
+  </div>
+</aside>
 
 <!-- ── Feedback modal — wired by app.js; loaded on every page via navbar ── -->
 <div id="hm-feedback-overlay" class="hm-feedback-overlay"
