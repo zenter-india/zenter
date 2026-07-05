@@ -269,24 +269,33 @@ async function loadData() {
   renderRequests();
   updateNavBadge();
 
-  // "Back to districts" from Profile (etc.) lands directly on the user's own
-  // district's student list, skipping the picker. One-shot — the hash is
-  // consumed here so a later manual refresh doesn't keep re-triggering it.
-  // Falls back to the picker if the user has no district set or it has no
-  // aspirants yet.
-  const wantsOwnDistrict = !activeDistrict && location.hash === '#my-district';
-  if (wantsOwnDistrict) history.replaceState(null, '', location.pathname);
-  const ownDistrictHasAspirants = myExamCentreDistrict
-    && allUsers.some(u => u.exam_centre_district === myExamCentreDistrict);
-
-  if (wantsOwnDistrict && ownDistrictHasAspirants) {
-    showStudentsView(myExamCentreDistrict);
-  } else if (activeDistrict && allUsers.some(u => u.exam_centre_district === activeDistrict)) {
-    // Refreshing while drilled into a district: stay there (with fresh data)
-    // unless that district no longer has anyone in it, then bounce back to the list.
-    applyFilters();
+  // Find-Aspirants-specific view state (district picker vs a chosen district)
+  // only applies while that tab is actually the one showing. On Requests /
+  // Co-ordinations / Chats, leave activeDistrict/the picker alone entirely —
+  // otherwise a background refresh here would silently reset whichever
+  // district the user had drilled into.
+  if (parseHash(location.hash) !== 'find-mates') {
+    setNavBackTarget(true); // "Districts" is reachable from every tab
   } else {
-    showDistrictView();
+    // "Aspirants" from Profile (etc.) lands directly on the user's own
+    // district's student list, skipping the picker. One-shot — the hash is
+    // consumed here so a later manual refresh doesn't keep re-triggering it.
+    // Falls back to the picker if the user has no district set or it has no
+    // aspirants yet.
+    const wantsOwnDistrict = !activeDistrict && location.hash === '#my-district';
+    if (wantsOwnDistrict) history.replaceState(null, '', location.pathname);
+    const ownDistrictHasAspirants = myExamCentreDistrict
+      && allUsers.some(u => u.exam_centre_district === myExamCentreDistrict);
+
+    if (wantsOwnDistrict && ownDistrictHasAspirants) {
+      showStudentsView(myExamCentreDistrict);
+    } else if (activeDistrict && allUsers.some(u => u.exam_centre_district === activeDistrict)) {
+      // Refreshing while drilled into a district: stay there (with fresh data)
+      // unless that district no longer has anyone in it, then bounce back to the list.
+      applyFilters();
+    } else {
+      showDistrictView();
+    }
   }
 
   // Fetch unread chat count for the badge (regardless of which tab is active)
@@ -402,6 +411,11 @@ async function activateTab(name) {
     btn.classList.toggle('is-active', active);
     btn.setAttribute('aria-selected', String(active));
   });
+
+  // Back button: "Districts" isn't Find-Aspirants-only — offer it on every
+  // other tab too. On Find Aspirants itself, only show it once the user has
+  // actually drilled into a district (hidden on the picker screen itself).
+  setNavBackTarget(tab !== 'find-mates' || !!activeDistrict);
 
   const panels = TAB_PANELS();
   Object.entries(panels).forEach(([key, el]) => { if (el) el.hidden = key !== tab; });
@@ -660,12 +674,23 @@ function setNavBackTarget(active) {
   if (!btn) return;
   btn.hidden = !active;
   if (active) {
-    btn.textContent = '← Back to districts';
-    btn.onclick = (e) => { e.preventDefault(); showDistrictView(); };
+    btn.textContent = '← Districts';
+    btn.onclick = (e) => { e.preventDefault(); goToDistricts(); };
   } else {
-    btn.textContent = '← Back to districts'; // restore default label (same as navbar.html)
+    btn.textContent = '← Aspirants'; // restore default label (same as navbar.html)
     btn.onclick = null;
   }
+}
+
+// Reusable "back to Districts" target for the nav back button — works from
+// any tab (Requests / Co-ordinations / Chats), not just from inside Find
+// Aspirants, by switching to the find-mates tab first when needed.
+function goToDistricts() {
+  if (parseHash(location.hash) !== 'find-mates') {
+    activateTab('find-mates');
+    history.replaceState(null, '', location.pathname);
+  }
+  showDistrictView();
 }
 
 function showDistrictView() {
