@@ -559,9 +559,12 @@ export function attemptReveal(userId) {
   return query(supabase.rpc('increment_reveal_count', { p_user_id: userId }));
 }
 
-/** Grant or revoke Plus membership (admin). */
-export function adminSetPlusMember(targetId, isPlus) {
-  return query(from('users').update({ plus_member: isPlus }).eq('id', targetId).select('id').single());
+/** Grant or revoke Plus membership (admin). Goes through a phone-checked RPC —
+ *  a DB trigger blocks direct client writes to plus_member. */
+export function adminSetPlusMember(targetId, requesterPhone, isPlus) {
+  return query(supabase.rpc('admin_set_plus_member', {
+    p_target_id: targetId, p_is_plus: isPlus, p_requester_phone: requesterPhone,
+  }));
 }
 
 // ─── Razorpay Payment ─────────────────────────────────────────────────────────
@@ -631,12 +634,13 @@ export function trackEvent(eventName, userId, properties = {}) {
   );
 }
 
-/** Grant or revoke Verified Aspirant status (Roll No verified by admin). */
-export function adminSetVerifiedAspirant(targetId, isVerified) {
-  const updates = isVerified
-    ? { is_verified_aspirant: true,  verification_requested: false, verification_rejected: false }
-    : { is_verified_aspirant: false, verification_requested: false, verification_rejected: true  };
-  return query(from('users').update(updates).eq('id', targetId).select('id').single());
+/** Grant or revoke Verified Aspirant status (Roll No verified by admin). Goes
+ *  through a phone-checked RPC — a DB trigger blocks direct client writes to
+ *  is_verified_aspirant. */
+export function adminSetVerifiedAspirant(targetId, requesterPhone, isVerified) {
+  return query(supabase.rpc('admin_set_verified_aspirant', {
+    p_target_id: targetId, p_verified: isVerified, p_requester_phone: requesterPhone,
+  }));
 }
 
 /** User submits Roll Number and requests verification. */

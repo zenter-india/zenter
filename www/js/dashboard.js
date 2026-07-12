@@ -849,7 +849,7 @@ function renderRevealBanner(plusEnabled) {
   banner.innerHTML = remaining > 0
     ? `<span class="hm-reveal-banner__text">
          You have <strong>${remaining} free chat${remaining === 1 ? '' : 's'}</strong> remaining.
-         <a href="/plus.html" class="hm-reveal-banner__link">Get Zenter Plus for unlimited chats →</a>
+         <a href="/plus.html" class="hm-reveal-banner__link">Unlock entire exam centre →</a>
        </span>`
     : `<span class="hm-reveal-banner__text hm-reveal-banner__text--limit">
          <strong style="font-weight:600;">Aspirants! Break the barriers 🚧</strong>
