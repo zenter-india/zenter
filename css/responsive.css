@@ -108,6 +108,17 @@ html, body { overflow-x: hidden; max-width: 100%; }
 
   .hm-footer__grid { grid-template-columns: 1fr 1fr; }
 
+  /* Legal bar: stack copyright / powered-by / credit vertically from
+     tablet width down (cascades to phone widths too). */
+  .hm-footer__legal {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: var(--hm-space-2);
+  }
+  .hm-footer__legal-copyright,
+  .hm-footer__legal-powered,
+  .hm-footer__legal-credit { text-align: center; }
+
   .hm-auth { grid-template-columns: 1fr; }
   .hm-auth__aside { display: none; }
 }
@@ -154,8 +165,8 @@ html, body { overflow-x: hidden; max-width: 100%; }
   .hm-toast { max-width: 100%; }
 
   /* Footer */
-  .hm-footer__grid  { grid-template-columns: 1fr; gap: var(--hm-space-5); }
-  .hm-footer__legal { flex-direction: column; align-items: flex-start; }
+  .hm-footer__grid { grid-template-columns: 1fr; gap: var(--hm-space-5); }
+  /* .hm-footer__legal stacking is handled by the ≤991.98px rule above. */
 
   /* Section card header: let edit button wrap */
   .hm-section-card__header { flex-wrap: wrap; gap: var(--hm-space-2); }
