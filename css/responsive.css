@@ -118,6 +118,11 @@ html, body { overflow-x: hidden; max-width: 100%; }
   .hm-footer__legal-copyright,
   .hm-footer__legal-powered,
   .hm-footer__legal-credit { text-align: center; }
+  /* Stacked order differs from desktop's left/center/right: copyright,
+     then the engineering credit, then "Powered by" last at the bottom. */
+  .hm-footer__legal-copyright { order: 1; }
+  .hm-footer__legal-credit    { order: 2; }
+  .hm-footer__legal-powered   { order: 3; }
 
   .hm-auth { grid-template-columns: 1fr; }
   .hm-auth__aside { display: none; }
