@@ -561,14 +561,18 @@
   margin-top: var(--hm-space-6);
   padding-top: var(--hm-space-4);
   border-top: 1px solid var(--hm-border);
-  /* Equal 1fr side columns keep the center item visually centered
-     regardless of how long the left/right text is. */
-  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--hm-space-3);
+  /* Two rows: copyright + engineering credit share the top row (left/right),
+     "Powered by" gets its own centered row underneath — never all three
+     sharing one line. */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas: "copyright credit" "powered powered";
+  row-gap: var(--hm-space-2); column-gap: var(--hm-space-3);
   font-size: var(--hm-text-sm); color: var(--hm-text-subtle);
 }
-.hm-footer__legal-copyright { text-align: left; }
-.hm-footer__legal-powered   { text-align: center; font-weight: 600; color: var(--hm-text-muted); }
-.hm-footer__legal-credit    { text-align: right; font-size: var(--hm-text-xs); opacity: 0.85; }
+.hm-footer__legal-copyright { grid-area: copyright; text-align: left; }
+.hm-footer__legal-credit    { grid-area: credit; text-align: right; font-size: var(--hm-text-xs); opacity: 0.85; }
+.hm-footer__legal-powered   { grid-area: powered; text-align: center; font-weight: 600; color: var(--hm-text-muted); }
 
 /* ============================================================
    TOAST + LOADERS

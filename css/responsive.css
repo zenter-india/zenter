@@ -108,21 +108,18 @@ html, body { overflow-x: hidden; max-width: 100%; }
 
   .hm-footer__grid { grid-template-columns: 1fr 1fr; }
 
-  /* Legal bar: stack copyright / powered-by / credit vertically from
-     tablet width down (cascades to phone widths too). */
+  /* Legal bar: stack copyright / credit / powered-by vertically from
+     tablet width down (cascades to phone widths too). "Powered by" stays
+     last/bottom, same as desktop's separate row. */
   .hm-footer__legal {
     grid-template-columns: 1fr;
+    grid-template-areas: "copyright" "credit" "powered";
     justify-items: center;
     gap: var(--hm-space-2);
   }
   .hm-footer__legal-copyright,
   .hm-footer__legal-powered,
   .hm-footer__legal-credit { text-align: center; }
-  /* Stacked order differs from desktop's left/center/right: copyright,
-     then the engineering credit, then "Powered by" last at the bottom. */
-  .hm-footer__legal-copyright { order: 1; }
-  .hm-footer__legal-credit    { order: 2; }
-  .hm-footer__legal-powered   { order: 3; }
 
   .hm-auth { grid-template-columns: 1fr; }
   .hm-auth__aside { display: none; }
