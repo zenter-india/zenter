@@ -1311,7 +1311,7 @@ document.addEventListener('click', async (e) => {
     }, async () => {
       btn.disabled = true;
       const { adminSetPlusMember } = await import('./supabase.js');
-      const { error } = await adminSetPlusMember(id, granting);
+      const { error } = await adminSetPlusMember(id, granting, adminPhone);
       if (error) { toast('Error: ' + error.message, 'error'); btn.disabled = false; return; }
       const u = allUsers.find(u => u.id === id);
       if (u) u.plus_member = granting;

@@ -560,8 +560,10 @@ export function attemptReveal(userId) {
 }
 
 /** Grant or revoke Plus membership (admin). */
-export function adminSetPlusMember(targetId, isPlus) {
-  return query(from('users').update({ plus_member: isPlus }).eq('id', targetId).select('id').single());
+export function adminSetPlusMember(targetId, isPlus, requesterPhone) {
+  return query(supabase.rpc('admin_set_plus_member', {
+    p_target_id: targetId, p_is_plus: isPlus, p_requester_phone: requesterPhone,
+  }));
 }
 
 // ─── Razorpay Payment ─────────────────────────────────────────────────────────
