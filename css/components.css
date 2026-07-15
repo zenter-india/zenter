@@ -107,6 +107,11 @@
   color: var(--hm-text);
   letter-spacing: -0.01em;
 }
+.hm-brand--stacked {
+  flex-direction: column;
+  gap: 0;
+  line-height: 1;
+}
 .hm-brand__mark {
   width: 36px; height: 36px;
   border-radius: 10px;
@@ -117,11 +122,26 @@
   box-shadow: var(--hm-shadow-sm);
 }
 .hm-brand__logo {
-  width: 36px; height: 36px;
-  border-radius: 10px;
-  object-fit: cover;
-  box-shadow: var(--hm-shadow-sm);
+  height: 40px;
+  width: auto;
+  object-fit: contain;
   flex-shrink: 0;
+}
+.hm-brand__icon {
+  height: 34px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.hm-brand__text {
+  color: var(--hm-primary);
+  font-weight: 800;
+  text-transform: lowercase;
+  letter-spacing: -0.02em;
+}
+.hm-brand--stacked .hm-brand__text {
+  font-size: 0.65rem;
+  margin-top: 1px;
 }
 .hm-nav-links {
   display: flex; align-items: center; justify-content: center; gap: var(--hm-space-2);
