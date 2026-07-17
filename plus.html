@@ -141,7 +141,7 @@
         <p style="color: var(--hm-text-muted); font-size: var(--hm-text-lg); margin-bottom: var(--hm-space-4);">
           Plus gives you priority visibility, featured card and co-ordinate with every centre aspirant.
         </p>
-        <div class="plus-price" style="visibility:hidden;">₹49 <span>/ exam season</span></div>
+        <div class="plus-price" style="visibility:hidden;">₹99 <span>/ exam season</span></div>
         <p class="plus-season">One-time for NEET UG 2026</p>
       </div>
 
@@ -384,7 +384,7 @@
         basePrice = price;
         finalPaise = probe.original_paise;
         document.querySelectorAll('.plus-price').forEach(el => {
-          el.innerHTML = `₹${price} <span>/ exam season</span>`;
+          el.innerHTML = `₹99 <span>/ exam season</span>`;
           el.style.visibility = 'visible';
         });
         if (priceFinal)   { priceFinal.textContent = `₹${price}`; priceFinal.style.visibility = 'visible'; }
