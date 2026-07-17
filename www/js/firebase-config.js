@@ -57,6 +57,7 @@ export { signInWithPhoneNumber, onAuthStateChanged, signOut };
 //
 // • Production: invisible reCAPTCHA, singleton.
 let verifierInstance = null;
+let lastContainerId  = 'hm-recaptcha-container';
 
 export function createRecaptcha(containerId = 'hm-recaptcha-container') {
   if (typeof window !== 'undefined' && window.__hm_e2e) {
@@ -69,6 +70,7 @@ export function createRecaptcha(containerId = 'hm-recaptcha-container') {
     };
   }
 
+  lastContainerId = containerId;
   if (verifierInstance) return verifierInstance;
 
   verifierInstance = new RecaptchaVerifier(auth, containerId, {
@@ -84,10 +86,24 @@ export function createRecaptcha(containerId = 'hm-recaptcha-container') {
 // Tear down the cached verifier so the next createRecaptcha() returns a fresh
 // instance. Call on auth errors so a stale or rate-limited verifier doesn't
 // poison subsequent retries. Safe to call when no verifier exists.
+//
+// clear() alone is not enough: grecaptcha tags the container DOM node as
+// "rendered" and doesn't always reset that tag, so a retry on the SAME node
+// throws "reCAPTCHA has already been rendered in this element" — which then
+// blocks every subsequent OTP attempt until a full page reload. Swapping the
+// container for a fresh, pristine clone (same id/attributes, no grecaptcha
+// state) guarantees the next verifier renders cleanly.
 export function resetRecaptcha() {
-  if (!verifierInstance) return;
-  try { verifierInstance.clear(); } catch { /* defensive — clear can throw on already-disposed */ }
-  verifierInstance = null;
+  if (verifierInstance) {
+    try { verifierInstance.clear(); } catch { /* defensive — clear can throw on already-disposed */ }
+    verifierInstance = null;
+  }
+  if (typeof document !== 'undefined') {
+    const el = document.getElementById(lastContainerId);
+    if (el && el.parentNode) {
+      el.parentNode.replaceChild(el.cloneNode(false), el);
+    }
+  }
 }
 
 // ─── Native phone auth (Capacitor Android/iOS) ─────────────────────────────
