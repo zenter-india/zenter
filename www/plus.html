@@ -37,12 +37,20 @@
       border-radius: 20px;
       margin-bottom: var(--hm-space-3);
     }
+    .plus-price-strike {
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--hm-text-muted);
+      line-height: 1;
+      text-decoration: line-through;
+      margin: var(--hm-space-3) 0 0;
+    }
     .plus-price {
       font-size: 48px;
       font-weight: 800;
       color: var(--hm-text);
       line-height: 1;
-      margin: var(--hm-space-3) 0 var(--hm-space-1);
+      margin: var(--hm-space-1) 0 var(--hm-space-1);
     }
     .plus-price span {
       font-size: 20px;
@@ -113,6 +121,7 @@
     /* Responsive */
     @media (max-width: 767px) {
       .plus-hero { padding: var(--hm-space-5) var(--hm-space-3) var(--hm-space-4); }
+      .plus-price-strike { font-size: 36px; }
       .plus-price { font-size: 36px; }
       .plus-price span { font-size: 16px; }
       .plus-features li { font-size: 14px; padding: 8px 0; }
@@ -120,6 +129,7 @@
       .plus-compare th, .plus-compare td { padding: 10px 8px; }
     }
     @media (max-width: 479px) {
+      .plus-price-strike { font-size: 30px; }
       .plus-price { font-size: 30px; }
       .plus-compare table { font-size: 12px; }
       .plus-compare th, .plus-compare td { padding: 8px 6px; }
@@ -141,6 +151,7 @@
         <p style="color: var(--hm-text-muted); font-size: var(--hm-text-lg); margin-bottom: var(--hm-space-4);">
           Plus gives you priority visibility, featured card and co-ordinate with every centre aspirant.
         </p>
+        <div class="plus-price-strike" id="hm-hero-price-strike" style="visibility:hidden;">₹199</div>
         <div class="plus-price" style="visibility:hidden;">₹99 <span>/ exam season</span></div>
         <p class="plus-season">One-time for NEET UG 2026</p>
       </div>
@@ -375,6 +386,7 @@
       let basePrice = null; // remember original price so we can restore on remove
       const priceOriginal = document.getElementById('hm-price-original');
       const priceFinal    = document.getElementById('hm-price-final');
+      const heroPriceStrike = document.getElementById('hm-hero-price-strike');
 
       // Fetch current price from server (admin-controlled via platform_config)
       try {
@@ -382,6 +394,7 @@
         const price = probe.original_paise / 100;
         basePrice = price;
         finalPaise = probe.original_paise;
+        if (heroPriceStrike) { heroPriceStrike.textContent = `₹${price}`; heroPriceStrike.style.visibility = 'visible'; }
         document.querySelectorAll('.plus-price').forEach(el => {
           el.innerHTML = `₹99 <span>/ exam season</span>`;
           el.style.visibility = 'visible';
@@ -392,6 +405,7 @@
         btn.style.visibility = 'visible';
       } catch {
         // Fallback: show hardcoded values
+        if (heroPriceStrike) heroPriceStrike.style.visibility = 'visible';
         document.querySelectorAll('.plus-price').forEach(el => { el.style.visibility = 'visible'; });
         if (priceFinal) priceFinal.style.visibility = 'visible';
         btn.textContent = 'Get Zenter Plus — ₹49';
