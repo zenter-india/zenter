@@ -83,6 +83,20 @@
   gap: var(--hm-space-4);
 }
 
+/* ← Back button — sits next to profile icon, hidden by default */
+#hm-nav-back {
+  background: none;
+  border: 1px solid var(--hm-border);
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--hm-text-muted);
+  cursor: pointer;
+  border-radius: 6px;
+  white-space: nowrap;
+  transition: background 120ms, color 120ms;
+}
+#hm-nav-back:hover { background: var(--hm-surface-2); color: var(--hm-text); }
 .hm-brand {
   display: inline-flex;
   align-items: center;
@@ -92,6 +106,7 @@
   font-size: var(--hm-text-lg);
   color: var(--hm-text);
   letter-spacing: -0.01em;
+  justify-self: start;
 }
 .hm-brand__mark {
   width: 36px; height: 36px;
@@ -133,149 +148,67 @@
 
 .hm-nav-actions { display: flex; align-items: center; gap: var(--hm-space-3); }
 
-/* ── Profile avatar trigger ─────────────────────────────────────────────── */
+/* ── Profile avatar + dropdown ───────────────────────────────────────────── */
 .hm-nav-profile { position: relative; }
 
-/* Hamburger-style toggle — 3 equal bars, opens the account drawer */
 .hm-nav-profile__btn {
-  display: inline-flex;
-  width: 44px; height: 44px;
-  flex-shrink: 0;
-  align-items: center; justify-content: center;
-  border: 1.5px solid var(--hm-border-strong);
-  background: var(--hm-surface);
+  display: flex; align-items: center; gap: 4px;
+  background: none; border: none; cursor: pointer;
+  padding: 4px 6px;
   border-radius: var(--hm-radius-md);
-  cursor: pointer;
-  transition: background var(--hm-duration-fast) var(--hm-ease),
-              border-color var(--hm-duration-fast) var(--hm-ease);
-}
-.hm-nav-profile__btn:hover  { background: var(--hm-surface-2); border-color: var(--hm-text-subtle); }
-.hm-nav-profile__btn:active { background: var(--hm-border); }
-
-.hm-nav-profile__bar {
-  display: block;
-  width: 20px; height: 2px;
-  background: var(--hm-text);
-  border-radius: 2px;
-  position: relative;
-  transition: background var(--hm-duration-base) var(--hm-ease),
-              transform var(--hm-duration-base) var(--hm-ease);
-}
-.hm-nav-profile__bar::before,
-.hm-nav-profile__bar::after {
-  content: '';
-  position: absolute; left: 0;
-  width: 20px; height: 2px;
-  background: var(--hm-text);
-  border-radius: 2px;
-  transition: top var(--hm-duration-base) var(--hm-ease),
-              transform var(--hm-duration-base) var(--hm-ease),
-              background var(--hm-duration-base) var(--hm-ease);
-}
-.hm-nav-profile__bar::before { top: -6px; }
-.hm-nav-profile__bar::after  { top: 6px; }
-
-/* X animation while the account drawer is open */
-.hm-nav-profile__btn.is-open {
-  background: var(--hm-surface-2);
-  border-color: var(--hm-border-strong);
-}
-.hm-nav-profile__btn.is-open .hm-nav-profile__bar           { background: transparent; }
-.hm-nav-profile__btn.is-open .hm-nav-profile__bar::before   { top: 0; transform: rotate(45deg); }
-.hm-nav-profile__btn.is-open .hm-nav-profile__bar::after    { top: 0; transform: rotate(-45deg); }
-
-/* ── Account drawer (slide-out from the right) ──────────────────────────── */
-.hm-account-backdrop {
-  position: fixed; inset: 0;
-  z-index: 1045;
-  background: rgba(15, 23, 42, 0.45);
-  opacity: 0; visibility: hidden;
-  transition: opacity var(--hm-duration-base) var(--hm-ease),
-              visibility 0s var(--hm-duration-base);
-}
-.hm-account-backdrop.is-open {
-  opacity: 1; visibility: visible;
-  transition: opacity var(--hm-duration-base) var(--hm-ease), visibility 0s;
-}
-
-.hm-account-drawer {
-  position: fixed; top: 0; right: 0; bottom: 0;
-  z-index: 1046;
-  width: min(320px, 86vw);
-  display: flex; flex-direction: column;
-  background: var(--hm-surface);
-  box-shadow: var(--hm-shadow-lg);
-  transform: translateX(100%);
-  transition: transform var(--hm-duration-base) var(--hm-ease);
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
-  overflow-y: auto;
-}
-.hm-account-drawer.is-open { transform: translateX(0); }
-
-.hm-account-drawer__header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: var(--hm-space-4);
-  border-bottom: 1px solid var(--hm-border);
-  flex-shrink: 0;
-}
-.hm-account-drawer__title {
-  font-family: var(--hm-font-display);
-  font-weight: 600; font-size: var(--hm-text-lg);
-  color: var(--hm-text);
-}
-.hm-account-drawer__close {
-  width: 36px; height: 36px;
-  display: flex; align-items: center; justify-content: center;
-  border: 1px solid var(--hm-border);
-  border-radius: var(--hm-radius-md);
-  background: var(--hm-surface);
-  font-size: 16px; line-height: 1;
-  color: var(--hm-text-muted);
-  cursor: pointer;
   transition: background var(--hm-duration-fast) var(--hm-ease);
 }
-.hm-account-drawer__close:hover { background: var(--hm-surface-2); color: var(--hm-text); }
+.hm-nav-profile__btn:hover { background: var(--hm-surface-2); }
 
-.hm-account-drawer__body { flex: 1; padding: var(--hm-space-2) 0; }
-
-.hm-account-drawer__section {
-  padding: var(--hm-space-2) 0;
-  border-bottom: 1px solid var(--hm-border);
+.hm-nav-profile__chevron {
+  font-size: 10px; color: var(--hm-text-subtle); line-height: 1;
+  transition: transform var(--hm-duration-fast) var(--hm-ease);
 }
-.hm-account-drawer__section:last-child { border-bottom: none; }
-
-.hm-account-drawer__section-title {
-  margin: 0;
-  padding: var(--hm-space-2) var(--hm-space-4) var(--hm-space-1);
-  font-size: 11px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.06em;
-  color: var(--hm-text-subtle);
+.hm-nav-profile__btn[aria-expanded="true"] .hm-nav-profile__chevron {
+  transform: rotate(180deg);
 }
 
-.hm-account-drawer__link {
-  display: block;
+.hm-nav-profile__dropdown {
+  position: absolute; top: calc(100% + 6px); right: 0;
+  min-width: 168px;
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-md);
+  box-shadow: var(--hm-shadow-md);
+  z-index: 1040;
+  list-style: none; padding: var(--hm-space-1) 0; margin: 0;
+  /* Animated with CSS class — JS toggles .is-open */
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity var(--hm-duration-fast) var(--hm-ease),
+              transform var(--hm-duration-fast) var(--hm-ease),
+              visibility 0s var(--hm-duration-fast);
+  pointer-events: none;
+}
+.hm-nav-profile__dropdown.is-open {
+  visibility: visible; opacity: 1; transform: translateY(0);
+  transition: opacity var(--hm-duration-fast) var(--hm-ease),
+              transform var(--hm-duration-fast) var(--hm-ease),
+              visibility 0s;
+  pointer-events: auto;
+}
+
+.hm-nav-profile__item {
+  display: flex; align-items: center;
   width: 100%; text-align: left;
-  padding: 12px var(--hm-space-4);
+  padding: 10px 16px;
   font-size: var(--hm-text-sm); font-weight: 500;
   color: var(--hm-text-muted);
   background: none; border: none; cursor: pointer;
   font-family: var(--hm-font-body);
-  text-decoration: none;
   transition: background var(--hm-duration-fast) var(--hm-ease),
               color var(--hm-duration-fast) var(--hm-ease);
+  text-decoration: none;
 }
-.hm-account-drawer__link:hover { background: var(--hm-surface-2); color: var(--hm-text); }
-.hm-account-drawer__link--plus { color: var(--hm-primary); font-weight: 600; }
-.hm-account-drawer__link--danger { color: var(--hm-danger); }
-.hm-account-drawer__link--danger:hover { background: #FEE2E2; color: var(--hm-danger); }
-
-.hm-account-drawer__footer {
-  padding: var(--hm-space-4);
-  font-size: 12px; color: var(--hm-text-subtle);
-  text-align: center;
-  flex-shrink: 0;
-}
+.hm-nav-profile__item:hover { background: var(--hm-surface-2); color: var(--hm-text); }
+.hm-nav-profile__item--danger { color: var(--hm-danger); }
+.hm-nav-profile__item--danger:hover { background: #FEE2E2; color: var(--hm-danger); }
 
 .hm-nav-toggle {
   display: none;
@@ -610,6 +543,37 @@
 .hm-avatar--md { width: 56px; height: 56px; font-size: var(--hm-text-lg); flex-shrink: 0; }
 .hm-avatar--lg { width: 96px; height: 96px; font-size: var(--hm-text-2xl); }
 
+/* ============================================================
+   FOOTER
+============================================================ */
+.hm-footer {
+  background: var(--hm-surface);
+  border-top: 1px solid var(--hm-border);
+  padding: var(--hm-space-7) 0 var(--hm-space-5);
+  margin-top: var(--hm-space-8);
+}
+.hm-footer__grid { display: grid; gap: var(--hm-space-6); grid-template-columns: 1.4fr 1fr 1fr 1fr; }
+.hm-footer__col h5 { font-size: var(--hm-text-sm); text-transform: uppercase; letter-spacing: 0.08em; color: var(--hm-text-subtle); }
+.hm-footer__col ul { list-style: none; padding: 0; margin: 0; }
+.hm-footer__col li { margin-bottom: 8px; }
+.hm-footer__col a { color: var(--hm-text-muted); }
+.hm-footer__col a:hover { color: var(--hm-text); }
+.hm-footer__legal {
+  margin-top: var(--hm-space-6);
+  padding-top: var(--hm-space-4);
+  border-top: 1px solid var(--hm-border);
+  /* Two rows: copyright + engineering credit share the top row (left/right),
+     "Powered by" gets its own centered row underneath — never all three
+     sharing one line. */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas: "copyright credit" "powered powered";
+  row-gap: var(--hm-space-2); column-gap: var(--hm-space-3);
+  font-size: var(--hm-text-sm); color: var(--hm-text-subtle);
+}
+.hm-footer__legal-copyright { grid-area: copyright; text-align: left; }
+.hm-footer__legal-credit    { grid-area: credit; text-align: right; font-size: var(--hm-text-xs); opacity: 0.85; }
+.hm-footer__legal-powered   { grid-area: powered; text-align: center; font-weight: 600; color: var(--hm-text-muted); }
 
 /* ============================================================
    TOAST + LOADERS
@@ -803,68 +767,6 @@
   0%   { transform: translateX(0); }
   100% { transform: translateX(-50%); }
 }
-/* ── Shared badge (also defined in dashboard.css for the in-page dashboard
-   tabs; duplicated here so it renders on every page that mounts the bottom
-   tab nav, even pages that don't load dashboard.css) ── */
-.hm-nav-badge {
-  display: inline-flex; align-items: center; justify-content: center;
-  min-width: 18px; height: 18px;
-  background: var(--hm-primary); color: #fff;
-  border-radius: 9px;
-  font-size: 10px; font-weight: 700;
-  padding: 0 5px;
-  margin-left: 4px;
-  vertical-align: middle;
-  line-height: 1;
-}
-
-/* ============================================================
-   BOTTOM TAB NAV (mobile app shell)
-============================================================ */
-.hm-bottomnav {
-  position: fixed;
-  left: 0; right: 0; bottom: 0;
-  z-index: 1030;
-  display: flex;
-  align-items: stretch;
-  height: var(--hm-bottomnav-h);
-  padding-bottom: env(safe-area-inset-bottom);
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: saturate(180%) blur(14px);
-  -webkit-backdrop-filter: saturate(180%) blur(14px);
-  border-top: 1px solid var(--hm-border);
-  box-shadow: 0 -2px 12px rgba(15, 23, 42, 0.06);
-}
-.hm-bottomnav__item {
-  position: relative;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  color: var(--hm-text-subtle);
-  text-decoration: none;
-  font-size: 11px;
-  font-weight: 500;
-  transition: color var(--hm-duration-fast) var(--hm-ease);
-}
-.hm-bottomnav__item:hover { color: var(--hm-text-muted); }
-.hm-bottomnav__icon {
-  width: 22px; height: 22px;
-  flex-shrink: 0;
-}
-.hm-bottomnav__label { line-height: 1.2; }
-.hm-bottomnav__item.is-active {
-  color: var(--hm-primary);
-}
-.hm-bottomnav__item .hm-nav-badge {
-  position: absolute;
-  top: 2px;
-  left: calc(50% + 6px);
-  margin-left: 0;
-}
-
 @media (max-width: 480px) {
   .hm-announcement-bar { font-size: 12px; height: 32px; }
   .hm-announcement-bar__ticker { animation-duration: 20s; }

@@ -106,6 +106,7 @@
   font-size: var(--hm-text-lg);
   color: var(--hm-text);
   letter-spacing: -0.01em;
+  justify-self: start;
 }
 .hm-brand__mark {
   width: 36px; height: 36px;
