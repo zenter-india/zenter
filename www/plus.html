@@ -152,7 +152,11 @@
           Plus gives you priority visibility, featured card and co-ordinate with every centre aspirant.
         </p>
         <div class="plus-price-strike" id="hm-hero-price-strike" style="visibility:hidden;">₹199</div>
-        <div class="plus-price" style="visibility:hidden; position:relative; display:inline-block;">₹99<span style="position:absolute; left:100%; bottom:0.15em; margin-left:6px; white-space:nowrap;">/ exam season</span></div>
+        <div class="plus-price-row" style="display:flex; align-items:baseline; justify-content:center; visibility:hidden;" id="hm-hero-price-row">
+          <span style="visibility:hidden; white-space:nowrap; margin-right:6px; font-size:20px; font-weight:500;" aria-hidden="true">/ exam season</span>
+          <span class="plus-price" style="margin:0;">₹99</span>
+          <span style="white-space:nowrap; margin-left:6px; font-size:20px; font-weight:500; color:var(--hm-text-muted);">/ exam season</span>
+        </div>
         <p class="plus-season">One-time for NEET UG 2026</p>
       </div>
 
@@ -395,9 +399,8 @@
         basePrice = price;
         finalPaise = probe.original_paise;
         if (heroPriceStrike) { heroPriceStrike.textContent = `₹${price}`; heroPriceStrike.style.visibility = 'visible'; }
-        document.querySelectorAll('.plus-price').forEach(el => {
-          el.style.visibility = 'visible';
-        });
+        const heroPriceRow = document.getElementById('hm-hero-price-row');
+        if (heroPriceRow) heroPriceRow.style.visibility = 'visible';
         if (priceFinal)   { priceFinal.textContent = `₹${price}`; priceFinal.style.visibility = 'visible'; }
         if (priceOriginal)  priceOriginal.textContent = `₹${price}`;
         btn.textContent = finalPaise === 0 ? 'Claim Zenter Plus — FREE' : `Get Zenter Plus — ₹${price}`;
@@ -405,7 +408,8 @@
       } catch {
         // Fallback: show hardcoded values
         if (heroPriceStrike) heroPriceStrike.style.visibility = 'visible';
-        document.querySelectorAll('.plus-price').forEach(el => { el.style.visibility = 'visible'; });
+        const heroPriceRowFb = document.getElementById('hm-hero-price-row');
+        if (heroPriceRowFb) heroPriceRowFb.style.visibility = 'visible';
         if (priceFinal) priceFinal.style.visibility = 'visible';
         btn.textContent = 'Get Zenter Plus — ₹49';
         btn.style.visibility = 'visible';
