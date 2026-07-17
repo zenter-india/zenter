@@ -151,13 +151,14 @@
         <p style="color: var(--hm-text-muted); font-size: var(--hm-text-lg); margin-bottom: var(--hm-space-4);">
           Plus gives you priority visibility, featured card and co-ordinate with every centre aspirant.
         </p>
-        <div class="plus-price-strike" id="hm-hero-price-strike" style="visibility:hidden;">₹199</div>
-        <div class="plus-price-row" style="display:flex; align-items:baseline; justify-content:center; visibility:hidden;" id="hm-hero-price-row">
-          <span style="visibility:hidden; white-space:nowrap; margin-right:6px; font-size:20px; font-weight:500;" aria-hidden="true">/ exam season</span>
-          <span class="plus-price" style="margin:0;">₹99</span>
-          <span style="white-space:nowrap; margin-left:6px; font-size:20px; font-weight:500; color:var(--hm-text-muted);">/ exam season</span>
+        <div id="hm-hero-price-block" style="display:inline-block; text-align:left; visibility:hidden;">
+          <div class="plus-price-strike" id="hm-hero-price-strike">₹199</div>
+          <div class="plus-price-row" style="display:flex; align-items:baseline;">
+            <span class="plus-price" style="margin:0;">₹99</span>
+            <span style="white-space:nowrap; margin-left:6px; font-size:20px; font-weight:500; color:var(--hm-text-muted);">/ exam season</span>
+          </div>
+          <p class="plus-season" style="margin:0 0 var(--hm-space-5);">One-time for NEET UG 2026</p>
         </div>
-        <p class="plus-season">One-time for NEET UG 2026</p>
       </div>
 
       <!-- ZenterFirst coupon banner -->
@@ -398,18 +399,17 @@
         const price = probe.original_paise / 100;
         basePrice = price;
         finalPaise = probe.original_paise;
-        if (heroPriceStrike) { heroPriceStrike.textContent = `₹${price}`; heroPriceStrike.style.visibility = 'visible'; }
-        const heroPriceRow = document.getElementById('hm-hero-price-row');
-        if (heroPriceRow) heroPriceRow.style.visibility = 'visible';
+        if (heroPriceStrike) heroPriceStrike.textContent = `₹${price}`;
+        const heroPriceBlock = document.getElementById('hm-hero-price-block');
+        if (heroPriceBlock) heroPriceBlock.style.visibility = 'visible';
         if (priceFinal)   { priceFinal.textContent = `₹${price}`; priceFinal.style.visibility = 'visible'; }
         if (priceOriginal)  priceOriginal.textContent = `₹${price}`;
         btn.textContent = finalPaise === 0 ? 'Claim Zenter Plus — FREE' : `Get Zenter Plus — ₹${price}`;
         btn.style.visibility = 'visible';
       } catch {
         // Fallback: show hardcoded values
-        if (heroPriceStrike) heroPriceStrike.style.visibility = 'visible';
-        const heroPriceRowFb = document.getElementById('hm-hero-price-row');
-        if (heroPriceRowFb) heroPriceRowFb.style.visibility = 'visible';
+        const heroPriceBlockFb = document.getElementById('hm-hero-price-block');
+        if (heroPriceBlockFb) heroPriceBlockFb.style.visibility = 'visible';
         if (priceFinal) priceFinal.style.visibility = 'visible';
         btn.textContent = 'Get Zenter Plus — ₹49';
         btn.style.visibility = 'visible';
