@@ -141,7 +141,12 @@
         <p style="color: var(--hm-text-muted); font-size: var(--hm-text-lg); margin-bottom: var(--hm-space-4);">
           Plus gives you priority visibility, featured card and co-ordinate with every centre aspirant.
         </p>
-        <div class="plus-price" style="visibility:hidden;">₹49 <span>/ exam season</span></div>
+        <div class="plus-price" style="font-size:22px;font-weight:600;color:var(--hm-text-subtle);text-decoration:line-through;visibility:hidden;margin-bottom:0;">₹49</div>
+        <div class="hm-plus-discount-line" style="visibility:hidden;margin-bottom:var(--hm-space-1);">
+          <span style="font-size:40px;font-weight:800;color:var(--hm-primary);line-height:1;">₹99</span>
+          <span style="font-size:14px;font-weight:600;color:var(--hm-text-muted);">discounted price</span>
+          <span style="font-size:16px;font-weight:500;color:var(--hm-text-muted);">/ exam season</span>
+        </div>
         <p class="plus-season">One-time for NEET UG 2026</p>
       </div>
 
@@ -383,9 +388,10 @@
         basePrice = price;
         finalPaise = probe.original_paise;
         document.querySelectorAll('.plus-price').forEach(el => {
-          el.innerHTML = `₹${price} <span>/ exam season</span>`;
+          el.textContent = `₹${price}`;
           el.style.visibility = 'visible';
         });
+        document.querySelectorAll('.hm-plus-discount-line').forEach(el => { el.style.visibility = 'visible'; });
         if (priceFinal)   { priceFinal.textContent = `₹${price}`; priceFinal.style.visibility = 'visible'; }
         if (priceOriginal)  priceOriginal.textContent = `₹${price}`;
         btn.textContent = finalPaise === 0 ? 'Claim Zenter Plus — FREE' : `Get Zenter Plus — ₹${price}`;
