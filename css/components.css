@@ -1,11 +1,56 @@
 /* HallMate — Reusable component library: buttons, cards, forms, badges, navbar, footer, toasts, loaders. */
 
+/* ── Feedback modal ─────────────────────────────────────────────────────────
+   Loaded on every page via navbar component — must not depend on dashboard.css */
+.hm-feedback-overlay {
+  display: flex; /* always flex — visibility controlled by opacity+pointer-events */
+  position: fixed; inset: 0; z-index: 1060;
+  background: rgba(15, 23, 42, 0.52);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+  padding: var(--hm-space-4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease-out;
+}
+.hm-feedback-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+@keyframes hm-feedback-enter {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);   }
+}
+.hm-feedback-overlay.is-open .hm-feedback-box {
+  animation: hm-feedback-enter 220ms ease-out both;
+}
+
+.hm-feedback-box {
+  width: 100%; max-width: 400px;
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius-xl);
+  box-shadow: var(--hm-shadow-lg);
+  padding: var(--hm-space-5);
+}
+.hm-feedback-box h3  { margin: 0 0 var(--hm-space-2); font-size: var(--hm-text-xl); }
+.hm-feedback-sub     { margin: 0 0 var(--hm-space-4); font-size: var(--hm-text-sm); color: var(--hm-text-muted); }
+.hm-feedback-ta      { width: 100%; resize: vertical; min-height: 100px; }
+.hm-feedback-actions {
+  display: flex; gap: var(--hm-space-2); justify-content: flex-end;
+  flex-wrap: wrap; margin-top: var(--hm-space-4);
+}
+
 /* ============================================================
    NAVBAR
 ============================================================ */
 .hm-navbar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
   z-index: 1030;
   background: rgba(255, 255, 255, 0.78);
   /* backdrop-filter is on ::before, NOT here.
@@ -37,6 +82,21 @@
   width: 100%;
   gap: var(--hm-space-4);
 }
+
+/* ← Back button — sits next to profile icon, hidden by default */
+#hm-nav-back {
+  background: none;
+  border: 1px solid var(--hm-border);
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--hm-text-muted);
+  cursor: pointer;
+  border-radius: 6px;
+  white-space: nowrap;
+  transition: background 120ms, color 120ms;
+}
+#hm-nav-back:hover { background: var(--hm-surface-2); color: var(--hm-text); }
 .hm-brand {
   display: inline-flex;
   align-items: center;
@@ -46,6 +106,12 @@
   font-size: var(--hm-text-lg);
   color: var(--hm-text);
   letter-spacing: -0.01em;
+  justify-self: start;
+}
+.hm-brand--stacked {
+  flex-direction: column;
+  gap: 0;
+  line-height: 1;
 }
 .hm-brand__mark {
   width: 36px; height: 36px;
@@ -55,6 +121,28 @@
   display: inline-flex; align-items: center; justify-content: center;
   font-weight: 700; font-size: 16px;
   box-shadow: var(--hm-shadow-sm);
+}
+.hm-brand__logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.hm-brand__icon {
+  height: 34px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.hm-brand__text {
+  color: var(--hm-primary);
+  font-weight: 800;
+  text-transform: lowercase;
+  letter-spacing: -0.02em;
+}
+.hm-brand--stacked .hm-brand__text {
+  font-size: 0.65rem;
+  margin-top: 1px;
 }
 .hm-nav-links {
   display: flex; align-items: center; justify-content: center; gap: var(--hm-space-2);
@@ -437,7 +525,13 @@
   font-size: var(--hm-text-xs); font-weight: 600;
   background: var(--hm-surface-2); color: var(--hm-text-muted);
 }
-.hm-badge--success { background: var(--hm-accent-100); color: #047857; }
+/* hm-badge--success: kept for other uses (e.g. Connected badge) */
+.hm-badge--success {
+  background: var(--hm-accent-100);
+  color: #047857;
+}
+/* hm-badge--verified and hm-badge--verified-full are defined in dashboard.css */
+.hm-badge--plus    { background: #fef9c3; color: #854d0e; border: 1px solid #fef08a; font-weight: 700; }
 .hm-badge--info    { background: var(--hm-secondary-100); color: var(--hm-secondary-600); }
 .hm-badge--warning { background: #FEF3C7; color: #92400E; }
 .hm-badge--danger  { background: #FEE2E2; color: #991B1B; }
@@ -466,6 +560,7 @@
 }
 .hm-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .hm-avatar--sm { width: 32px; height: 32px; font-size: var(--hm-text-xs); font-weight: 700; }
+.hm-avatar--md { width: 56px; height: 56px; font-size: var(--hm-text-lg); flex-shrink: 0; }
 .hm-avatar--lg { width: 96px; height: 96px; font-size: var(--hm-text-2xl); }
 
 /* ============================================================
@@ -487,9 +582,18 @@
   margin-top: var(--hm-space-6);
   padding-top: var(--hm-space-4);
   border-top: 1px solid var(--hm-border);
-  display: flex; justify-content: space-between; align-items: center; gap: var(--hm-space-3);
+  /* Two rows: copyright + engineering credit share the top row (left/right),
+     "Powered by" gets its own centered row underneath — never all three
+     sharing one line. */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas: "copyright credit" "powered powered";
+  row-gap: var(--hm-space-2); column-gap: var(--hm-space-3);
   font-size: var(--hm-text-sm); color: var(--hm-text-subtle);
 }
+.hm-footer__legal-copyright { grid-area: copyright; text-align: left; }
+.hm-footer__legal-credit    { grid-area: credit; text-align: right; font-size: var(--hm-text-xs); opacity: 0.85; }
+.hm-footer__legal-powered   { grid-area: powered; text-align: center; font-weight: 600; color: var(--hm-text-muted); }
 
 /* ============================================================
    TOAST + LOADERS
@@ -551,3 +655,139 @@
   border-radius: var(--hm-radius-sm);
 }
 @keyframes hm-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ── Exam category selector (landing page) ────────────────────────────────── */
+
+/* Wrapper: pull it flush with the bottom of the page's top padding */
+.hm-exam-selector-wrap {
+  padding-top: var(--hm-space-4);
+  padding-bottom: var(--hm-space-6);
+}
+
+/* Pill row: centered on desktop, horizontally scrollable on mobile */
+.hm-exam-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--hm-space-2);
+  justify-content: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Individual exam pill */
+.hm-exam-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 18px;
+  border-radius: var(--hm-radius-pill);
+  border: 1.5px solid var(--hm-border);
+  background: var(--hm-surface);
+  color: var(--hm-text-muted);
+  font-size: var(--hm-text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--hm-duration-fast) var(--hm-ease),
+              border-color var(--hm-duration-fast) var(--hm-ease),
+              color var(--hm-duration-fast) var(--hm-ease);
+}
+.hm-exam-pill:hover {
+  background: var(--hm-primary-100);
+  border-color: var(--hm-primary);
+  color: var(--hm-primary);
+  text-decoration: none;
+}
+.hm-exam-pill:focus-visible {
+  outline: 2px solid var(--hm-primary);
+  outline-offset: 2px;
+}
+
+/* Active pill — HallMate orange, for the currently supported exam */
+.hm-exam-pill--active {
+  background: var(--hm-primary);
+  border-color: var(--hm-primary);
+  color: #fff;
+}
+.hm-exam-pill--active:hover {
+  background: var(--hm-primary-600);
+  border-color: var(--hm-primary-600);
+  color: #fff;
+}
+
+/* Mobile: switch to a single scrollable row to prevent wrapping/overflow */
+@media (max-width: 479px) {
+  .hm-exam-selector {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px; /* breathing room above scroll shadow */
+  }
+  .hm-exam-selector::-webkit-scrollbar { display: none; }
+}
+
+/* ── Zenter Plus reveal usage banner ──────────────────────────────────────── */
+.hm-reveal-banner {
+  background: #fff3ed;
+  border: 1px solid #fed7aa;
+  border-radius: var(--hm-radius-lg);
+  padding: 10px 16px;
+  margin-bottom: var(--hm-space-3);
+  font-size: var(--hm-text-sm);
+  color: var(--hm-text);
+}
+.hm-reveal-banner__text--limit {
+  color: var(--hm-danger, #dc2626);
+}
+.hm-reveal-banner__link {
+  color: var(--hm-primary);
+  font-weight: 600;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+/* Plus item in navbar dropdown */
+.hm-nav-profile__item--plus {
+  color: var(--hm-primary) !important;
+  font-weight: 600;
+}
+
+/* ── Announcement ticker bar ────────────────────────────────────────────────
+   Appears below the navbar on public + dashboard pages.
+   Admin-managed via /admin.html → Settings → Announcements. */
+.hm-announcement-bar {
+  background: var(--hm-primary);
+  color: #fff;
+  height: 36px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  position: relative;
+  z-index: 99;
+  font-size: 13px;
+  font-weight: 500;
+}
+.hm-announcement-bar__ticker {
+  display: flex;
+  white-space: nowrap;
+  animation: hm-ticker-scroll 28s linear infinite;
+  will-change: transform;
+}
+.hm-announcement-bar__ticker:hover { animation-play-state: paused; }
+.hm-announcement-bar__text {
+  /* No padding — the separator "   ·   " is baked into the text itself,
+     so the gap between loop repetitions is just the character width. */
+  padding: 0;
+  flex-shrink: 0;
+}
+@keyframes hm-ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@media (max-width: 480px) {
+  .hm-announcement-bar { font-size: 12px; height: 32px; }
+  .hm-announcement-bar__ticker { animation-duration: 20s; }
+}

@@ -1,0 +1,111 @@
+<nav class="hm-navbar" id="hm-navbar">
+  <div class="hm-container hm-navbar__inner">
+
+    <!-- ── LEFT: Brand ────────────────────────────────────────────────────── -->
+    <a href="/index.html" class="hm-brand hm-brand--stacked" id="hm-brand-link" aria-label="Zenter home">
+      <img src="/assets/logos/zenter-icon.png" alt="" class="hm-brand__icon">
+      <span class="hm-brand__text">Zenter</span>
+    </a>
+
+    <!--
+      ── RIGHT: hm-nav-right ────────────────────────────────────────────────
+      1. hm-nav-cta      — mobile-only; logged-out Sign in
+      2. hm-nav-actions  — desktop-only; logged-out Sign in
+      3. hm-nav-profile  — all viewports; logged-in avatar opens the account drawer
+    -->
+    <div class="hm-nav-right">
+
+      <!-- 1. Mobile CTA (logged-out, always visible on mobile) -->
+      <div class="hm-nav-cta" data-auth="logged-out">
+        <a href="/login.html" class="hm-btn hm-btn--primary hm-btn--xs" style="white-space:nowrap;">Signup / Login</a>
+      </div>
+
+      <!-- 2. Desktop CTA (logged-out, hidden on mobile) -->
+      <div class="hm-nav-actions" data-auth="logged-out">
+        <a href="/login.html" class="hm-btn hm-btn--primary hm-btn--sm" style="white-space:nowrap;">Signup / Login</a>
+      </div>
+
+      <!-- 3. Menu toggle — opens the account drawer (all viewports) -->
+      <div class="hm-nav-profile" data-auth="logged-in" hidden>
+        <button
+          class="hm-nav-profile__btn"
+          id="hm-avatar-btn"
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded="false"
+          aria-controls="hm-account-drawer"
+          aria-label="Account menu"
+        >
+          <span class="hm-nav-profile__bar" aria-hidden="true"></span>
+        </button>
+      </div>
+
+    </div><!-- /.hm-nav-right -->
+
+  </div><!-- /.hm-navbar__inner -->
+</nav>
+
+<!-- ── Account drawer — slide-out panel with account + all footer links ── -->
+<div class="hm-account-backdrop" id="hm-account-backdrop" aria-hidden="true"></div>
+<aside class="hm-account-drawer" id="hm-account-drawer" role="dialog" aria-modal="true" aria-label="Account menu">
+  <div class="hm-account-drawer__header">
+    <span class="hm-account-drawer__title">Account</span>
+    <button type="button" class="hm-account-drawer__close" id="hm-account-drawer-close" aria-label="Close menu">✕</button>
+  </div>
+
+  <nav class="hm-account-drawer__body">
+    <div class="hm-account-drawer__section">
+      <a href="/profile.html" class="hm-account-drawer__link">Profile</a>
+      <a href="/plus.html" class="hm-account-drawer__link hm-account-drawer__link--plus" id="hm-plus-nav-item">⭐ Get Zenter Plus</a>
+      <a href="/admin.html" class="hm-account-drawer__link" id="hm-admin-nav-item" hidden>⚙️ Admin panel</a>
+    </div>
+
+    <div class="hm-account-drawer__section">
+      <p class="hm-account-drawer__section-title">Product</p>
+      <a href="/index.html#how-it-works" class="hm-account-drawer__link">How it works</a>
+      <a href="/index.html#safety" class="hm-account-drawer__link">Safety</a>
+      <a href="/dashboard.html" class="hm-account-drawer__link">Find mates</a>
+    </div>
+
+    <div class="hm-account-drawer__section">
+      <p class="hm-account-drawer__section-title">Company</p>
+      <a href="/contact.html" class="hm-account-drawer__link">Contact us</a>
+      <a href="/faq.html" class="hm-account-drawer__link">FAQ</a>
+      <button type="button" class="hm-account-drawer__link" data-action="feedback">Feedback</button>
+    </div>
+
+    <div class="hm-account-drawer__section">
+      <p class="hm-account-drawer__section-title">Legal</p>
+      <a href="/privacy.html" class="hm-account-drawer__link">Privacy Policy</a>
+      <a href="/terms.html" class="hm-account-drawer__link">Terms and Conditions</a>
+      <a href="/community.html" class="hm-account-drawer__link">Community Guidelines</a>
+    </div>
+
+    <div class="hm-account-drawer__section">
+      <button type="button" class="hm-account-drawer__link hm-account-drawer__link--danger" data-action="logout">Log out</button>
+    </div>
+  </nav>
+
+  <div class="hm-account-drawer__footer">
+    © <span id="hm-year"></span> Zenter. Built for Exam aspirants.
+  </div>
+</aside>
+
+<!-- ── Feedback modal — wired by app.js; loaded on every page via navbar ── -->
+<div id="hm-feedback-overlay" class="hm-feedback-overlay"
+     role="dialog" aria-modal="true" aria-labelledby="hm-feedback-title">
+  <div class="hm-feedback-box">
+    <h3 id="hm-feedback-title">😊 We'd love your feedback</h3>
+    <p class="hm-feedback-sub">Help us improve Zenter - your thoughts go directly to the team.</p>
+    <textarea id="hm-feedback-text" class="hm-textarea hm-feedback-ta"
+              rows="4" maxlength="1000"
+              placeholder="Share your thoughts, suggestions or issues…"></textarea>
+    <p id="hm-feedback-err" class="text-danger small mt-1" hidden></p>
+    <div class="hm-feedback-actions">
+      <button type="button" class="hm-btn hm-btn--ghost hm-btn--sm"
+              id="hm-feedback-cancel">Cancel</button>
+      <button type="button" class="hm-btn hm-btn--primary hm-btn--sm"
+              id="hm-feedback-submit">Submit</button>
+    </div>
+  </div>
+</div>

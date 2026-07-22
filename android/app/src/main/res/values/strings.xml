@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Zenter</string>
+    <string name="title_activity_main">Zenter</string>
+    <string name="package_name">in.zenter.app</string>
+    <string name="custom_url_scheme">in.zenter.app</string>
+</resources>
