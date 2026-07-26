@@ -49,8 +49,23 @@ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"  
 setx JAVA_HOME "C:\Program Files\Android\Android Studio\jbr"                     # Windows
 ```
 
-> **This app cannot run in Expo Go.** It uses native modules (Firebase Auth,
-> Reanimated, Razorpay), so it needs a custom **dev client** — see §3.
+> **This app cannot run in Expo Go, and it has no web target.** It uses native
+> modules (Firebase Auth, Reanimated, Razorpay), so it needs a custom **dev
+> client** on Android or iOS — see §3.
+>
+> If you open `http://localhost:8081` or press `w` at the Metro prompt, the app
+> will bundle for web and then crash with:
+>
+> ```
+> ERROR [Error: No Firebase App '[DEFAULT]' has been created -
+>        call firebase.initializeApp()]   at src/stores/session.tsx
+> ```
+>
+> That is expected, not a bug. `@react-native-firebase/auth` initialises itself
+> from the native `google-services.json` / `GoogleService-Info.plist`, and
+> neither exists on web. Press **`a`** (Android) or **`i`** (iOS) instead.
+> `react-native-web` and `react-dom` are present only because Expo's tooling
+> requires them.
 
 ---
 
@@ -257,6 +272,10 @@ and Firebase *test* numbers bypass the exact code path most likely to break.
 
 | Symptom | Fix |
 |---|---|
+| `No Firebase App '[DEFAULT]' has been created` | You are running on **web**, which is not supported. Press `a` or `i` at the Metro prompt, not `w`. See the note in §1. |
+| Gradle: `Unsupported class file major version` / refuses to start | `JAVA_HOME` points at JDK 22+. Point it at JDK 17 or 21 — see §1. |
+| `npm run android` reports no devices | Attach a phone with USB debugging on, or start an emulator from Android Studio → Device Manager. Check with `adb devices`. |
+| A killed Gradle build left stale locks | `cd android && ./gradlew --stop`, then delete `android/.gradle`, or just `npx expo prebuild --clean` |
 | Red "Missing config" screen on launch | `.env` is absent or empty — `cp .env.example .env`, then restart Metro with `npm start --clear` |
 | `expo prebuild` fails on the Firebase plugin | `config/google-services.json` or `config/GoogleService-Info.plist` is missing — they ship with this repo, so restore them from git |
 | Gradle fails with an "Unsupported class file major version" or JDK error | You are not on JDK 17. Check `java -version` and `JAVA_HOME`. |
