@@ -9,8 +9,22 @@ Built with **Expo SDK 57** (custom dev client) + **Expo Router** + **TypeScript
 data, Firebase for phone-OTP authentication — so nothing needs to be provisioned
 before you can run it.
 
-This repository contains **only** the mobile app. The website and its Capacitor
-shell live in a separate repository.
+> ### ⚠️ Clone this branch, not the default one
+>
+> This app lives on the **`app/react-native`** branch. The repository's default
+> branch (`main`) holds the *website* — a completely different codebase. A plain
+> `git clone` will give you the wrong thing.
+>
+> ```bash
+> git clone -b app/react-native --single-branch \
+>   https://github.com/zenter-india/zenter.git zenter-react-native-app
+> ```
+>
+> `app/react-native` has its own independent history and shares no files with
+> `main`. Never merge it into `main` or `stage-zenter`.
+
+This branch contains **only** the mobile app. The website and its Capacitor
+shell live on the other branches of the same repository.
 
 ---
 
@@ -43,7 +57,9 @@ setx JAVA_HOME "C:\Program Files\Android\Android Studio\jbr"                    
 ## 2. Clone and install
 
 ```bash
-git clone <this-repo-url> zenter-react-native-app
+# -b and --single-branch are REQUIRED — see the warning at the top
+git clone -b app/react-native --single-branch \
+  https://github.com/zenter-india/zenter.git zenter-react-native-app
 cd zenter-react-native-app
 
 npm install
