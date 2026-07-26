@@ -1,0 +1,32 @@
+# Git and project folders
+.git/
+node_modules/
+
+# Expo and Metro
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native directories (Ignored since we build on EAS cloud)
+ios/
+android/
+
+# Secrets / env (Ensure these aren't uploaded unless needed)
+.env
+.env.local
+.env*.local
+
+# Logs and debug files
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS / editors
+.DS_Store
+*.pem
+*.p8
+*.p12
+*.key
+*.mobileprovision
