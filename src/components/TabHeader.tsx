@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { colors, space } from '@/theme';
 import { Text } from './Text';
-import { Icon } from './Icon';
 
 /**
  * The single shared header for the bottom-tab screens (Find / Requests /
@@ -12,10 +11,8 @@ import { Icon } from './Icon';
  *
  * Slots keep it flexible enough for the feed's two-mode header without any tab
  * re-declaring layout:
- *   - `left`      full override of the left area (feed's back button). Takes
- *                 precedence over `onMenu`.
- *   - `onMenu`    when set (and no `left`), renders the standard drawer-menu
- *                 button.
+ *   - `left`      optional leading node (feed's back button when a district is
+ *                 open). Tabs otherwise start flush with the title.
  *   - `titleBadge` inline node right of the title (feed's exam badge, the
  *                 connections "+N New" pill).
  *   - `right`     trailing slot (the profile avatar, or feed's Filters button).
@@ -23,30 +20,18 @@ import { Icon } from './Icon';
  */
 export type TabHeaderProps = {
   title: string;
-  onMenu?: () => void;
   left?: ReactNode;
   right?: ReactNode;
   titleBadge?: ReactNode;
   children?: ReactNode;
 };
 
-export function TabHeader({ title, onMenu, left, right, titleBadge, children }: TabHeaderProps) {
+export function TabHeader({ title, left, right, titleBadge, children }: TabHeaderProps) {
   return (
     <View style={styles.header}>
       <View style={styles.titleRow}>
         <View style={styles.leftGroup}>
-          {left ??
-            (onMenu ? (
-              <Pressable
-                onPress={onMenu}
-                accessibilityRole="button"
-                accessibilityLabel="Open menu"
-                hitSlop={8}
-                style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
-              >
-                <Icon name="menu" size={24} color={colors.text} />
-              </Pressable>
-            ) : null)}
+          {left}
           <View style={styles.titleWrap}>
             <Text variant="h2" numberOfLines={1}>{title}</Text>
             {titleBadge}
@@ -73,7 +58,4 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space[3] },
   leftGroup: { flexDirection: 'row', alignItems: 'center', gap: space[2], flexShrink: 1 },
   titleWrap: { flexDirection: 'row', alignItems: 'center', gap: space[2], flexShrink: 1 },
-  // Shared 44px-tall touch target for the menu / back button.
-  iconBtn: { width: 32, height: 44, alignItems: 'center', justifyContent: 'center' },
-  pressed: { opacity: 0.7 },
 });

@@ -3,7 +3,6 @@ import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, space } from '@/theme';
 import { Button, MateCard, EmptyState, AsyncBoundary, Badge, TabHeader, type MateCardData } from '@/components';
-import { useNavigation } from 'expo-router';
 import { useMyUserId } from '@/features/connections/useMyUserId';
 import { useConnections } from '@/data/useConnections';
 import { useConversations } from '@/data/useConversations';
@@ -33,7 +32,6 @@ type AcceptedConn = { connectionId: string; otherUserId: string };
  */
 export default function ConnectionsScreen() {
   const myUserId = useMyUserId();
-  const navigation = useNavigation();
   const conns = useConnections(myUserId);
   const blocked = useBlockedList(myUserId ?? undefined);
 
@@ -98,7 +96,6 @@ export default function ConnectionsScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <TabHeader
         title="Connections"
-        onMenu={() => (navigation as any).getParent()?.openDrawer()}
         titleBadge={newCount > 0 ? <Badge label={`+${newCount} New`} variant="success" /> : undefined}
         right={<ProfileMenuButton />}
       />

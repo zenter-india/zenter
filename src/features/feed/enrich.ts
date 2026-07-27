@@ -127,9 +127,14 @@ export function toMateCardData(u: FeedUser): MateCardData {
   return {
     name: u.full_name || 'Aspirant',
     homePlace: homePlace(u),
+    centreName: u.exam_center || undefined,
     centrePlace: centrePlace(u),
-    travelLabel: travelChip(u.travel_mode),
-    stayLabel: stayChip(u.stay_plan),
+    // Icon and label stay separate so the card can size the emoji larger than
+    // the caption, the way the web badge cards do.
+    travelIcon: u.travel_mode ? TRAVEL_ICON[u.travel_mode] : undefined,
+    travelLabel: u.travel_mode ? TRAVEL_LABEL[u.travel_mode] : undefined,
+    stayIcon: u.stay_plan ? STAY_ICON[u.stay_plan] : undefined,
+    stayLabel: u.stay_plan ? STAY_LABEL[u.stay_plan] : undefined,
     gender: u.gender ?? null,
     verified: u.is_verified_aspirant === true,
     plus: u.plus_member === true,

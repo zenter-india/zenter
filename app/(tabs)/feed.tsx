@@ -1,8 +1,8 @@
 import { useMemo, useState, useCallback } from 'react';
 import { View, StyleSheet, FlatList, RefreshControl, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Redirect, router, useNavigation } from 'expo-router';
-import { colors, space, radius, fonts, badgeVariants, shadows } from '@/theme';
+import { Redirect, router } from 'expo-router';
+import { colors, space, radius, fonts, badgeVariants, shadows, avatarColor, avatarInitials } from '@/theme';
 import { Text, Badge, EmptyState, AsyncBoundary, Icon, TabHeader } from '@/components';
 import { useFeed } from '@/data/useFeed';
 import { applyFeedFilters, groupByDistrict, type FeedItem, type DistrictGroup } from '@/domain/matching';
@@ -37,7 +37,6 @@ import { ProfileMenuButton } from '@/features/profile/ProfileMenuButton';
 export default function FindScreen() {
   const { data, me, isLoading, isError, error, isRefetching, refetch } = useFeed();
   const filters = useFeedFilters();
-  const navigation = useNavigation();
 
   // District-first state: null = district grid, string = district aspirant list
   const [activeDistrict, setActiveDistrict] = useState<string | null>(null);
@@ -102,7 +101,6 @@ export default function FindScreen() {
             </Pressable>
           ) : undefined
         }
-        onMenu={activeDistrict ? undefined : () => (navigation as any).getParent()?.openDrawer()}
         titleBadge={
           !activeDistrict && me?.exam_type ? <Badge label={examLabel(me.exam_type)} variant="info" /> : undefined
         }
@@ -262,6 +260,12 @@ function DistrictCard({
         pressed && styles.pressed,
       ]}
     >
+      <View style={styles.districtCardTop}>
+        <View style={[styles.districtAvatar, { backgroundColor: avatarColor(group.name) }]}>
+          <Text style={styles.districtAvatarText}>{avatarInitials(group.name)}</Text>
+        </View>
+        <Icon name="chevron-right" size={16} color={colors.textSubtle} />
+      </View>
       <Text style={styles.districtName} numberOfLines={2}>
         {group.name}
       </Text>
@@ -322,13 +326,30 @@ const styles = StyleSheet.create({
     padding: space[4],
     gap: space[1],
     minHeight: 100,
-    justifyContent: 'center',
     ...shadows.sm,
   },
   districtCardMine: {
     borderColor: colors.primary,
     borderWidth: 2,
     backgroundColor: colors.warmTint,
+  },
+  districtCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: space[1],
+  },
+  districtAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  districtAvatarText: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 14,
+    color: colors.white,
   },
   districtName: {
     fontFamily: fonts.displayBold,

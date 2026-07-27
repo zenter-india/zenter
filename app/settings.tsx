@@ -12,7 +12,6 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import * as Linking from 'expo-linking';
 import { colors, space, fonts } from '@/theme';
 import { Text, Card, Button, useToast } from '@/components';
 import { useSession } from '@/stores/session';
@@ -23,14 +22,6 @@ import { SIGN_IN_ROUTE, FEED_ROUTE } from '@/features/auth/routing';
 import { ScreenHeader } from '@/features/profile/ScreenHeader';
 import { ConfirmDialog } from '@/features/profile/ConfirmDialog';
 
-const LINKS = {
-  privacy: 'https://zenter.in/privacy.html',
-  terms: 'https://zenter.in/terms.html',
-  community: 'https://zenter.in/community.html',
-  refund: 'https://zenter.in/refund-policy.html',
-  support: 'mailto:support@zenter.in',
-} as const;
-
 export default function SettingsScreen() {
   const { phone } = useSession();
   const me = useProfile(phone).data;
@@ -39,10 +30,6 @@ export default function SettingsScreen() {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace(FEED_ROUTE));
-
-  function openUrl(url: string) {
-    Linking.openURL(url).catch(() => show('Could not open the link.', 'danger'));
-  }
 
   async function signOut() {
     await logout();
@@ -78,10 +65,10 @@ export default function SettingsScreen() {
         {/* About & legal */}
         <Card style={styles.card}>
           <Text variant="h3">About</Text>
-          <LinkRow label="Privacy Policy" onPress={() => openUrl(LINKS.privacy)} />
-          <LinkRow label="Terms & Conditions" onPress={() => openUrl(LINKS.terms)} />
-          <LinkRow label="Community Guidelines" onPress={() => openUrl(LINKS.community)} />
-          <LinkRow label="Refund & Cancellation Policy" onPress={() => openUrl(LINKS.refund)} />
+          <LinkRow label="Privacy Policy" onPress={() => router.push('/privacy')} isInternal />
+          <LinkRow label="Terms & Conditions" onPress={() => router.push('/terms')} isInternal />
+          <LinkRow label="Community Guidelines" onPress={() => router.push('/community')} isInternal />
+          <LinkRow label="Refund & Cancellation Policy" onPress={() => router.push('/refund')} isInternal />
         </Card>
 
         {/* Support & Help */}

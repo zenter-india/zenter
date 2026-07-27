@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useNavigation } from 'expo-router';
+import { router } from 'expo-router';
 import { colors, space } from '@/theme';
 import { EmptyState, AsyncBoundary, TabHeader } from '@/components';
 import { useSession } from '@/stores/session';
@@ -30,7 +30,6 @@ type Row = { conv: Conversation; otherId: string };
  */
 export default function ChatsScreen() {
   const myUserId = useMyUserId();
-  const navigation = useNavigation();
   const conns = useConversations(myUserId);
   const lastRead = useLastRead(myUserId);
 
@@ -66,7 +65,6 @@ export default function ChatsScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <TabHeader
         title="Chats"
-        onMenu={() => (navigation as any).getParent()?.openDrawer()}
         right={<ProfileMenuButton />}
       />
 

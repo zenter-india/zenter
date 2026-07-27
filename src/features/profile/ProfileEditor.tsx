@@ -12,7 +12,7 @@
  */
 import { useMemo, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { colors, space, fonts, radius } from '@/theme';
+import { colors, space, fonts } from '@/theme';
 import { Text, Card, Input, Button, useToast } from '@/components';
 import { SelectField } from '@/features/onboarding/SelectField';
 import { TRAVEL_OPTIONS, STAY_OPTIONS, VALIDATION, type SelectOption } from '@/features/onboarding/options';
@@ -261,24 +261,25 @@ export function ProfileEditor({ me, phone }: { me: User; phone: string | null })
   );
 }
 
+/** Label/value pair on one row (web `.hm-kv dt`/`dd` grid: fixed label column,
+ *  flexible value column). Locked fields get a trailing lock glyph, matching
+ *  the web's subtle `dd.hm-kv__locked::after` treatment instead of a badge. */
 function KV({ label, value, locked }: { label: string; value?: string | null; locked?: boolean }) {
   const filled = !!value && value.trim().length > 0;
   return (
     <View style={styles.kv}>
-      <View style={styles.kvLabelRow}>
-        <Text variant="small" style={styles.kvLabel}>
-          {label}
-        </Text>
-        {locked ? (
-          <Text variant="caption" style={styles.lock} accessibilityLabel="permanent, cannot be changed">
-            🔒 Permanent
-          </Text>
-        ) : null}
-      </View>
+      <Text variant="small" style={styles.kvLabel}>
+        {label}
+      </Text>
       {filled ? (
-        <Text variant="body">{value}</Text>
+        <Text variant="body" style={styles.kvValue}>
+          {value}
+          {locked ? (
+            <Text style={styles.lock} accessibilityLabel="permanent, cannot be changed"> 🔒</Text>
+          ) : null}
+        </Text>
       ) : (
-        <Text variant="bodyMuted">Not set</Text>
+        <Text variant="bodyMuted" style={styles.kvValue}>Not set</Text>
       )}
     </View>
   );
@@ -287,18 +288,10 @@ function KV({ label, value, locked }: { label: string; value?: string | null; lo
 const styles = StyleSheet.create({
   wrap: { gap: space[3] },
   card: { gap: space[3] },
-  kv: { gap: 2 },
-  kvLabelRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  kvLabel: { color: colors.textMuted },
-  lock: {
-    color: colors.textMuted,
-    fontFamily: fonts.bodyMedium,
-    backgroundColor: colors.surface2,
-    borderRadius: radius.sm,
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    overflow: 'hidden',
-  },
+  kv: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3] },
+  kvLabel: { width: 108, color: colors.textMuted, flexShrink: 0, paddingTop: 2 },
+  kvValue: { flex: 1, fontFamily: fonts.bodyMedium },
+  lock: { fontSize: 12, opacity: 0.45 },
   actions: { flexDirection: 'row', gap: space[3] },
   actionBtn: { flex: 1 },
 });

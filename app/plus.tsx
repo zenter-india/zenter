@@ -18,12 +18,13 @@
  * to Google Play Billing — required by Play for digital goods — needs no change
  * here and no rebuild.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { View, ScrollView, StyleSheet, TextInput, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { colors, space, radius, fonts } from '@/theme';
-import { Text, Button, Card, Badge, useToast } from '@/components';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, space, radius, fonts, shadows, badgeVariants } from '@/theme';
+import { Text, Button, Card, Badge, Avatar, useToast } from '@/components';
 import { useSession } from '@/stores/session';
 import { useProfile } from '@/data/useProfile';
 import { useConfig } from '@/data/useConfig';
@@ -68,6 +69,90 @@ const COMPARISON = [
   { feature: 'Exchange contact', free: '2 only', plus: 'Unlimited' },
 ] as const;
 
+/** Founding-member code advertised in the promo banner (web plus.html). */
+const FOUNDING_COUPON = 'ZENTERFIRST';
+
+/**
+ * Early-access headline price shown in the hero, with the server's list price
+ * struck through beside it. Display only — the amount actually charged always
+ * comes from the server probe (and any coupon), never from this constant.
+ * Mirrors the web hero's hardcoded discount line in plus.html.
+ */
+const DISCOUNTED_PRICE = 99;
+
+// ─── Card preview ─────────────────────────────────────────────────────────────
+
+/**
+ * Miniature feed card used by the "How your card looks" comparison. Built from
+ * the real Avatar + badge tokens rather than the web's hand-rolled hex so the
+ * preview keeps matching the actual card if the design system moves.
+ */
+function PreviewCard({
+  tier,
+  plus,
+  name,
+  gender,
+  home,
+  centre,
+  chips,
+  footNote,
+}: {
+  tier: string;
+  plus?: boolean;
+  name: string;
+  gender: 'Male' | 'Female';
+  home: string;
+  centre: string;
+  chips: string[];
+  footNote: string;
+}) {
+  const homeParts = home.split(', ');
+  return (
+    <View style={styles.previewCol}>
+      <Text style={[styles.previewTier, plus && styles.previewTierPlus]}>{tier}</Text>
+      <View style={[styles.previewCard, plus && styles.previewCardPlus]}>
+        <View style={styles.previewHead}>
+          <Avatar name={name} size={40} />
+          <View style={styles.previewHeadText}>
+            <Text style={styles.previewName}>{name}</Text>
+            <View style={styles.previewBadges}>
+              <Badge label={gender} variant={gender === 'Female' ? 'female' : 'male'} />
+              {plus ? <Badge label="⭐ Plus" variant="plus" /> : null}
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.previewLine}>
+          <Text style={styles.previewIcon}>🏠</Text>
+          <Text style={styles.previewLoc}>
+            <Text style={styles.previewLocStrong}>{homeParts[0]}</Text>
+            {homeParts.length > 1 ? `, ${homeParts.slice(1).join(', ')}` : ''}
+          </Text>
+        </View>
+        <View style={styles.previewLine}>
+          <Text style={styles.previewIcon}>📋</Text>
+          <Text style={styles.previewLoc}>{centre}</Text>
+        </View>
+
+        <View style={styles.previewChips}>
+          {chips.map((c) => (
+            <View key={c} style={[styles.previewChip, plus && styles.previewChipPlus]}>
+              <Text style={[styles.previewChipText, plus && styles.previewChipTextPlus]}>{c}</Text>
+            </View>
+          ))}
+        </View>
+
+        <View style={[styles.previewFoot, plus && styles.previewFootPlus]}>
+          <Text style={[styles.previewFootNote, plus && styles.previewFootNotePlus]}>{footNote}</Text>
+          <View style={[styles.previewCta, plus && styles.previewCtaPlus]}>
+            <Text style={[styles.previewCtaText, plus && styles.previewCtaTextPlus]}>Connect</Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function PlusScreen() {
@@ -91,6 +176,19 @@ export default function PlusScreen() {
   // Purchase state
   const [buying, setBuying] = useState(false);
   const [purchased, setPurchased] = useState(false);
+
+  // "Get now" in the promo banner jumps to the coupon field and focuses it —
+  // the native equivalent of the web's scrollIntoView + focus().
+  const scrollRef = useRef<ScrollView>(null);
+  const couponInputRef = useRef<TextInput>(null);
+  const couponY = useRef(0);
+
+  const jumpToCoupon = useCallback(() => {
+    setCouponCode(FOUNDING_COUPON);
+    scrollRef.current?.scrollTo({ y: Math.max(0, couponY.current - 24), animated: true });
+    // Focus after the scroll settles so the keyboard doesn't fight the animation.
+    setTimeout(() => couponInputRef.current?.focus(), 350);
+  }, []);
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace(FEED_ROUTE));
 
@@ -256,7 +354,7 @@ export default function PlusScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScreenHeader title="Zenter Plus" onBack={goBack} />
 
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         {/* Hero */}
         <View style={styles.hero}>
           <Badge label="⭐ Zenter Plus" variant="plus" />
@@ -268,13 +366,72 @@ export default function PlusScreen() {
             aspirant.
           </Text>
           {!priceLoading && (
-            <Text style={styles.heroPrice}>
-              ₹{basePrice ?? 49} <Text style={styles.heroPriceSuffix}>/ exam season</Text>
-            </Text>
+            <View style={styles.heroPriceRow}>
+              {basePrice != null && basePrice !== DISCOUNTED_PRICE ? (
+                <Text style={styles.heroPriceStrike}>₹{basePrice}</Text>
+              ) : null}
+              <Text style={styles.heroPrice}>₹{DISCOUNTED_PRICE}</Text>
+              <Text style={styles.heroPriceSuffix}>/ exam season</Text>
+            </View>
           )}
           <Text variant="small" style={styles.heroSeason}>
             One-time for NEET UG 2026
           </Text>
+        </View>
+
+        {/* "Early Access Offer" promo — tapping Get now fills the coupon field
+           below (the web equivalent copies the code and scrolls to the input). */}
+        {!isPlus && !purchased && (
+          <LinearGradient
+            colors={[colors.promoNavy, colors.promoNavyDeep]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.promo}
+          >
+            <Text style={styles.promoEyebrow}>🎉 Early Access Offer</Text>
+            <Text style={styles.promoLine}>
+              Founding members get Zenter Plus{' '}
+              <Text style={styles.promoAccent}>at a discounted price</Text>
+            </Text>
+            <View style={styles.promoCodeBox}>
+              <Text style={styles.promoCode}>{FOUNDING_COUPON}</Text>
+              <Pressable
+                onPress={jumpToCoupon}
+                accessibilityRole="button"
+                accessibilityLabel={`Use coupon ${FOUNDING_COUPON}`}
+                hitSlop={6}
+                style={({ pressed }) => [styles.promoBtn, pressed && styles.pressed]}
+              >
+                <Text style={styles.promoBtnText}>Get now</Text>
+              </Pressable>
+            </View>
+          </LinearGradient>
+        )}
+
+        {/* Card preview — how the feed card differs on Free vs Plus */}
+        <View style={styles.previewWrap}>
+          <Text style={styles.previewHeading}>How your card looks</Text>
+          <View style={styles.previewRow}>
+            <PreviewCard
+              tier="Free"
+              name="Arun R."
+              gender="Male"
+              home="Pune, Maharashtra"
+              centre="Sion Hospital, Mumbai"
+              chips={['🚆 Train', '🏨 Needs stay']}
+              footNote="2 chats max"
+            />
+            <PreviewCard
+              tier="✨ Plus"
+              plus
+              name="Priya R."
+              gender="Female"
+              home="Mumbai, Maharashtra"
+              centre="Sion Hospital, Mumbai"
+              chips={['🏠 Has stay', '🚗 Self Drive']}
+              footNote="✨ Unlimited chats"
+            />
+          </View>
         </View>
 
         {/* Features */}
@@ -342,9 +499,15 @@ export default function PlusScreen() {
 
         {/* Coupon */}
         {!isPlus && !purchased && (
-          <View style={styles.couponSection}>
+          <View
+            style={styles.couponSection}
+            onLayout={(e) => {
+              couponY.current = e.nativeEvent.layout.y;
+            }}
+          >
             <View style={styles.couponRow}>
               <TextInput
+                ref={couponInputRef}
                 style={styles.couponInput}
                 placeholder="Have a coupon code?"
                 placeholderTextColor={colors.textSubtle}
@@ -421,9 +584,95 @@ const styles = StyleSheet.create({
   hero: { alignItems: 'center', paddingVertical: space[5], gap: space[2] },
   heroTitle: { textAlign: 'center', marginTop: space[2] },
   heroSub: { textAlign: 'center', maxWidth: 340, marginBottom: space[2] },
-  heroPrice: { fontSize: 36, fontFamily: fonts.displayExtra, color: colors.text, lineHeight: 42 },
+  heroPriceRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center', flexWrap: 'wrap', gap: 8 },
+  heroPriceStrike: { fontSize: 18, fontFamily: fonts.body, color: colors.textMuted, textDecorationLine: 'line-through' },
+  heroPrice: { fontSize: 40, fontFamily: fonts.displayExtra, color: colors.primary, lineHeight: 44 },
   heroPriceSuffix: { fontSize: 16, fontFamily: fonts.bodyMedium, color: colors.textMuted },
   heroSeason: { color: colors.textMuted },
+
+  // Early-access promo banner
+  promo: { borderRadius: 14, borderWidth: 1.5, borderColor: colors.promoAmber, padding: 18, alignItems: 'center' },
+  promoEyebrow: {
+    fontFamily: fonts.bodyBold,
+    fontSize: 11,
+    letterSpacing: 2,
+    color: colors.promoAmber,
+    textTransform: 'uppercase',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  promoLine: { fontFamily: fonts.bodySemibold, fontSize: 15, lineHeight: 21, color: colors.white, textAlign: 'center', marginBottom: 12 },
+  promoAccent: { color: colors.promoAmber },
+  promoCodeBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: colors.promoAmber,
+    borderRadius: radius.sm,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+  },
+  promoCode: { fontFamily: fonts.mono, fontSize: 16, letterSpacing: 2, color: colors.promoAmber },
+  promoBtn: { borderWidth: 1, borderColor: colors.promoAmber, borderRadius: 5, paddingHorizontal: 8, paddingVertical: 3 },
+  promoBtnText: { fontFamily: fonts.bodyBold, fontSize: 11, color: colors.promoAmber },
+  pressed: { opacity: 0.6 },
+
+  // Card preview
+  previewWrap: { gap: space[3] },
+  previewHeading: {
+    fontFamily: fonts.bodySemibold,
+    fontSize: 12,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
+  previewRow: { flexDirection: 'row', gap: space[3] },
+  previewCol: { flex: 1, gap: 6 },
+  previewTier: { fontFamily: fonts.body, fontSize: 11, color: colors.textMuted },
+  previewTierPlus: { fontFamily: fonts.bodyBold, color: badgeVariants.warning.fg },
+  previewCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    padding: space[3],
+    gap: 6,
+    ...shadows.xs,
+  },
+  previewCardPlus: { backgroundColor: colors.plusTint, borderWidth: 1.5, borderColor: colors.plusBorder },
+  previewHead: { flexDirection: 'row', alignItems: 'center', gap: space[2], marginBottom: 6 },
+  previewHeadText: { flex: 1, gap: 3 },
+  previewName: { fontFamily: fonts.bodyBold, fontSize: 14, color: colors.text },
+  previewBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
+  previewLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  previewIcon: { fontSize: 13 },
+  previewLoc: { flex: 1, fontFamily: fonts.body, fontSize: 12, lineHeight: 17, color: colors.textMuted },
+  previewLocStrong: { fontFamily: fonts.bodyBold, color: colors.text },
+  previewChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
+  previewChip: { backgroundColor: colors.surface2, borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 4 },
+  previewChipPlus: { backgroundColor: badgeVariants.plus.bg },
+  previewChipText: { fontFamily: fonts.body, fontSize: 11, color: colors.textMuted },
+  previewChipTextPlus: { color: badgeVariants.warning.fg },
+  previewFoot: {
+    marginTop: 6,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  previewFootPlus: { borderTopColor: colors.plusBorder },
+  previewFootNote: { flex: 1, fontFamily: fonts.body, fontSize: 10, color: colors.textSubtle },
+  previewFootNotePlus: { fontFamily: fonts.bodySemibold, color: colors.success600 },
+  previewCta: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 5 },
+  previewCtaPlus: { borderColor: colors.primary, backgroundColor: colors.primary },
+  previewCtaText: { fontFamily: fonts.bodySemibold, fontSize: 11, color: colors.primary },
+  previewCtaTextPlus: { color: colors.white },
 
   // Features
   featuresCard: { gap: 0, padding: space[4] },

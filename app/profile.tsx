@@ -100,50 +100,50 @@ function ProfileBody({ me, phone }: { me: User; phone: string | null }) {
 
   return (
     <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-      {/* Identity */}
-      <Card style={styles.identity}>
-        <Avatar name={me.full_name} size={64} />
-        <View style={styles.identityText}>
-          <Text variant="h3" numberOfLines={1}>
-            {me.full_name?.trim() || 'Your name'}
-          </Text>
-          <Text variant="small" accessibilityLabel="Your phone number">
-            {formatPhone(phone)}
-          </Text>
+      {/* Identity — avatar/name/phone/Plus, then Roll No verification and the
+         paused notice grouped into the same card, matching the web's single
+         left-column identity card. */}
+      <Card style={styles.identityCard}>
+        <View style={styles.identity}>
+          <Avatar name={me.full_name} size={64} />
+          <View style={styles.identityText}>
+            <Text variant="h3" numberOfLines={1}>
+              {me.full_name?.trim() || 'Your name'}
+            </Text>
+            <Text variant="small" accessibilityLabel="Your phone number">
+              {formatPhone(phone)}
+            </Text>
+          </View>
+          {me.plus_member ? <Badge label="⭐ Zenter Plus" variant="plus" /> : null}
         </View>
-        {me.plus_member ? (
-          <Badge label="⭐ Zenter Plus" variant="plus" />
-        ) : (
-          /* Ports the web's profile.html "Get Zenter Plus →" link. Together with
-             the drawer entry this is the only proactive route to checkout — the
-             other CTAs only appear once the member has already hit the gate. */
-          <Pressable
+
+        {/* With the drawer gone this is the ONLY proactive route to checkout —
+           every other Plus CTA appears reactively, once the member has already
+           hit the free-tier gate. Keep it a full button, not a text link. */}
+        {!me.plus_member ? (
+          <Button
+            title="⭐ Get Zenter Plus"
+            variant="soft"
+            style={styles.plusCta}
             onPress={() => {
               track('upgrade_cta_click', { source: 'profile' });
               router.push('/plus');
             }}
-            accessibilityRole="button"
-            accessibilityLabel="Get Zenter Plus"
-            hitSlop={8}
-          >
-            <Text variant="small" color={colors.primary} style={styles.plusLink}>
-              Get Zenter Plus →
+          />
+        ) : null}
+
+        {/* Verification (Story 6.2) */}
+        <VerificationSection me={me} phone={phone} embedded />
+
+        {/* Paused banner (FR-25) */}
+        {paused ? (
+          <View style={styles.pausedBanner}>
+            <Text style={styles.pausedText} accessibilityLabel="paused">
+              ⏸ Your profile is paused and hidden from Find Aspirants.
             </Text>
-          </Pressable>
-        )}
+          </View>
+        ) : null}
       </Card>
-
-      {/* Paused banner (FR-25) */}
-      {paused ? (
-        <View style={styles.pausedBanner}>
-          <Text style={styles.pausedText} accessibilityLabel="paused">
-            ⏸ Your profile is paused and hidden from Find Aspirants.
-          </Text>
-        </View>
-      ) : null}
-
-      {/* Verification (Story 6.2) */}
-      <VerificationSection me={me} phone={phone} />
 
       {/* View / edit sections (Story 6.1) */}
       <ProfileEditor me={me} phone={phone} />
@@ -155,20 +155,24 @@ function ProfileBody({ me, phone }: { me: User; phone: string | null }) {
           Your phone number is never shown to other aspirants until you both accept a contact
           exchange.
         </Text>
-        <Button
-          title={paused ? 'Reactivate profile' : 'Pause my profile'}
-          variant={paused ? 'primary' : 'soft'}
-          onPress={() => (paused ? applyPause(false) : setPauseConfirm(true))}
-          busy={pause.isPending}
-        />
-        {/* Blocked users (Story 8.2) — manage/unblock. */}
-        <Button
-          title="Blocked users"
-          icon="slash"
-          variant="ghost"
-          onPress={() => router.push('/blocked')}
-          accessibilityLabel="Manage blocked users"
-        />
+        <View style={styles.accountActions}>
+          {/* Blocked users (Story 8.2) — manage/unblock. */}
+          <Button
+            title="Blocked users"
+            icon="slash"
+            variant="ghost"
+            size="sm"
+            onPress={() => router.push('/blocked')}
+            accessibilityLabel="Manage blocked users"
+          />
+          <Button
+            title={paused ? 'Reactivate profile' : 'Pause my profile'}
+            variant="ghost"
+            size="sm"
+            onPress={() => (paused ? applyPause(false) : setPauseConfirm(true))}
+            busy={pause.isPending}
+          />
+        </View>
       </Card>
 
       <ConfirmDialog
@@ -193,10 +197,12 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.6 },
   gearGlyph: { fontSize: 20, color: colors.textMuted },
   scroll: { padding: space[4], gap: space[3], paddingBottom: space[7] },
+  identityCard: { gap: 0 },
   identity: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   identityText: { flex: 1, gap: 2 },
-  plusLink: { fontFamily: fonts.bodySemibold },
+  plusCta: { marginTop: space[3] },
   pausedBanner: {
+    marginTop: space[3],
     backgroundColor: badgeVariants.warning.bg,
     borderColor: colors.warning,
     borderWidth: 1,
@@ -206,4 +212,5 @@ const styles = StyleSheet.create({
   },
   pausedText: { fontFamily: fonts.bodyMedium, fontSize: 13, color: badgeVariants.warning.fg },
   account: { gap: space[3] },
+  accountActions: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
 });

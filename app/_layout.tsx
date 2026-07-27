@@ -86,7 +86,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" options={{ animation: 'fade' }} />
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="onboarding" />
-          <Stack.Screen name="(drawer)" />
+          <Stack.Screen name="(tabs)" />
           {/* Exam gate (Story 3.1): full-screen, unbypassable — no back gesture. */}
           <Stack.Screen name="maintenance" options={{ gestureEnabled: false }} />
           <Stack.Screen name="chat/[id]" />
@@ -105,6 +105,11 @@ export default function RootLayout() {
           <Stack.Screen name="feedback" options={{ presentation: 'formSheet', sheetAllowedDetents: [0.5, 0.9] }} />
           <Stack.Screen name="faq" />
           <Stack.Screen name="contact" />
+          {/* Long-form policy pages, mirroring the website's footer links. */}
+          <Stack.Screen name="privacy" />
+          <Stack.Screen name="terms" />
+          <Stack.Screen name="community" />
+          <Stack.Screen name="refund" />
         </Stack>
       </ToastProvider>
       </SessionProvider>

@@ -28,7 +28,12 @@ function StatusPill({ label, variant }: { label: string; variant: 'verified' | '
   );
 }
 
-export function VerificationSection({ me, phone }: { me: User; phone: string | null }) {
+/**
+ * `embedded` renders the section as a plain block (no Card/border) so the
+ * caller can nest it inside another Card — matches the web layout, where Roll
+ * No verification lives inside the identity card rather than as its own.
+ */
+export function VerificationSection({ me, phone, embedded }: { me: User; phone: string | null; embedded?: boolean }) {
   const state = verificationState(me);
   const showForm = canSubmitVerification(state);
   const [roll, setRoll] = useState(me.nta_application_number ?? '');
@@ -51,8 +56,8 @@ export function VerificationSection({ me, phone }: { me: User; phone: string | n
     }
   }
 
-  return (
-    <Card style={styles.card}>
+  const body = (
+    <>
       <Text variant="caption" style={styles.eyebrow}>
         {C.sectionTitle}
       </Text>
@@ -96,12 +101,16 @@ export function VerificationSection({ me, phone }: { me: User; phone: string | n
           <Button title={C.submitCta} size="sm" busy={verify.isPending} onPress={submit} />
         </View>
       ) : null}
-    </Card>
+    </>
   );
+
+  if (embedded) return <View style={styles.embedded}>{body}</View>;
+  return <Card style={styles.card}>{body}</Card>;
 }
 
 const styles = StyleSheet.create({
   card: { gap: space[3] },
+  embedded: { gap: space[3], marginTop: space[4], paddingTop: space[4], borderTopWidth: 1, borderTopColor: colors.border, alignSelf: 'stretch' },
   eyebrow: {
     color: colors.textMuted,
     fontFamily: fonts.bodySemibold,

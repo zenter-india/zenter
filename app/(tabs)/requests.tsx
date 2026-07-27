@@ -3,7 +3,6 @@ import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, space } from '@/theme';
 import { MateCard, EmptyState, AsyncBoundary, TabHeader, type MateCardData } from '@/components';
-import { useNavigation } from 'expo-router';
 import { useMyUserId } from '@/features/connections/useMyUserId';
 import { useVisibleRequests } from '@/features/connections/useVisibleRequests';
 import { useCounterparts } from '@/features/connections/useCounterparts';
@@ -27,7 +26,6 @@ import { ProfileMenuButton } from '@/features/profile/ProfileMenuButton';
  */
 export default function RequestsScreen() {
   const myUserId = useMyUserId();
-  const navigation = useNavigation();
   const { visible, isLoading, isError, error, refetch, isRefetching } = useVisibleRequests(myUserId);
 
   const senderIds = useMemo(() => visible.map((r) => r.userId), [visible]);
@@ -37,7 +35,6 @@ export default function RequestsScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <TabHeader
         title="Requests"
-        onMenu={() => (navigation as any).getParent()?.openDrawer()}
         right={<ProfileMenuButton />}
       />
 

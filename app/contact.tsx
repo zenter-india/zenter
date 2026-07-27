@@ -2,9 +2,29 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
-import { colors, space } from '@/theme';
+import { colors, space, fonts } from '@/theme';
 import { Text, Card, Button, useToast } from '@/components';
 import { ScreenHeader } from '@/features/profile/ScreenHeader';
+
+/** The web contact page's "Common issues" list, verbatim. */
+const COMMON_ISSUES = [
+  {
+    lead: 'OTP not arriving?',
+    body: 'Wait 30 seconds, then tap Resend. Check if your number has DND active.',
+  },
+  {
+    lead: 'Entered the wrong number?',
+    body: 'Tap "Change number" on the verification screen to go back.',
+  },
+  {
+    lead: 'Profile not saving?',
+    body: 'Check your internet connection and try again. All your data stays safe.',
+  },
+  {
+    lead: 'Privacy concern?',
+    body: 'Phone numbers are only revealed after both users accept a connection.',
+  },
+];
 
 export default function ContactScreen() {
   const { show } = useToast();
@@ -53,9 +73,14 @@ export default function ContactScreen() {
 
         <Card style={[styles.card, { backgroundColor: colors.surface2, borderColor: 'transparent', marginTop: space[4] }]}>
           <Text variant="h3" style={{ marginBottom: space[2] }}>Common issues</Text>
-          <Text variant="bodyMuted">
-            <Text style={{ color: colors.text, fontWeight: '600' }}>OTP not arriving?</Text> Wait 30 seconds, then tap Resend. Check if your number has DND active.
-          </Text>
+          {COMMON_ISSUES.map((it, i) => (
+            <View key={i} style={styles.issue}>
+              <Text style={styles.bullet}>•</Text>
+              <Text variant="bodyMuted" style={styles.issueText}>
+                <Text style={styles.issueLead}>{it.lead}</Text> {it.body}
+              </Text>
+            </View>
+          ))}
         </Card>
       </ScrollView>
     </SafeAreaView>
@@ -67,4 +92,8 @@ const styles = StyleSheet.create({
   scroll: { padding: space[4], gap: space[3], paddingBottom: space[7] },
   headerArea: { alignItems: 'center', marginBottom: space[4], paddingHorizontal: space[4] },
   card: { gap: space[2] },
+  issue: { flexDirection: 'row', gap: space[2] },
+  bullet: { fontFamily: fonts.body, fontSize: 15, lineHeight: 25, color: colors.primary },
+  issueText: { flex: 1 },
+  issueLead: { fontFamily: fonts.bodySemibold, color: colors.text },
 });

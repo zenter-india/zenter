@@ -37,6 +37,14 @@ export const colors = {
   cardWarmBorder: '#FFF4E5',
   // Route-timeline dots (MateCard): home = slate-800, centre = danger (below).
   routeHome: '#1E293B',
+  // Zenter Plus card treatment (web .hm-mate--plus): amber-50 wash + amber-200 border.
+  plusTint: '#FFFBEB',
+  plusBorder: '#FDE68A',
+  // "Early Access Offer" promo banner on the Plus page (web plus.html):
+  // deep navy gradient with an amber keyline and code text.
+  promoNavy: '#1E3A5F',
+  promoNavyDeep: '#0F2540',
+  promoAmber: '#FACC15',
   // Sent chat-bubble timestamp (on the primary bubble) — warm tint of white.
   sentBubbleTime: '#FFE0CC',
   // Warm section wash (feed banners).
@@ -118,6 +126,8 @@ export const badgeVariants = {
   female: { bg: '#F3E8FF', fg: '#7C3AED' },
   male: { bg: '#DBEAFE', fg: '#1D4ED8' }, // blue-100 / blue-700
   verified: { bg: '#F0FDF4', fg: '#15803D', border: '#DCFCE7' }, // green-50 / green-700 / green-100
+  // Roll-No verified on the mate card — web .hm-badge--verified-full (solid green-700).
+  verifiedSolid: { bg: '#15803D', fg: '#FFFFFF', border: '#15803D' },
   neutral: { bg: '#F1F5F9', fg: '#475569' },
 } as const;
 
