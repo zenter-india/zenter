@@ -1,9 +1,11 @@
 {
   "expo": {
     "extra": {
+      "router": {},
       "eas": {
-        "projectId": "fbfc260c-a95f-4ac8-a9a7-c1dae28fe630"
+        "projectId": "c8cecf9e-4153-4bfa-bb9a-8e89f696248b"
       }
-    }
+    },
+    "owner": "amselgold"
   }
 }

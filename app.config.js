@@ -1,3 +1,9 @@
+// Build profiles signed with a Distribution certificate (ad-hoc/internal APK-
+// style installs, TestFlight, and the App Store all use one) — every other
+// case, including local `expo prebuild`/Xcode debug runs where
+// EAS_BUILD_PROFILE is unset, uses a Development certificate.
+const APS_PRODUCTION_PROFILES = ['preview', 'playInternal', 'production'];
+
 module.exports = ({ config }) => ({
   ...config,
   name: 'Zenter',
@@ -13,6 +19,14 @@ module.exports = ({ config }) => ({
     supportsTablet: false,
     infoPlist: {
       UIBackgroundModes: ['remote-notification'],
+    },
+    // Required for @react-native-firebase/auth's silent-push device
+    // verification on iOS (the APNs equivalent of Android's Play Integrity
+    // check) — without this entitlement the app never gets a valid APNs
+    // device token, so Firebase can't silently verify the device and always
+    // falls back to the reCAPTCHA web-view during phone sign-in.
+    entitlements: {
+      'aps-environment': APS_PRODUCTION_PROFILES.includes(process.env.EAS_BUILD_PROFILE) ? 'production' : 'development',
     },
   },
   android: {
@@ -58,7 +72,15 @@ module.exports = ({ config }) => ({
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     sentryDsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
     eas: {
-      projectId: process.env.EAS_PROJECT_ID || (config.extra && config.extra.eas && config.extra.eas.projectId) || 'fbfc260c-a95f-4ac8-a9a7-c1dae28fe630',
+      // The single source of truth is app.json's extra.eas.projectId — `eas
+      // init`/`eas build` write it there directly (app.json is static config;
+      // this file can't be auto-updated by EAS CLI since it's dynamic JS).
+      // EAS_PROJECT_ID lets a specific command override it ad hoc without
+      // touching either file. No hardcoded fallback: a stale literal here
+      // previously pointed at a foreign, inaccessible EAS project
+      // (fbfc260c-a95f-4ac8-a9a7-c1dae28fe630) whenever app.json's field was
+      // ever absent — exactly the failure mode this is guarding against.
+      projectId: process.env.EAS_PROJECT_ID || (config.extra && config.extra.eas && config.extra.eas.projectId),
     },
   },
   runtimeVersion: { policy: 'appVersion' },
