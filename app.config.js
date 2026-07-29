@@ -57,6 +57,7 @@ module.exports = ({ config }) => ({
     'expo-dev-client',
     '@react-native-firebase/app',
     '@react-native-firebase/auth',
+    './plugins/withExplicitApnsRegistration',
     [
       'expo-build-properties',
       {
