@@ -24,6 +24,16 @@ module.exports = ({ config }) => ({
       // encryption — so it's exempt. Without this key, App Store Connect asks
       // the encryption question manually on every submission.
       ITSAppUsesNonExemptEncryption: false,
+      // ITMS-90683: Apple's static binary scan flags the mere presence of the
+      // Photo Library API symbol and requires a purpose string regardless of
+      // whether it's actually called. The app has no image-picker or avatar-
+      // upload feature (Avatar renders initials only — see
+      // src/components/Avatar.tsx) and never requests this permission; the
+      // symbol comes from @sentry/react-native's screenshot-attachment
+      // feature, which is off by default and not enabled anywhere in
+      // src/lib/observability.ts's Sentry.init(). This string is honest: the
+      // dialog it describes will never actually appear.
+      NSPhotoLibraryUsageDescription: 'Zenter does not access your photo library.',
     },
     // Required for @react-native-firebase/auth's silent-push device
     // verification on iOS (the APNs equivalent of Android's Play Integrity
