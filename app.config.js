@@ -19,6 +19,11 @@ module.exports = ({ config }) => ({
     supportsTablet: false,
     infoPlist: {
       UIBackgroundModes: ['remote-notification'],
+      // Export-compliance answer for App Store Connect: the app only uses
+      // standard OS-provided HTTPS/TLS (Supabase, Firebase) — no proprietary
+      // encryption — so it's exempt. Without this key, App Store Connect asks
+      // the encryption question manually on every submission.
+      ITSAppUsesNonExemptEncryption: false,
     },
     // Required for @react-native-firebase/auth's silent-push device
     // verification on iOS (the APNs equivalent of Android's Play Integrity
