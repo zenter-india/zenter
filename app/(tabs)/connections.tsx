@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { colors, space } from '@/theme';
 import { Button, MateCard, EmptyState, AsyncBoundary, Badge, TabHeader, type MateCardData } from '@/components';
 import { useMyUserId } from '@/features/connections/useMyUserId';
@@ -74,8 +75,21 @@ export default function ConnectionsScreen() {
     if (!myUserId || conns.data === undefined) return;
     let alive = true;
     (async () => {
-      const seen = (await storage.getJSON<string[]>(STORAGE_KEYS.connectionsSeen, myUserId)) ?? [];
-      const seenSet = new Set(seen);
+      const stored = await storage.getJSON<string[]>(STORAGE_KEYS.connectionsSeen, myUserId);
+      // First open on this device: adopt the current set as already-seen instead
+      // of announcing every existing connection as "+N New" (a fresh install of
+      // a long-standing account showed "+10 New"). Same first-load seeding rule
+      // `seedLastReadMap` uses to stop old chats flashing unread.
+      if (stored === null) {
+        await storage.setJSON(
+          STORAGE_KEYS.connectionsSeen,
+          accepted.map((a) => a.connectionId),
+          myUserId,
+        );
+        if (alive) setNewCount(0);
+        return;
+      }
+      const seenSet = new Set(stored);
       const fresh = accepted.filter((a) => !seenSet.has(a.connectionId)).length;
       if (!alive) return;
       setNewCount(fresh);
@@ -170,22 +184,33 @@ function ConnectionListItem({
   return (
     <MateCard
       data={data}
+      // Three controls never fit beside the joined date — give the row its own line.
+      footerFullWidth
       footer={
-        <View style={styles.rowActions}>
-          <Button
-            title="Open Chat"
-            icon="message-circle"
-            accessibilityLabel="Open chat"
-            variant="soft"
-            size="sm"
-            style={styles.actionBtn}
-            onPress={goToChats}
-          />
-          {/* Epic 7: Contact-Exchange / Call renders beside Open Chat. */}
+        <View style={styles.actions}>
+          <View style={styles.primaryRow}>
+            <Button
+              title="Open Chat"
+              icon="message-circle"
+              accessibilityLabel="Open chat"
+              variant="soft"
+              size="sm"
+              style={styles.actionBtn}
+              // Open THIS connection's thread — the row already resolved its
+              // conversation id for the exchange control. Falling back to the
+              // Chats tab only when the conversation isn't in the cache yet
+              // (e.g. just accepted), same rule as ConnectButton's Open Chat.
+              onPress={() =>
+                convId ? router.push({ pathname: '/chat/[id]', params: { id: convId } }) : goToChats()
+              }
+            />
+            {/* Story 8.1: block this connection — compact icon so Open Chat keeps
+                the width it needs. */}
+            <BlockButton compact onPress={onBlock} />
+          </View>
+          {/* Epic 7: Contact-Exchange / Call gets its own full-width line — its
+              widest state (revealed number + Call) can't share one. */}
           <ExchangeCallButton convId={convId} otherName={user?.full_name ?? undefined} />
-          {/* Story 8.1: block this connection — compact icon so the two primary
-              actions get room (was cramping the row). */}
-          <BlockButton compact onPress={onBlock} />
         </View>
       }
     />
@@ -196,6 +221,10 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   listWrap: { flex: 1 },
   listContent: { padding: space[4], gap: space[3], paddingBottom: space[7] },
-  rowActions: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  // A full-width column (see MateCard `footerFullWidth`), so `flex: 1` below has
+  // real width to divide — inline in the old content-sized footer slot it
+  // measured as zero and clipped the button labels away.
+  actions: { gap: space[2] },
+  primaryRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   actionBtn: { flex: 1 },
 });

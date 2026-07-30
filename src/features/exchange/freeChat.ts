@@ -45,8 +45,19 @@ export function computeUnlockedConvIds(
     for (const c of conversations) unlocked.add(c.id);
     return unlocked;
   }
+  // A missing/unparseable `created_at` yields NaN, and NaN comparisons make the
+  // sort order depend on the incoming row order — the same member could get a
+  // different unlocked set (and so a different chat paywalled) between fetches.
+  // Undated rows sort last (treated as newest, i.e. locked first), and the id
+  // breaks ties so the result is stable for a given set.
+  // `new Date(null)` is epoch 0, not NaN — without the falsy guard an undated
+  // row would rank as the OLDEST conversation and take a free slot from a real one.
+  const at = (c: ConvLite) => {
+    const t = c.created_at ? new Date(c.created_at).getTime() : NaN;
+    return Number.isFinite(t) ? t : Number.POSITIVE_INFINITY;
+  };
   const oldestFirst = [...conversations].sort(
-    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    (a, b) => at(a) - at(b) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0),
   );
   for (const c of oldestFirst.slice(0, Math.max(0, gate.freeLimit))) unlocked.add(c.id);
   return unlocked;

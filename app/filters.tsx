@@ -1,12 +1,11 @@
 import { useMemo } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { colors, space } from '@/theme';
 import { Text, Button } from '@/components';
 import { useFeed } from '@/data/useFeed';
-import { applyFeedFilters, groupByDistrict, type FeedItem } from '@/domain/matching';
-import { isAdminRole, centreLabel } from '@/domain/gating';
+import { applyFeedFilters, type FeedItem } from '@/domain/matching';
 import { SelectField } from '@/features/onboarding/SelectField';
 import {
   GENDER_OPTIONS,
@@ -23,15 +22,15 @@ import {
 
 /**
  * Filter sheet (Story 3.3). Presented as a bottom sheet (FR-34; registered in
- * `app/_layout.tsx`). Controls: gender, district/centre (CMS centres when the
- * member's exam is UPSC CMS), travel mode, and stay plan — feeding the pure
- * `applyFeedFilters` predicate via the shared filter store. Changes apply live,
- * and the primary button shows the live result count (AC: "results update with a
- * live count").
+ * `app/_layout.tsx`). Controls: gender, travel mode, and stay plan — feeding the
+ * pure `applyFeedFilters` predicate via the shared filter store. Changes apply
+ * live, and the primary button shows the live result count (AC: "results update
+ * with a live count").
  *
- * The district/centre options are derived from the loaded feed (`groupByDistrict`)
- * so only centres that actually have aspirants appear, with the member's own
- * centre first and a count on each — mirroring the web district picker.
+ * There is deliberately NO district/centre control: the sheet is only reachable
+ * from inside a district (the feed's grid → list drill-down), so the district is
+ * already decided. The screen passes it in as a route param purely so the live
+ * count matches the list behind the sheet.
  */
 const anyOption = (label: string): SelectOption => ({ value: '', label });
 
@@ -39,8 +38,10 @@ const anyOption = (label: string): SelectOption => ({ value: '', label });
 const EMPTY_FEED: FeedItem[] = [];
 
 export default function Filters() {
-  const { data, me } = useFeed();
+  const { data } = useFeed();
   const filters = useFeedFilters();
+  // The district being browsed, handed over by the feed screen.
+  const { district } = useLocalSearchParams<{ district?: string }>();
 
   // Stable identity while the feed is loading. A literal `data ?? []` mints a
   // fresh array every render, which changes the deps of both useMemos below and
@@ -48,25 +49,13 @@ export default function Filters() {
   const feed = data ?? EMPTY_FEED;
   const activeCount = activeFilterCount(filters);
 
-  const centreNoun = centreLabel(me?.exam_type); // 'exam centre' | 'district'
-  const centreTitle = centreNoun.charAt(0).toUpperCase() + centreNoun.slice(1);
-
-  const districtOptions = useMemo<SelectOption[]>(() => {
-    const myDistrict = isAdminRole(me?.role) ? null : me?.exam_centre_district ?? null;
-    const groups = groupByDistrict(feed, myDistrict);
-    return [
-      anyOption(`Any ${centreNoun}`),
-      ...groups.map((g) => ({ value: g.name, label: `${g.name} (${g.count})` })),
-    ];
-  }, [feed, me?.role, me?.exam_centre_district, centreNoun]);
-
   const genderOptions = useMemo<SelectOption[]>(() => [anyOption('Any gender'), ...GENDER_OPTIONS], []);
   const travelOptions = useMemo<SelectOption[]>(() => [anyOption('Any travel mode'), ...TRAVEL_OPTIONS], []);
   const stayOptions = useMemo<SelectOption[]>(() => [anyOption('Any stay plan'), ...STAY_OPTIONS], []);
 
   const resultCount = useMemo(
-    () => applyFeedFilters(feed, toFeedPredicate(filters)).length,
-    [feed, filters],
+    () => applyFeedFilters(feed, { ...toFeedPredicate(filters), district: district ?? null }).length,
+    [feed, filters, district],
   );
 
   const showLabel = `Show ${resultCount} ${resultCount === 1 ? 'aspirant' : 'aspirants'}`;
@@ -93,13 +82,6 @@ export default function Filters() {
           value={filters.gender ?? ''}
           options={genderOptions}
           onChange={(v) => feedFilters.set({ gender: v })}
-        />
-        <SelectField
-          label={centreTitle}
-          placeholder={`Any ${centreNoun}`}
-          value={filters.district ?? ''}
-          options={districtOptions}
-          onChange={(v) => feedFilters.set({ district: v })}
         />
         <SelectField
           label="Travel mode"

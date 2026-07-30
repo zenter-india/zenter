@@ -26,6 +26,13 @@ export type MateCardProps = {
   data: MateCardData;
   onPress?: () => void;
   footer?: React.ReactNode; // the connection CTA button
+  /**
+   * Put the footer node on its own full-width row under the joined date instead
+   * of sharing the line with it. Needed by any footer holding more than one
+   * control (Connections: Open Chat + contact exchange + block) — the inline
+   * slot is content-sized, so flexible children there collapse to their padding.
+   */
+  footerFullWidth?: boolean;
 };
 
 /**
@@ -36,7 +43,7 @@ export type MateCardProps = {
  * then a joined-date ↔ CTA footer. Plus is a corner badge plus a warm amber
  * card wash — never a gold background.
  */
-export function MateCard({ data, onPress, footer }: MateCardProps) {
+export function MateCard({ data, onPress, footer, footerFullWidth }: MateCardProps) {
   const hasBadges = !!(data.travelLabel || data.stayLabel);
   const hasFooter = !!(data.joined || footer);
 
@@ -109,12 +116,19 @@ export function MateCard({ data, onPress, footer }: MateCardProps) {
         ) : null}
       </View>
 
-      {/* Footer: join date · connection CTA */}
+      {/* Footer: join date · connection CTA (stacked when the CTA needs the width) */}
       {hasFooter ? (
-        <View style={styles.footer}>
-          <Text numberOfLines={1} style={styles.joined}>{data.joined ?? ''}</Text>
-          {footer ? <View style={styles.footerCta}>{footer}</View> : null}
-        </View>
+        footerFullWidth ? (
+          <View style={styles.footerStack}>
+            {data.joined ? <Text numberOfLines={1} style={styles.joined}>{data.joined}</Text> : null}
+            {footer}
+          </View>
+        ) : (
+          <View style={styles.footer}>
+            <Text numberOfLines={1} style={styles.joined}>{data.joined ?? ''}</Text>
+            {footer ? <View style={styles.footerCta}>{footer}</View> : null}
+          </View>
+        )
       ) : null}
 
       {/* Corner Plus badge — overlays the head row, like the web's absolute pill. */}
@@ -243,6 +257,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 8,
+    paddingTop: space[3],
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  footerStack: {
+    gap: space[2],
     paddingTop: space[3],
     borderTopWidth: 1,
     borderTopColor: colors.border,

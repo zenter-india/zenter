@@ -1,13 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { qk } from '@/data/keys';
-import { queryClient } from '@/data/queryClient';
 import { useSession } from '@/stores/session';
 import { getUserByPhone, getAllUsers, getSeededUsers } from '@/api/users';
 import { getMyConnections } from '@/api/connections';
 import { getBlockedUserIds, getBlockedByIds } from '@/api/blocked';
 import { isAdminRole } from '@/domain/gating';
 import { buildFeed, type FeedItem } from '@/domain/matching';
-import { CONFIG_DEFAULTS, type AppConfig } from '@/data/useConfig';
+import { useConfig, CONFIG_DEFAULTS } from '@/data/useConfig';
 
 /**
  * Feed composition hook (AD-2, AD-9). Two layered queries on the canonical keys:
@@ -22,11 +21,18 @@ import { CONFIG_DEFAULTS, type AppConfig } from '@/data/useConfig';
  * (which `getAllUsers` treats as the NEET-UG + legacy-null scope, as in
  * production); everyone else passes their own exam type.
  *
- * Seeded-visibility comes from the parsed `AppConfig` cached under qk.config
- * (loaded app-wide by the root guard / `useConfig`, refreshed on foreground per
- * AD-10) — read here, not refetched, so the feed fan-out stays to the four
- * documented queries. It falls back to `CONFIG_DEFAULTS` (all visible) when
- * config has not yet loaded.
+ * Seeded-visibility comes from the parsed `AppConfig` under qk.config (loaded
+ * app-wide, refreshed on foreground per AD-10) — subscribed to, not read out of
+ * the cache once, and falling back to `CONFIG_DEFAULTS` (all visible) until it
+ * loads. The fan-out is still the four documented queries; `useConfig` shares
+ * the app-wide cache entry rather than adding a fifth fetch.
+ *
+ * Everything `buildFeed` composes from beyond the user id — the member's role /
+ * exam / centre fields and the two seeded toggles — is part of the query key. A
+ * cached feed is only valid for the inputs that produced it: keyed on the id
+ * alone, config arriving after the feed left seeded users wrongly shown/hidden
+ * until something else invalidated, and a refetch straight after `me` changed
+ * re-ran the OLD closure's `me`.
  *
  * Errors: the primary users fetch throws (surfaced by AsyncBoundary); the
  * secondary fetches (seeded, connections, block-sets) degrade to empty like the
@@ -48,8 +54,21 @@ export function useFeed() {
   const me = meQuery.data ?? null;
   const myUserId = me?.id ?? null;
 
+  const cfg = useConfig().data ?? CONFIG_DEFAULTS;
+
+  // Appended to `qk.feed(userId)`, so prefix invalidation elsewhere
+  // (`useRelationshipKeys`) still matches every scope of this user's feed.
+  const scope = {
+    role: me?.role ?? null,
+    examType: me?.exam_type ?? null,
+    centreState: me?.exam_centre_state ?? null,
+    centreDistrict: me?.exam_centre_district ?? null,
+    seededVisible: cfg.seededVisible,
+    seededCentreVisible: cfg.seededCentreVisible,
+  };
+
   const feedQuery = useQuery({
-    queryKey: qk.feed(myUserId ?? ''),
+    queryKey: [...qk.feed(myUserId ?? ''), scope],
     enabled: !!myUserId,
     queryFn: async (): Promise<FeedItem[]> => {
       // Admins pass null → getAllUsers' NEET-UG + legacy-null scope (as in web).
@@ -65,8 +84,6 @@ export function useFeed() {
 
       // Users is the critical fetch — surface its failure. The rest degrade.
       if (usersRes.error) throw new Error(usersRes.error.message);
-
-      const cfg = queryClient.getQueryData<AppConfig>(qk.config) ?? CONFIG_DEFAULTS;
 
       return buildFeed({
         me,

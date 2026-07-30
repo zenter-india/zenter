@@ -54,7 +54,19 @@ export function BlockButton({ onPress, disabled, compact }: BlockButtonProps) {
 }
 
 const styles = StyleSheet.create({
-  icon: { width: 40, height: 44, alignItems: 'center', justifyContent: 'center' },
+  // Same outlined shell as a ghost Button (44 min hit area, radius.md, hairline
+  // border) so the icon-only form reads as a control beside the filled actions
+  // in a Connections row instead of a loose glyph.
+  icon: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   disabled: { opacity: 0.4 },
   pill: {
     height: 44,

@@ -26,6 +26,7 @@ export default function OtpScreen() {
   const [resetKey, setResetKey] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
   const submitting = useRef(false);
+  const resending = useRef(false);
   const [verified, setVerified] = useState(false);
   const { isCoolingDown, cooldownText, triggerCooldown } = useAuthCooldown();
 
@@ -80,7 +81,12 @@ export default function OtpScreen() {
   );
 
   async function onResend() {
-    if (secondsLeft > 0 || busy || !phone) return;
+    // `busy` is set synchronously via the ref: the state update alone lands too
+    // late to stop a second tap in the same tick, and each extra tap costs the
+    // member a real SMS.
+    if (secondsLeft > 0 || busy || resending.current || !phone) return;
+    resending.current = true;
+    setBusy(true);
     setError(null);
     setCode('');
     setResetKey((k) => k + 1);
@@ -95,6 +101,9 @@ export default function OtpScreen() {
         triggerCooldown(5);
       }
       setError(mapAuthError(code));
+    } finally {
+      resending.current = false;
+      setBusy(false);
     }
   }
 

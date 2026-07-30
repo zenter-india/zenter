@@ -12,16 +12,22 @@
 import { useSyncExternalStore } from 'react';
 import type { FeedFilters } from '@/domain/matching';
 
-/** The filters the native sheet exposes: gender, district/centre, travel, stay. */
+/**
+ * The filters the native sheet exposes: gender, travel, stay.
+ *
+ * Deliberately NO district: the sheet only opens from inside a district, so the
+ * district is already chosen by the drill-down. It used to be here, but the feed
+ * screen scopes by its own `activeDistrict` and passes `district: null` into the
+ * predicate — so the control changed nothing while still counting toward the
+ * "N active" badge and keeping "Clear all" enabled.
+ */
 export type FeedFilterState = {
   gender: string | null;
-  /** Exact `exam_centre_district` (holds the CMS centre name for UPSC CMS). */
-  district: string | null;
   travelMode: string | null;
   stayPlan: string | null;
 };
 
-const EMPTY: FeedFilterState = { gender: null, district: null, travelMode: null, stayPlan: null };
+const EMPTY: FeedFilterState = { gender: null, travelMode: null, stayPlan: null };
 
 let state: FeedFilterState = EMPTY;
 const listeners = new Set<() => void>();
@@ -57,7 +63,7 @@ export function useFeedFilters(): FeedFilterState {
 
 /** How many filters are currently applied (drives the "Filters" button dot/label). */
 export function activeFilterCount(f: FeedFilterState): number {
-  return (f.gender ? 1 : 0) + (f.district ? 1 : 0) + (f.travelMode ? 1 : 0) + (f.stayPlan ? 1 : 0);
+  return (f.gender ? 1 : 0) + (f.travelMode ? 1 : 0) + (f.stayPlan ? 1 : 0);
 }
 
 /** Whether any filter is applied — selects the correct empty-state copy. */
@@ -65,11 +71,14 @@ export function hasActiveFilters(f: FeedFilterState): boolean {
   return activeFilterCount(f) > 0;
 }
 
-/** Adapt the store shape to the pure `applyFeedFilters` predicate input. */
+/**
+ * Adapt the store shape to the pure `applyFeedFilters` predicate input. The
+ * predicate's `district` is left to the caller — the feed scopes it from the
+ * drill-down, not from stored filter state.
+ */
 export function toFeedPredicate(f: FeedFilterState): FeedFilters {
   return {
     gender: f.gender,
-    district: f.district,
     travelMode: f.travelMode,
     stayPlan: f.stayPlan,
   };

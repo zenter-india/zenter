@@ -54,10 +54,14 @@ export default function FindScreen() {
     [data, filters],
   );
 
-  // District groups derived from the full feed (ignoring district filter)
+  // District groups derived from the UNFILTERED feed. The grid has no filter
+  // affordance (the Filters button only exists in the drilled-in list), so
+  // deriving it from `allFiltered` let a filter set earlier silently delete
+  // whole districts from the grid — a gender filter dropped Salem entirely,
+  // with nothing on screen to explain why or to clear it.
   const districts = useMemo(
-    () => groupByDistrict(allFiltered, myDistrict),
-    [allFiltered, myDistrict],
+    () => groupByDistrict(data ?? [], myDistrict),
+    [data, myDistrict],
   );
 
   // Aspirants in the selected district (with all filters including district)
@@ -109,7 +113,10 @@ export default function FindScreen() {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={activeCount ? `Filters, ${activeCount} active` : 'Filters'}
-              onPress={() => router.push('/filters')}
+              // The sheet's live count must be scoped to the district being
+              // browsed, otherwise it reports a state-wide total the list
+              // behind it never shows.
+              onPress={() => router.push({ pathname: '/filters', params: { district: activeDistrict } })}
               style={({ pressed }) => [styles.filterBtn, pressed && styles.pressed]}
             >
               <Icon name="sliders" size={15} color={colors.textMuted} />

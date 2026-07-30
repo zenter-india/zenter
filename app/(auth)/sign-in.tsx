@@ -3,7 +3,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 're
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, space } from '@/theme';
+import { colors, space, fonts } from '@/theme';
 import { Text, Input, Button } from '@/components';
 import { startPhoneAuth, normalizePhoneIN, mapAuthError } from '@/features/auth/firebasePhone';
 import { otpSession } from '@/features/auth/otpSession';
@@ -70,7 +70,7 @@ export default function SignInScreen() {
               Zenter
             </Text>
             <Text variant="bodyMuted" color={colors.white} style={styles.heroSub}>
-              Find your exam-centre mates.
+              Find your exam-centre aspirants.
             </Text>
           </LinearGradient>
 
@@ -110,8 +110,29 @@ export default function SignInScreen() {
               style={styles.cta} 
             />
 
+            {/* The two policies are the website's documents, shipped in-app
+                (app/terms.tsx, app/community.tsx) — both are root stack screens,
+                so they push fine from the logged-out auth stack. */}
             <Text variant="caption" style={styles.legal}>
-              By continuing you agree to Zenter&apos;s Terms and Community Guidelines.
+              By continuing you agree to Zenter&apos;s{' '}
+              <Text
+                variant="caption"
+                style={styles.legalLink}
+                accessibilityRole="link"
+                onPress={() => router.push('/terms')}
+              >
+                Terms and Conditions
+              </Text>{' '}
+              and{' '}
+              <Text
+                variant="caption"
+                style={styles.legalLink}
+                accessibilityRole="link"
+                onPress={() => router.push('/community')}
+              >
+                Community Guidelines
+              </Text>
+              .
             </Text>
           </View>
         </ScrollView>
@@ -130,4 +151,5 @@ const styles = StyleSheet.create({
   lead: { marginBottom: space[1] },
   cta: { marginTop: space[2] },
   legal: { marginTop: space[2] },
+  legalLink: { fontFamily: fonts.bodySemibold, color: colors.secondary, textDecorationLine: 'underline' },
 });

@@ -94,18 +94,28 @@ export function ExchangeCallButton({
   } else if (data.status === 'pending' && iAmResponder) {
     control = (
       <View style={styles.pair}>
-        <Button title="Accept" size="sm" busy={respondEx.isPending} onPress={() => onRespond(true)} />
+        <Button
+          title="Accept"
+          size="sm"
+          style={styles.half}
+          busy={respondEx.isPending}
+          onPress={() => onRespond(true)}
+        />
         <Button
           title="Decline"
           variant="ghost"
           size="sm"
+          style={styles.half}
           disabled={respondEx.isPending}
           onPress={() => onRespond(false)}
         />
       </View>
     );
   } else if (data.status === 'pending') {
-    control = <Button title="⏳ Requested" variant="ghost" size="sm" disabled onPress={() => {}} />;
+    // Feather icon, not an emoji — emoji is reserved for the travel/stay tags.
+    control = (
+      <Button title="Requested" icon="clock" variant="ghost" size="sm" style={styles.grow} disabled onPress={() => {}} />
+    );
   } else {
     // none | declined
     control = (
@@ -141,9 +151,12 @@ export function ExchangeCallButton({
   );
 }
 
+// The control owns a full-width line in the Connections footer, so these rows
+// stretch and their flexible children get real width to divide.
 const styles = StyleSheet.create({
-  accepted: { flexDirection: 'row', alignItems: 'center', gap: space[2], flex: 1 },
-  pair: { flexDirection: 'row', alignItems: 'center', gap: space[2], flex: 1 },
+  accepted: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  pair: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
   phone: { fontFamily: fonts.mono, color: colors.text, flex: 1 },
-  grow: { flex: 1 },
+  grow: { alignSelf: 'stretch' },
+  half: { flex: 1 },
 });
