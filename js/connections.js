@@ -57,7 +57,7 @@ export async function runConnections(root, firebaseUser) {
   }
   if (checkSuspended(me)) return;
 
-  const LIVE_EXAMS = ['NEET UG', 'NEET PG', 'UPSC CMS', 'INICET', 'NEET MDS', 'NEET SS', 'FMGE'];
+  const LIVE_EXAMS = ['NEET UG', 'NEET PG', 'UPSC CMS', 'INICET', 'NEET MDS', 'NEET SS', 'FMGE', 'JEE Main'];
   if (me.exam_type && !LIVE_EXAMS.includes(me.exam_type)) {
     window.location.replace('/maintenance.html');
     return;
