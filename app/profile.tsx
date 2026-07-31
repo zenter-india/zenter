@@ -1,5 +1,5 @@
 /**
- * Profile (self) screen — Epic 6. Reached from the Find Aspirants header avatar
+ * Profile (self) screen — Epic 6. Reached from the Find Aspirants header menu
  * (ProfileMenuButton) and pushed onto the root stack over the tabs.
  *
  * Composes:
@@ -8,11 +8,12 @@
  *    never overwritten by a partial fetch (AD-2).
  *  - Story 6.2: Roll-Number verification (VerificationSection).
  *  - Story 6.3: pause / reactivate (amber banner + confirm). Delete lives in
- *    Settings (Flow 7: "Settings/About → Delete Account"), reached via the header
- *    gear.
+ *    Settings (Flow 7: "Settings/About → Delete Account"), reached via the
+ *    "Settings" button in Privacy & account — no header gear anymore, matching
+ *    web's profile.html (which has no separate settings icon either).
  */
 import { useState } from 'react';
-import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { colors, space, radius, fonts, badgeVariants } from '@/theme';
@@ -37,23 +38,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScreenHeader
-        title="My profile"
-        onBack={goBack}
-        rightSlot={
-          <Pressable
-            onPress={() => router.push('/settings')}
-            accessibilityRole="button"
-            accessibilityLabel="Settings"
-            hitSlop={8}
-            style={({ pressed }) => [styles.gear, pressed && styles.pressed]}
-          >
-            <Text style={styles.gearGlyph} accessibilityElementsHidden importantForAccessibility="no">
-              ⚙
-            </Text>
-          </Pressable>
-        }
-      />
+      <ScreenHeader title="My profile" onBack={goBack} />
 
       <AsyncBoundary<User | null>
         isLoading={q.isLoading}
@@ -172,6 +157,16 @@ function ProfileBody({ me, phone }: { me: User; phone: string | null }) {
             onPress={() => (paused ? applyPause(false) : setPauseConfirm(true))}
             busy={pause.isPending}
           />
+          {/* Settings (legal links, delete account) — used to be reached via
+             the header gear; now a plain in-page link, matching web's
+             profile.html which has no separate settings page/icon either. */}
+          <Button
+            title="Settings"
+            icon="settings"
+            variant="ghost"
+            size="sm"
+            onPress={() => router.push('/settings')}
+          />
         </View>
       </Card>
 
@@ -193,9 +188,6 @@ function ProfileBody({ me, phone }: { me: User; phone: string | null }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  gear: { width: 32, height: 44, alignItems: 'center', justifyContent: 'center' },
-  pressed: { opacity: 0.6 },
-  gearGlyph: { fontSize: 20, color: colors.textMuted },
   scroll: { padding: space[4], gap: space[3], paddingBottom: space[7] },
   identityCard: { gap: 0 },
   identity: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
