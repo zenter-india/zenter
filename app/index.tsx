@@ -9,7 +9,7 @@ import { isLiveExam } from '@/domain/gating';
 /**
  * Gated boot (Story 2.2, FR-3/FR-4). Single source of launch routing:
  *   - session not resolved → splash (no auth flash for returning members)
- *   - no session          → sign-in
+ *   - no session          → welcome (pitch screen, then sign-in)
  *   - session, profile loading → splash
  *   - profile incomplete OR fetch error → onboarding (fail-safe, matches web)
  *   - profile complete     → a pending deep-link target, else the feed
@@ -20,7 +20,7 @@ export default function Boot() {
   const profile = useProfile(phone);
 
   if (!ready) return <BootSplash />;
-  if (!user || !phone) return <Redirect href="/(auth)/sign-in" />;
+  if (!user || !phone) return <Redirect href="/(auth)/welcome" />;
   if (profile.isLoading) return <BootSplash />;
 
   const completed = !profile.isError && profile.data?.profile_completed === true;
