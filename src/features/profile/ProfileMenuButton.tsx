@@ -4,10 +4,13 @@
  * Aspirants header, that opens a dropdown listing the same items as the web
  * navbar's profile dropdown (components/navbar.html on `main`): Profile,
  * Requests, Find aspirants, Districts, Co-ordinations, Chats, Contact us,
- * Feedback, Log out.
+ * Feedback, Log out — except "Co-ordinations" is relabeled "Connections"
+ * here to match this app's own bottom-tab-bar wording for the same screen
+ * (app/(tabs)/_layout.tsx), rather than introduce two names for one
+ * destination inside a single app.
  */
-import { useState } from 'react';
-import { Modal, Pressable, View, StyleSheet } from 'react-native';
+import { useRef, useState } from 'react';
+import { Modal, Platform, Pressable, View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { colors, space, radius, fonts, shadows } from '@/theme';
@@ -25,18 +28,37 @@ type MenuItem = {
 export function ProfileMenuButton() {
   const [open, setOpen] = useState(false);
   const insets = useSafeAreaInsets();
+  // Deferred action, run once this Modal has actually finished dismissing —
+  // firing router.push (esp. into a formSheet-presented screen like /feedback)
+  // in the same tick as closing this Modal races two native presentations on
+  // iOS and can leave the pushed screen rendering blank/broken.
+  const pendingAction = useRef<(() => void) | null>(null);
+
+  const runPending = () => {
+    const action = pendingAction.current;
+    pendingAction.current = null;
+    action?.();
+  };
+
+  const deferThenClose = (action: () => void) => {
+    pendingAction.current = action;
+    setOpen(false);
+    // Modal's onDismiss (iOS-only) is the reliable signal, but Android doesn't
+    // fire it — fall back to a timeout matching the fade animation there.
+    if (Platform.OS !== 'ios') setTimeout(runPending, 250);
+  };
 
   const close = () => setOpen(false);
   const go = (href: Parameters<typeof router.push>[0]) => {
-    close();
-    router.push(href);
+    deferThenClose(() => router.push(href));
   };
 
-  async function handleLogout() {
-    close();
-    await logout();
-    if (router.canDismiss()) router.dismissAll();
-    router.replace(SIGN_IN_ROUTE);
+  function handleLogout() {
+    deferThenClose(async () => {
+      await logout();
+      if (router.canDismiss()) router.dismissAll();
+      router.replace(SIGN_IN_ROUTE);
+    });
   }
 
   const items: MenuItem[] = [
@@ -44,7 +66,7 @@ export function ProfileMenuButton() {
     { label: 'Requests', icon: 'inbox', onPress: () => go('/(tabs)/requests') },
     { label: 'Find aspirants', icon: 'search', onPress: () => go('/(tabs)/feed') },
     { label: 'Districts', icon: 'map-pin', onPress: () => go('/(tabs)/feed') },
-    { label: 'Co-ordinations', icon: 'users', onPress: () => go('/(tabs)/connections') },
+    { label: 'Connections', icon: 'users', onPress: () => go('/(tabs)/connections') },
     { label: 'Chats', icon: 'message-circle', onPress: () => go('/(tabs)/chats') },
     { label: 'Contact us', icon: 'phone', onPress: () => go('/contact') },
     { label: 'Feedback', icon: 'edit-2', onPress: () => go('/feedback') },
@@ -63,7 +85,13 @@ export function ProfileMenuButton() {
         <Icon name="menu" size={24} color={colors.text} />
       </Pressable>
 
-      <Modal visible={open} transparent animationType="fade" onRequestClose={close}>
+      <Modal
+        visible={open}
+        transparent
+        animationType="fade"
+        onRequestClose={close}
+        onDismiss={runPending}
+      >
         <Pressable style={styles.backdrop} onPress={close}>
           <View style={[styles.menu, { marginTop: insets.top + 52 }]}>
             {items.map((item) => (
