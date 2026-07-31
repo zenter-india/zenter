@@ -938,8 +938,8 @@ async function loadSettings() {
 async function loadCoupons() {
   const el = document.getElementById('adm-coupons-list');
   if (!el) return;
-  const { query: q, from: f } = await import('./supabase.js');
-  const { data } = await q(f('coupons').select('*').order('created_at', { ascending: false }));
+  const { query: q, supabase: sb } = await import('./supabase.js');
+  const { data } = await q(sb.rpc('admin_list_coupons', { p_requester_phone: adminPhone }));
   if (!data?.length) { el.innerHTML = '<p style="color:var(--adm-text-muted);font-size:13px;margin:0;">No coupons yet. Click "+ New Coupon" to create one.</p>'; return; }
 
   el.innerHTML = `<table class="adm-table">
@@ -973,7 +973,7 @@ async function loadCoupons() {
       const isActive = btn.dataset.active === 'true';
       btn.disabled = true;
       const { supabase: sb } = await import('./supabase.js');
-      const { error } = await sb.rpc('admin_toggle_coupon', { p_code: code, p_active: !isActive });
+      const { error } = await sb.rpc('admin_toggle_coupon', { p_code: code, p_active: !isActive, p_requester_phone: adminPhone });
       if (error) { toast('Error: ' + error.message, 'error'); btn.disabled = false; return; }
       toast(`Coupon ${!isActive ? 'enabled' : 'disabled'} ✓`, 'success');
       await loadCoupons();
@@ -990,7 +990,7 @@ async function loadCoupons() {
         danger: true,
       }, async () => {
         const { supabase: sb } = await import('./supabase.js');
-        const { error } = await sb.rpc('admin_delete_coupon', { p_code: code });
+        const { error } = await sb.rpc('admin_delete_coupon', { p_code: code, p_requester_phone: adminPhone });
         if (error) { toast('Error: ' + error.message, 'error'); return; }
         toast('Coupon deleted ✓', 'success');
         await loadCoupons();
@@ -1132,6 +1132,7 @@ function openCouponForm(existing) {
       p_discounted_paise: price * 100,
       p_max_uses: maxUses,
       p_expires_at: expires ? new Date(expires).toISOString() : null,
+      p_requester_phone: adminPhone,
     });
 
     if (error) {
@@ -1311,7 +1312,7 @@ document.addEventListener('click', async (e) => {
     }, async () => {
       btn.disabled = true;
       const { adminSetPlusMember } = await import('./supabase.js');
-      const { error } = await adminSetPlusMember(id, granting);
+      const { error } = await adminSetPlusMember(id, adminPhone, granting);
       if (error) { toast('Error: ' + error.message, 'error'); btn.disabled = false; return; }
       const u = allUsers.find(u => u.id === id);
       if (u) u.plus_member = granting;
@@ -1331,7 +1332,7 @@ document.addEventListener('click', async (e) => {
     }, async () => {
       btn.disabled = true;
       const { adminSetVerifiedAspirant } = await import('./supabase.js');
-      const { error } = await adminSetVerifiedAspirant(id, approving);
+      const { error } = await adminSetVerifiedAspirant(id, adminPhone, approving);
       if (error) { toast('Error: ' + error.message, 'error'); btn.disabled = false; return; }
       // Drop the row from the pending queue (either outcome removes it from this list)
       allRollNoRequests = allRollNoRequests.filter(u => u.id !== id);
@@ -1358,7 +1359,7 @@ document.addEventListener('click', async (e) => {
     }, async () => {
       btn.disabled = true;
       const { adminSetVerifiedAspirant } = await import('./supabase.js');
-      const { error } = await adminSetVerifiedAspirant(id, false);
+      const { error } = await adminSetVerifiedAspirant(id, adminPhone, false);
       if (error) { toast('Error: ' + error.message, 'error'); btn.disabled = false; return; }
       const u = allUsers.find(u => u.id === id);
       if (u) { u.is_verified_aspirant = false; u.verification_requested = false; u.verification_rejected = true; }
@@ -1378,7 +1379,7 @@ document.addEventListener('click', async (e) => {
     }, async () => {
       btn.disabled = true;
       const { adminSetVerifiedAspirant } = await import('./supabase.js');
-      const { error } = await adminSetVerifiedAspirant(id, verifying);
+      const { error } = await adminSetVerifiedAspirant(id, adminPhone, verifying);
       if (error) { toast('Error: ' + error.message, 'error'); btn.disabled = false; return; }
       const u = allUsers.find(u => u.id === id);
       if (u) u.is_verified_aspirant = verifying;

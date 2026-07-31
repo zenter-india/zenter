@@ -28,20 +28,6 @@
   <main class="hm-page" id="hm-main">
     <div class="hm-container">
 
-      <!-- Dashboard tab bar -->
-      <div class="hm-tabs" role="tablist" aria-label="Dashboard sections">
-        <button class="hm-tab" role="tab" data-tab="requests" aria-selected="false">
-          Requests
-          <span id="hm-requests-tab-badge" class="hm-nav-badge" hidden aria-live="polite">0</span>
-        </button>
-        <button class="hm-tab is-active" role="tab" data-tab="find-mates" aria-selected="true">Find Aspirants</button>
-        <button class="hm-tab" role="tab" data-tab="connections" aria-selected="false">Co-ordinations</button>
-        <button class="hm-tab" role="tab" data-tab="chats" aria-selected="false">
-          Chats
-          <span id="hm-chats-tab-badge" class="hm-nav-badge" hidden aria-live="polite">0</span>
-        </button>
-      </div>
-
       <!-- Zenter Plus chat usage banner (shown to free users on ALL tabs) -->
       <div id="hm-reveal-banner" class="hm-reveal-banner" hidden></div>
 
@@ -56,87 +42,100 @@
         <div>
           <!-- Exam type — fixed per account (set during onboarding) -->
           <span class="hm-eyebrow" id="hm-exam-label"></span>
-          <h1 style="margin-top: 12px;">Find centre Aspirants</h1>
+          <h1 id="hm-feed-title" style="margin-top: 12px;">Choose your district</h1>
           <p class="hm-text-muted">
-            Aspirants going to the same exam centre as you.
+            <span id="hm-feed-subtitle">Pick your exam district to find aspirants near you.</span>
             <span id="hm-results-count" class="hm-results-count"></span>
           </p>
         </div>
         <div class="d-flex gap-2 flex-shrink-0">
-          <button class="hm-btn hm-btn--ghost hm-btn--sm hm-filter-toggle" type="button" id="hm-filter-toggle" aria-expanded="false">
+          <button class="hm-btn hm-btn--ghost hm-btn--sm hm-filter-toggle" type="button" id="hm-filter-toggle" aria-expanded="false" hidden>
             ⚙ Filters
           </button>
-          <button class="hm-btn hm-btn--primary hm-btn--sm" type="button" id="hm-refresh">Refresh</button>
         </div>
       </header>
 
-      <section class="hm-dashboard">
-
-        <!-- FILTER SIDEBAR -->
-        <aside aria-label="Filter mates" id="hm-filter-aside">
-          <div class="hm-sidebar">
-            <p class="hm-sidebar__title">Filter by</p>
-
-            <div class="hm-sidebar__fields">
-              <div class="hm-field">
-                <label class="hm-label" for="hm-filter-gender">Gender</label>
-                <select class="hm-select" id="hm-filter-gender">
-                  <option value="">Any</option>
-                  <option value="Female">Female</option>
-                  <option value="Male">Male</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-
-              <div class="hm-field">
-                <label class="hm-label" for="hm-filter-district">Exam district</label>
-                <select class="hm-select" id="hm-filter-district">
-                  <option value="">All districts</option>
-                </select>
-              </div>
-
-              <div class="hm-field">
-                <label class="hm-label" for="hm-filter-center">Exam centre</label>
-                <input class="hm-input" id="hm-filter-center" type="text" placeholder="Search centre…" autocomplete="off" />
-              </div>
-
-              <div class="hm-field">
-                <label class="hm-label" for="hm-filter-travel">Travel mode</label>
-                <select class="hm-select" id="hm-filter-travel">
-                  <option value="">All travel modes</option>
-                  <option value="By train">🚆 Train</option>
-                  <option value="By flight">✈️ Flight</option>
-                  <option value="By bus">🚌 Bus</option>
-                  <option value="Self-drive">🚗 Self Drive</option>
-                  <option value="Shared Cab">🚕 Shared Cab</option>
-                  <option value="Other">Yet to Decide</option>
-                </select>
-              </div>
-
-              <div class="hm-field">
-                <label class="hm-label" for="hm-filter-stay">Stay plan</label>
-                <select class="hm-select" id="hm-filter-stay">
-                  <option value="">All stay plans</option>
-                  <option value="Need accommodation">🏨 Needs stay</option>
-                  <option value="Have accommodation">🏠 Has stay</option>
-                  <option value="Looking for room share">🛏️ Room share</option>
-                  <option value="Other">Yet to Decide</option>
-                </select>
-              </div>
-            </div>
-
-            <div style="text-align:center;margin-top:var(--hm-space-4);">
-              <button class="hm-btn hm-btn--ghost hm-btn--sm" type="button" id="hm-filter-clear">Clear filters</button>
-            </div>
+      <!-- ── DISTRICT LIST (default landing view) ─────────────────────────── -->
+      <div id="hm-district-view">
+        <div class="d-flex gap-2 align-items-center" id="hm-district-search-row" style="max-width: 480px; margin-bottom: var(--hm-space-4);">
+          <div class="hm-field" style="flex: 1; margin-bottom: 0;">
+            <input class="hm-input" id="hm-district-search" type="text" placeholder="Search district…" autocomplete="off" />
           </div>
-        </aside>
+          <button class="hm-btn hm-btn--primary hm-btn--sm" type="button" id="hm-refresh">Refresh</button>
+        </div>
+        <div class="hm-grid-cards" id="hm-district-grid"></div>
+      </div>
 
-        <!-- MATE FEED -->
-        <section aria-label="Centre mate list" aria-live="polite">
-          <div class="hm-grid-cards" id="hm-mates-grid"></div>
+      <!-- ── STUDENT LIST (shown after a district card is picked) ─────────── -->
+      <!-- Back navigation now uses the navbar's ← Back to Home button (shown
+           while inside a district, wired in dashboard.js to return to the
+           district list instead of literally leaving the page). -->
+      <div id="hm-students-view" hidden>
+        <div class="d-flex align-items-center gap-2" style="margin-bottom: var(--hm-space-4);">
+          <div id="hm-students-refresh-slot"></div>
+        </div>
+
+        <section class="hm-dashboard">
+
+          <!-- FILTER SIDEBAR (district removed — already chosen via card) -->
+          <aside aria-label="Filter aspirants" id="hm-filter-aside">
+            <div class="hm-sidebar">
+              <p class="hm-sidebar__title">Filter by</p>
+
+              <div class="hm-sidebar__fields">
+                <div class="hm-field">
+                  <label class="hm-label" for="hm-filter-gender">Gender</label>
+                  <select class="hm-select" id="hm-filter-gender">
+                    <option value="">Any</option>
+                    <option value="Female">Female</option>
+                    <option value="Male">Male</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div class="hm-field">
+                  <label class="hm-label" for="hm-filter-center">Exam centre</label>
+                  <input class="hm-input" id="hm-filter-center" type="text" placeholder="Search centre…" autocomplete="off" />
+                </div>
+
+                <div class="hm-field">
+                  <label class="hm-label" for="hm-filter-travel">Travel mode</label>
+                  <select class="hm-select" id="hm-filter-travel">
+                    <option value="">All travel modes</option>
+                    <option value="By train">🚆 Train</option>
+                    <option value="By flight">✈️ Flight</option>
+                    <option value="By bus">🚌 Bus</option>
+                    <option value="Self-drive">🚗 Self Drive</option>
+                    <option value="Shared Cab">🚕 Shared Cab</option>
+                    <option value="Other">Yet to Decide</option>
+                  </select>
+                </div>
+
+                <div class="hm-field">
+                  <label class="hm-label" for="hm-filter-stay">Stay plan</label>
+                  <select class="hm-select" id="hm-filter-stay">
+                    <option value="">All stay plans</option>
+                    <option value="Need accommodation">🏨 Needs stay</option>
+                    <option value="Have accommodation">🏠 Has stay</option>
+                    <option value="Looking for room share">🛏️ Room share</option>
+                    <option value="Other">Yet to Decide</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style="text-align:center;margin-top:var(--hm-space-4);">
+                <button class="hm-btn hm-btn--ghost hm-btn--sm" type="button" id="hm-filter-clear">Clear filters</button>
+              </div>
+            </div>
+          </aside>
+
+          <!-- MATE FEED -->
+          <section aria-label="Centre mate list" aria-live="polite">
+            <div class="hm-grid-cards" id="hm-mates-grid"></div>
+          </section>
+
         </section>
-
-      </section>
+      </div>
 
       </div><!-- /#hm-panel-find-mates -->
 
@@ -160,8 +159,7 @@
 
     </div>
   </main>
-
-  <div data-include="footer"></div>
+  <div data-include="bottom-nav"></div>
 
   <!-- Profile detail modal -->
   <div id="hm-profile-modal" class="hm-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="hm-modal-name">
@@ -236,7 +234,7 @@
         aria-describedby="hm-block-reason-help"></textarea>
       <p id="hm-block-reason-help" class="hm-text-subtle"
          style="margin:6px 0 var(--hm-space-4);font-size:var(--hm-text-xs);">
-        Minimum 5 characters.
+        Minimum 4 characters.
       </p>
 
       <div class="d-flex gap-2 justify-content-end flex-wrap">
@@ -260,9 +258,7 @@
         Safety Reminder
       </h3>
       <p style="margin:0 0 var(--hm-space-5);color:var(--hm-text-muted);font-size:var(--hm-text-sm);line-height:1.65;text-align:center;">
-        In view of individual safety concerns, before travelling or staying together
-        with a random person, kindly verify the other mate with their Hall ticket and
-        ID proof.
+        Kindly verify with Government ID proof and Admit card of random aspirants, before finalising any travel plans.
         <br><br>
         All the very best for your exam 💐 ! You have got this !
       </p>

@@ -37,7 +37,7 @@ export function from(table) {
 export function getUserByPhone(phone) {
   return query(
     from('users')
-      .select('id, profile_completed, exam_type, role, state, exam_centre_state, plus_member, contact_reveals_used, is_verified_aspirant, account_status, appeal_submitted_at, suspension_warning')
+      .select('id, profile_completed, exam_type, role, state, exam_centre_state, exam_centre_district, plus_member, contact_reveals_used, is_verified_aspirant, account_status, appeal_submitted_at, suspension_warning')
       .eq('phone', phone)
       .maybeSingle()
   );
@@ -206,12 +206,16 @@ export function upsertUser(payload) {
 //     with null exam_type (users created before exam_type was introduced).
 //   - Any other examType: strict equality — segregates NEET PG etc.
 export function getAllUsers(examType = 'NEET UG') {
-  let q = from('users')
+  // Reads the public_profiles VIEW, not the raw users table — phone is
+  // pre-masked server-side (idempotent with the client's maskPhone(), so no
+  // rendering change needed) and sensitive columns (real phone, roll number,
+  // device fingerprint, suspicious_flags, role, etc.) are never sent to the
+  // browser for OTHER users. account_status filtering is baked into the view
+  // (suspended/banned users are excluded there), so no filter needed here.
+  let q = from('public_profiles')
     .select('id, full_name, gender, state, district, exam_centre_state, exam_centre_district, exam_center, phone, travel_mode, stay_plan, bio, exam_type, plus_member, is_verified_aspirant, created_at')
     .eq('profile_completed', true)
-    .or('is_profile_paused.is.null,is_profile_paused.eq.false')
-    // Exclude admin-suspended and admin-banned users from the public feed
-    .or('account_status.is.null,account_status.eq.active');
+    .or('is_profile_paused.is.null,is_profile_paused.eq.false');
 
   if (!examType || examType === 'NEET UG') {
     q = q.or('exam_type.eq.NEET UG,exam_type.is.null');
@@ -571,9 +575,12 @@ export function attemptReveal(userId) {
   return query(supabase.rpc('increment_reveal_count', { p_user_id: userId }));
 }
 
-/** Grant or revoke Plus membership (admin). */
-export function adminSetPlusMember(targetId, isPlus) {
-  return query(from('users').update({ plus_member: isPlus }).eq('id', targetId).select('id').single());
+/** Grant or revoke Plus membership (admin). Goes through a phone-checked RPC —
+ *  a DB trigger blocks direct client writes to plus_member. */
+export function adminSetPlusMember(targetId, requesterPhone, isPlus) {
+  return query(supabase.rpc('admin_set_plus_member', {
+    p_target_id: targetId, p_is_plus: isPlus, p_requester_phone: requesterPhone,
+  }));
 }
 
 // ─── Razorpay Payment ─────────────────────────────────────────────────────────
@@ -643,12 +650,13 @@ export function trackEvent(eventName, userId, properties = {}) {
   );
 }
 
-/** Grant or revoke Verified Aspirant status (Roll No verified by admin). */
-export function adminSetVerifiedAspirant(targetId, isVerified) {
-  const updates = isVerified
-    ? { is_verified_aspirant: true,  verification_requested: false, verification_rejected: false }
-    : { is_verified_aspirant: false, verification_requested: false, verification_rejected: true  };
-  return query(from('users').update(updates).eq('id', targetId).select('id').single());
+/** Grant or revoke Verified Aspirant status (Roll No verified by admin). Goes
+ *  through a phone-checked RPC — a DB trigger blocks direct client writes to
+ *  is_verified_aspirant. */
+export function adminSetVerifiedAspirant(targetId, requesterPhone, isVerified) {
+  return query(supabase.rpc('admin_set_verified_aspirant', {
+    p_target_id: targetId, p_verified: isVerified, p_requester_phone: requesterPhone,
+  }));
 }
 
 /** User submits Roll Number and requests verification. */

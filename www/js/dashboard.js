@@ -9,7 +9,6 @@ import { getAllUsers, getUserByPhone, getMyConnections,
 import { debounce, checkSuspended } from './utils.js';
 import { toast, setButtonBusy } from './ui.js';
 import * as Relationships from './relationships.js';
-import { populateStateSelect, wireDistrictCascade, DISTRICTS_BY_STATE, UPSC_CMS_CENTRES } from './location-data.js';
 
 const { REL } = Relationships;
 
@@ -30,6 +29,8 @@ let myUserId              = null;
 let myExamType            = null;   // permanent — set during onboarding
 let myExamTypeForFeed     = null;   // null for admins (all exams), else same as myExamType
 let myExamCentreState     = null;   // state-level matching boundary
+let myExamCentreDistrict  = null;   // user's own exam-centre district (feed priority sort)
+let activeDistrict        = null;   // null = showing district-card list; else the chosen district/centre
 let myPlusMember          = false;  // Zenter Plus membership
 let myRevealsUsed         = 0;      // contact reveals used so far
 let myIsVerified          = false;  // whether current user has verified Roll No
@@ -50,7 +51,6 @@ const FILTERS = [
   // State/district filters removed — state-level matching is enforced on load.
   // Remaining filters let users narrow within their state.
   { id: 'hm-filter-gender',   key: 'gender',               type: 'select' },
-  { id: 'hm-filter-district', key: 'exam_centre_district', type: 'select' },
   { id: 'hm-filter-center',   key: 'exam_center',          type: 'text'   },
   { id: 'hm-filter-travel',   key: 'travel_mode',          type: 'select' },
   { id: 'hm-filter-stay',     key: 'stay_plan',            type: 'select' },
@@ -104,34 +104,14 @@ async function init() {
   myExamCentreState = (myRole === 'admin' || myRole === 'superadmin')
     ? null
     : (me?.exam_centre_state || null);
+  myExamCentreDistrict = (myRole === 'admin' || myRole === 'superadmin')
+    ? null
+    : (me?.exam_centre_district || null);
 
   // Zenter Plus state
   myPlusMember  = me?.plus_member === true;
   myRevealsUsed = me?.contact_reveals_used || 0;
   myIsVerified  = me?.is_verified_aspirant === true;
-
-  // Populate the district filter dropdown.
-  // UPSC CMS: show the 48 CMS centres. NEET: show districts from user's exam state.
-  const districtEl = document.getElementById('hm-filter-district');
-  if (districtEl) {
-    if (myExamType === 'UPSC CMS') {
-      UPSC_CMS_CENTRES.forEach(({ centre }) => {
-        const opt = document.createElement('option');
-        opt.value = centre; opt.textContent = centre;
-        districtEl.appendChild(opt);
-      });
-    } else {
-      const stateForDistricts = me?.exam_centre_state || null;
-      const districts = stateForDistricts
-        ? (DISTRICTS_BY_STATE[stateForDistricts] || [])
-        : Object.values(DISTRICTS_BY_STATE).flat().sort();
-      districts.forEach(d => {
-        const opt = document.createElement('option');
-        opt.value = d; opt.textContent = d;
-        districtEl.appendChild(opt);
-      });
-    }
-  }
 
   // Cache role so the navbar admin link can show/hide without an extra fetch.
   // Also update the DOM directly — renderNavAuthState() in app.js fires before
@@ -146,7 +126,7 @@ async function init() {
   if (plusNavItem) plusNavItem.hidden = myPlusMember;
 
   // Only NEET UG, NEET PG, and UPSC CMS are live; other exam types → maintenance page.
-  const LIVE_EXAMS = ['NEET UG', 'NEET PG', 'UPSC CMS', 'INICET', 'NEET MDS', 'NEET SS', 'FMGE'];
+  const LIVE_EXAMS = ['NEET UG', 'NEET PG', 'UPSC CMS', 'INICET', 'NEET MDS', 'NEET SS', 'FMGE', 'JEE Main'];
   if (!LIVE_EXAMS.includes(myExamType)) {
     window.location.replace('/maintenance.html');
     return;
@@ -160,6 +140,7 @@ async function init() {
   const examYearDisplay = {
     'NEET UG': 'NEET UG 2026', 'NEET PG': 'NEET PG 2026', 'UPSC CMS': 'UPSC CMS 2026',
     'INICET': 'INICET 2026', 'NEET MDS': 'NEET MDS 2026', 'NEET SS': 'NEET SS 2026', 'FMGE': 'FMGE 2026 Jun',
+    'JEE Main': 'JEE Main 2026',
   };
   if (examLabel) examLabel.textContent = examYearDisplay[myExamType] || myExamType;
 
@@ -174,6 +155,7 @@ async function init() {
   }
 
   wireFilters();
+  wireDistrictView();
   wireModal();
   wireConnectionActions();
   wireBlockModal();
@@ -269,18 +251,53 @@ async function loadData() {
     return true;
   });
 
-  // Sort Plus members to top — featured profile benefit
-  // Within each group (Plus / Free) keep the original created_at order
+  // Feed ordering (stable sort keeps original created_at order within ties):
+  //   1. Plus members first — paid "priority visibility" benefit.
+  //   2. Then aspirants in the signed-in user's OWN exam-centre district —
+  //      most relevant matches surface to the top without hiding the rest.
+  //   3. Then everyone else (existing created_at order).
   allUsers.sort((a, b) => {
-    if (a.plus_member && !b.plus_member) return -1;
-    if (!a.plus_member && b.plus_member) return  1;
+    if (a.plus_member !== b.plus_member) return a.plus_member ? -1 : 1;
+    if (myExamCentreDistrict) {
+      const aSame = a.exam_centre_district === myExamCentreDistrict;
+      const bSame = b.exam_centre_district === myExamCentreDistrict;
+      if (aSame !== bSame) return aSame ? -1 : 1;
+    }
     return 0;
   });
 
   dataLoaded = true; // gate empty states until real data is present
   renderRequests();
   updateNavBadge();
-  applyFilters();
+
+  // Find-Aspirants-specific view state (district picker vs a chosen district)
+  // only applies while that tab is actually the one showing. On Requests /
+  // Co-ordinations / Chats, leave activeDistrict/the picker alone entirely —
+  // otherwise a background refresh here would silently reset whichever
+  // district the user had drilled into.
+  if (parseHash(location.hash) !== 'find-mates') {
+    setNavBackTarget(true); // "Districts" is reachable from every tab
+  } else {
+    // "Aspirants" from Profile (etc.) lands directly on the user's own
+    // district's student list, skipping the picker. One-shot — the hash is
+    // consumed here so a later manual refresh doesn't keep re-triggering it.
+    // Falls back to the picker if the user has no district set or it has no
+    // aspirants yet.
+    const wantsOwnDistrict = !activeDistrict && location.hash === '#my-district';
+    if (wantsOwnDistrict) history.replaceState(null, '', location.pathname);
+    const ownDistrictHasAspirants = myExamCentreDistrict
+      && allUsers.some(u => u.exam_centre_district === myExamCentreDistrict);
+
+    if (wantsOwnDistrict && ownDistrictHasAspirants) {
+      showStudentsView(myExamCentreDistrict);
+    } else if (activeDistrict && allUsers.some(u => u.exam_centre_district === activeDistrict)) {
+      // Refreshing while drilled into a district: stay there (with fresh data)
+      // unless that district no longer has anyone in it, then bounce back to the list.
+      applyFilters();
+    } else {
+      showDistrictView();
+    }
+  }
 
   // Fetch unread chat count for the badge (regardless of which tab is active)
   if (myUserId) {
@@ -306,8 +323,8 @@ async function loadData() {
         const lr = lastRead[c.id];
         if (lr && new Date(c.updated_at) > new Date(lr)) unread++;
       });
-      const badge = document.getElementById('hm-chats-tab-badge');
-      if (badge) { badge.textContent = unread; badge.hidden = unread === 0; }
+      const bottomBadge = document.getElementById('hm-bottomnav-chats-badge');
+      if (bottomBadge) { bottomBadge.textContent = unread; bottomBadge.hidden = unread === 0; }
     } catch {}
   }
 
@@ -338,11 +355,6 @@ function applyInitialTabFromHash() {
   const tab = VALID_TABS.includes(h) ? h : 'find-mates';
   if (tab === 'find-mates') return; // HTML default already correct — nothing to do
 
-  document.querySelectorAll('.hm-tab[data-tab]').forEach(btn => {
-    const active = btn.dataset.tab === tab;
-    btn.classList.toggle('is-active', active);
-    btn.setAttribute('aria-selected', String(active));
-  });
   Object.entries(TAB_PANELS()).forEach(([key, el]) => { if (el) el.hidden = key !== tab; });
 }
 
@@ -359,14 +371,6 @@ function parseHash(hash) {
 function wireTabs() {
   const startTab = parseHash(location.hash);
   if (startTab !== 'find-mates') activateTab(startTab);
-
-  document.querySelectorAll('.hm-tab[data-tab]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const t = btn.dataset.tab;
-      activateTab(t);
-      history.replaceState(null, '', t === 'find-mates' ? location.pathname : `#${t}`);
-    });
-  });
 
   window.addEventListener('hashchange', () => {
     const tab = parseHash(location.hash);
@@ -396,13 +400,14 @@ async function activateTab(name) {
     btn.setAttribute('aria-selected', String(active));
   });
 
-  const panels = {
-    'requests':    document.getElementById('hm-panel-requests'),
-    'find-mates':  document.getElementById('hm-panel-find-mates'),
-    'chats':       document.getElementById('hm-panel-chats'),
-    'connections': document.getElementById('hm-panel-connections'),
-  };
+  // Back button: "Districts" isn't Find-Aspirants-only — offer it on every
+  // other tab too. On Find Aspirants itself, only show it once the user has
+  // actually drilled into a district (hidden on the picker screen itself).
+  setNavBackTarget(tab !== 'find-mates' || !!activeDistrict);
+
+  const panels = TAB_PANELS();
   Object.entries(panels).forEach(([key, el]) => { if (el) el.hidden = key !== tab; });
+  updateTabBarVisibility();
 
   // Render Requests tab content (derived from in-memory data — no extra fetch)
   if (tab === 'requests') renderRequests();
@@ -419,10 +424,10 @@ async function activateTab(name) {
 
         const { mountChat } = await import('./chat.js');
         await mountChat(root, myUserId, usersMap, (unread) => {
-          const badge = document.getElementById('hm-chats-tab-badge');
-          if (badge) {
-            badge.textContent = unread;
-            badge.hidden = unread === 0;
+          const bottomBadge = document.getElementById('hm-bottomnav-chats-badge');
+          if (bottomBadge) {
+            bottomBadge.textContent = unread;
+            bottomBadge.hidden = unread === 0;
           }
         }, {
           isVerified: myIsVerified,
@@ -470,6 +475,17 @@ async function activateTab(name) {
   }
 }
 
+/** Top tab bar (Requests / Find Aspirants / Co-ordinations / Chats) is only
+ *  shown once the user is inside a district — hidden on the bare "choose your
+ *  district" landing screen so that first screen stays uncluttered. */
+function updateTabBarVisibility() {
+  const tabBar = document.querySelector('.hm-tabs[role="tablist"]');
+  if (!tabBar) return;
+  const findMatesPanel = document.getElementById('hm-panel-find-mates');
+  const onFindMatesTab = findMatesPanel && !findMatesPanel.hidden;
+  tabBar.hidden = onFindMatesTab && !activeDistrict;
+}
+
 // ─── Filtering ────────────────────────────────────────────────────────────────
 
 function getActiveFilters() {
@@ -482,11 +498,16 @@ function getActiveFilters() {
 }
 
 function applyFilters() {
-  const active = getActiveFilters();
-  const keys   = Object.keys(active);
-  const result = keys.length === 0
-    ? allUsers
-    : allUsers.filter((u) => keys.every((k) => {
+  // Student list only ever renders for a chosen district/centre — the district
+  // itself is picked via a card, not a filter field (see wireDistrictView()).
+  if (!activeDistrict) return;
+
+  const active   = getActiveFilters();
+  const keys     = Object.keys(active);
+  const inDistrict = allUsers.filter(u => u.exam_centre_district === activeDistrict);
+  const result   = keys.length === 0
+    ? inDistrict
+    : inDistrict.filter((u) => keys.every((k) => {
         const fdef   = FILTERS.find(f => f.key === k);
         // Use fallback field for backward compat (old users without exam_centre_* cols)
         const raw    = u[k] ?? (fdef?.fallback ? u[fdef.fallback] : '');
@@ -498,9 +519,9 @@ function applyFilters() {
 
   updateCount(result.length);
 
-  if (result.length === 0 && allUsers.length === 0) renderEmpty(false);
-  else if (result.length === 0)                     renderEmpty(true);
-  else                                              renderUsers(result);
+  if (result.length === 0 && inDistrict.length === 0) renderEmpty(false);
+  else if (result.length === 0)                       renderEmpty(true);
+  else                                                renderUsers(result);
 }
 
 const debouncedApply = debounce(applyFilters, 240);
@@ -524,8 +545,6 @@ function wireFilters() {
       ?.addEventListener(type === 'text' ? 'input' : 'change', debouncedApply);
   });
 
-  // State/district dropdowns removed — district matching is enforced at load time.
-
   document.getElementById('hm-filter-clear')?.addEventListener('click', clearFilters);
 
   document.getElementById('hm-refresh')?.addEventListener('click', async () => {
@@ -536,8 +555,169 @@ function wireFilters() {
 
 function clearFilters() {
   FILTERS.forEach(({ id }) => { const el = document.getElementById(id); if (el) el.value = ''; });
-  // Trigger cascade so district options reset to "All districts" when state is cleared
   applyFilters();
+}
+
+// ─── District view (Find Aspirants landing) ────────────────────────────────────
+// Find Aspirants now opens on a list of district cards (UPSC CMS: exam-centre
+// cards — same field, `exam_centre_district`, holds the CMS centre name for
+// that exam type). Clicking a card drills into that district's aspirants,
+// where the remaining filters (gender / exam centre / travel / stay) apply.
+
+function districtLabel() { return myExamType === 'UPSC CMS' ? 'exam centre' : 'district'; }
+
+/** Group the loaded feed by exam_centre_district, with counts. Own district
+ *  first, then the rest ordered by aspirant count (most first). */
+function groupByDistrict() {
+  const counts = new Map();
+  allUsers.forEach((u) => {
+    const d = u.exam_centre_district;
+    if (!d) return;
+    counts.set(d, (counts.get(d) || 0) + 1);
+  });
+  const list = [...counts.entries()].map(([name, count]) => ({ name, count }));
+  list.sort((a, b) => {
+    if (myExamCentreDistrict) {
+      const aMine = a.name === myExamCentreDistrict;
+      const bMine = b.name === myExamCentreDistrict;
+      if (aMine !== bMine) return aMine ? -1 : 1;
+    }
+    return b.count - a.count;
+  });
+  return list;
+}
+
+function districtCard({ name, count }) {
+  const mine = name === myExamCentreDistrict;
+  return `
+    <button type="button" class="hm-card hm-card--interactive hm-district-card${mine ? ' hm-district-card--mine' : ''}" data-district="${esc(name)}">
+      ${mine ? `<span class="hm-badge hm-badge--success hm-district-card__mine-badge">✓ Your ${districtLabel()}</span>` : ''}
+      <div class="hm-avatar hm-avatar--card" style="background:${avatarColor(name)};color:#fff;" aria-hidden="true">${avatarInitials(name)}</div>
+      <span class="hm-district-card__body">
+        <span class="hm-district-card__name">${esc(name)}</span>
+        <span class="hm-badge hm-district-card__count">👥 ${count} ${count === 1 ? 'aspirant' : 'aspirants'}</span>
+      </span>
+      <span class="hm-district-card__arrow" aria-hidden="true">›</span>
+    </button>`;
+}
+
+function skeletonDistrictCard() {
+  return `
+    <div class="hm-card hm-district-card hm-district-card--skeleton" aria-hidden="true">
+      <div class="hm-skeleton" style="width:44px;height:44px;border-radius:50%;flex-shrink:0;"></div>
+      <div class="hm-district-card__body">
+        <div class="hm-skeleton" style="width:55%;height:16px;margin-bottom:8px;"></div>
+        <div class="hm-skeleton" style="width:80px;height:20px;border-radius:999px;"></div>
+      </div>
+    </div>`;
+}
+
+function renderDistrictCards(searchTerm = '') {
+  let list = groupByDistrict();
+  updateDistrictCount();
+
+  const q = searchTerm.trim().toLowerCase();
+  if (q) list = list.filter((d) => d.name.toLowerCase().includes(q));
+
+  if (list.length === 0) {
+    setDistrictGrid(`
+      <div class="hm-empty" style="grid-column:1/-1;">
+        <div class="hm-empty__icon" aria-hidden="true">🔍</div>
+        <h3>No ${districtLabel()} found</h3>
+        <p class="hm-text-muted">${q ? 'Try a different search.' : `Be the first aspirant on Zenter for your ${districtLabel()}.`}</p>
+      </div>`);
+    return;
+  }
+  setDistrictGrid(list.map(districtCard).join(''));
+}
+
+function updateFeedHeader() {
+  const title    = document.getElementById('hm-feed-title');
+  const subtitle = document.getElementById('hm-feed-subtitle');
+  if (activeDistrict) {
+    if (title)    title.textContent    = `Aspirants in ${activeDistrict}`;
+    if (subtitle) subtitle.textContent = `Aspirants going to ${activeDistrict}.`;
+  } else {
+    const label = districtLabel();
+    if (title)    title.textContent    = `Choose your ${label}`;
+    if (subtitle) subtitle.textContent = `Pick your exam ${label} to find aspirants near you.`;
+  }
+}
+
+/** The single #hm-refresh button lives next to whichever search/back row is
+ *  currently visible — moved between the two homes instead of duplicating it
+ *  (duplicate ids would break getElementById-based wiring). */
+function relocateRefreshButton(targetId) {
+  const btn    = document.getElementById('hm-refresh');
+  const target = document.getElementById(targetId);
+  if (btn && target && btn.parentElement !== target) target.appendChild(btn);
+}
+
+/** The navbar's ← Back to Home button is reused here while inside a district —
+ *  shown and repointed to return to the district list (instead of its default
+ *  history.back()/dashboard redirect), then hidden again on the district list
+ *  itself (where NO_BACK_PAGES already keeps it hidden by default). */
+function setNavBackTarget(active) {
+  const btn = document.getElementById('hm-nav-back');
+  if (!btn) return;
+  btn.hidden = !active;
+  if (active) {
+    btn.textContent = '← Districts';
+    btn.onclick = (e) => { e.preventDefault(); goToDistricts(); };
+  } else {
+    btn.textContent = '← Aspirants'; // restore default label (same as navbar.html)
+    btn.onclick = null;
+  }
+}
+
+// Reusable "back to Districts" target for the nav back button — works from
+// any tab (Requests / Co-ordinations / Chats), not just from inside Find
+// Aspirants, by switching to the find-mates tab first when needed.
+function goToDistricts() {
+  if (parseHash(location.hash) !== 'find-mates') {
+    activateTab('find-mates');
+    history.replaceState(null, '', location.pathname);
+  }
+  showDistrictView();
+}
+
+function showDistrictView() {
+  activeDistrict = null;
+  document.getElementById('hm-district-view').hidden  = false;
+  document.getElementById('hm-students-view').hidden  = true;
+  document.getElementById('hm-filter-toggle').hidden  = true;
+  relocateRefreshButton('hm-district-search-row');
+  setNavBackTarget(false);
+  updateTabBarVisibility();
+  updateFeedHeader();
+  renderDistrictCards(document.getElementById('hm-district-search')?.value || '');
+  scrollPageToTop();
+}
+
+function showStudentsView(name) {
+  activeDistrict = name;
+  document.getElementById('hm-district-view').hidden  = true;
+  document.getElementById('hm-students-view').hidden  = false;
+  document.getElementById('hm-filter-toggle').hidden  = false;
+  relocateRefreshButton('hm-students-refresh-slot');
+  setNavBackTarget(true);
+  updateTabBarVisibility();
+  updateFeedHeader();
+  applyFilters();
+  scrollPageToTop();
+}
+
+function wireDistrictView() {
+  document.getElementById('hm-district-grid')?.addEventListener('click', (e) => {
+    const card = e.target.closest('[data-district]');
+    if (!card) return;
+    showStudentsView(card.dataset.district);
+  });
+
+  document.getElementById('hm-district-search')?.addEventListener(
+    'input',
+    debounce((e) => renderDistrictCards(e.target.value), 200)
+  );
 }
 
 function wireModal() {
@@ -670,10 +850,10 @@ function renderRevealBanner(plusEnabled) {
   banner.innerHTML = remaining > 0
     ? `<span class="hm-reveal-banner__text">
          You have <strong>${remaining} free chat${remaining === 1 ? '' : 's'}</strong> remaining.
-         <a href="/plus.html" class="hm-reveal-banner__link">Get Zenter Plus for unlimited chats →</a>
+         <a href="/plus.html" class="hm-reveal-banner__link">Unlock entire exam centre →</a>
        </span>`
     : `<span class="hm-reveal-banner__text hm-reveal-banner__text--limit">
-         You've used all your free chats.
+         <strong style="font-weight:600;">Aspirants! Break the barriers 🚧</strong>
          <a href="/plus.html" class="hm-reveal-banner__link">Upgrade to Zenter Plus →</a>
        </span>`;
 }
@@ -766,8 +946,18 @@ function showCallExchangePrompt(userId) {
 
 function updateCount(n) {
   const el = document.getElementById('hm-results-count');
+  if (!el || !activeDistrict) return;
+  el.textContent = `${n} ${n === 1 ? 'Aspirant' : 'Aspirants'} found in ${activeDistrict}`;
+}
+
+/** District-list landing screen shows the total aspirant count for the whole
+ *  state (same wording as the old pre-district feed count), not the number
+ *  of district cards — the cards are just a way to narrow down from there. */
+function updateDistrictCount() {
+  const el = document.getElementById('hm-results-count');
   if (!el) return;
-  if (allUsers.length === 0) { el.textContent = ''; return; }
+  const n = allUsers.length;
+  if (n === 0) { el.textContent = ''; return; }
   const stateSuffix = myExamCentreState ? ` in ${myExamCentreState}` : '';
   el.textContent = `${n} ${n === 1 ? 'Aspirant' : 'Aspirants'} found${stateSuffix}`;
 }
@@ -779,8 +969,8 @@ function updateNavBadge() {
     .length;
   const navBadge = document.getElementById('hm-requests-badge');
   if (navBadge) { navBadge.textContent = n; navBadge.hidden = n === 0; }
-  const tabBadge = document.getElementById('hm-requests-tab-badge');
-  if (tabBadge) { tabBadge.textContent = n; tabBadge.hidden = n === 0; }
+  const bottomBadge = document.getElementById('hm-bottomnav-requests-badge');
+  if (bottomBadge) { bottomBadge.textContent = n; bottomBadge.hidden = n === 0; }
 }
 
 // ─── Requests tab ─────────────────────────────────────────────────────────────
@@ -1013,7 +1203,10 @@ function renderModalActions() {
 
 // ─── Render ───────────────────────────────────────────────────────────────────
 
-function renderSkeletons() { setGrid(Array.from({ length: 6 }, skeletonCard).join('')); }
+function renderSkeletons() {
+  if (activeDistrict) setGrid(Array.from({ length: 6 }, skeletonCard).join(''));
+  else                setDistrictGrid(Array.from({ length: 6 }, skeletonDistrictCard).join(''));
+}
 
 function renderUsers(users) {
   displayedUsers = users;
@@ -1022,14 +1215,15 @@ function renderUsers(users) {
 
 function renderEmpty(isFiltered) {
   displayedUsers = [];
+  const where = activeDistrict ? esc(activeDistrict) : `this ${districtLabel()}`;
   setGrid(`
     <div class="hm-empty" style="grid-column:1/-1;">
       <div class="hm-empty__icon" aria-hidden="true">${isFiltered ? '🔍' : '🏛️'}</div>
-      <h3>${isFiltered ? 'No centre mates found' : 'No mates yet'}</h3>
+      <h3>${isFiltered ? 'No aspirants found' : 'No aspirants yet'}</h3>
       <p class="hm-text-muted">
         ${isFiltered
-          ? 'No aspirants in your exam centre state match the filters.'
-          : 'Be the first aspirant from your exam centre state on Zenter.'}
+          ? `No aspirants in ${where} match the filters.`
+          : `Be the first aspirant from ${where} on Zenter.`}
       </p>
       ${isFiltered ? `<button class="hm-btn hm-btn--ghost hm-btn--sm" onclick="document.getElementById('hm-filter-clear').click()">Clear filters</button>` : ''}
     </div>`);
@@ -1037,17 +1231,23 @@ function renderEmpty(isFiltered) {
 
 function renderError(msg) {
   displayedUsers = [];
-  setGrid(`
+  const html = `
     <div class="hm-empty" style="grid-column:1/-1;">
       <div class="hm-empty__icon" aria-hidden="true">⚠️</div>
-      <h3>Could not load mates</h3>
+      <h3>Could not load aspirants</h3>
       <p class="hm-text-muted">${esc(msg) || 'Please refresh and try again.'}</p>
       <button class="hm-btn hm-btn--ghost hm-btn--sm" onclick="document.getElementById('hm-refresh').click()">Retry</button>
-    </div>`);
+    </div>`;
+  if (activeDistrict) setGrid(html); else setDistrictGrid(html);
 }
 
 function setGrid(html) {
   const g = document.getElementById('hm-mates-grid');
+  if (g) g.innerHTML = html;
+}
+
+function setDistrictGrid(html) {
+  const g = document.getElementById('hm-district-grid');
   if (g) g.innerHTML = html;
 }
 
@@ -1249,7 +1449,7 @@ function esc(str) {
 
 // ─── Block ────────────────────────────────────────────────────────────────────
 
-const MIN_BLOCK_REASON_LEN = 5;
+const MIN_BLOCK_REASON_LEN = 4;
 
 function openBlockModal(userId) {
   const modal = document.getElementById('hm-block-modal');

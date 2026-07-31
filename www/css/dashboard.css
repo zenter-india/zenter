@@ -2,8 +2,11 @@
 
 /* Remove default page padding at top only on dashboard (tabs start immediately).
    :has(.hm-tabs) scopes this to the dashboard main element so it doesn't strip
-   padding from the landing page (which shares id="hm-main"). */
-#hm-main:has(.hm-tabs) { padding-top: 0; }
+   padding from the landing page (which shares id="hm-main"). Only applies while
+   the tab bar is actually VISIBLE — on the district-picker landing screen the
+   tab bar is hidden (see updateTabBarVisibility() in dashboard.js), and without
+   this guard the page content sits flush against the promo ticker with no gap. */
+#hm-main:has(.hm-tabs:not([hidden])) { padding-top: 0; }
 
 /* ── Connections page — received requests link banner ───────────────────── */
 .hm-conn-requests-link {
@@ -98,39 +101,6 @@
   animation: hm-panel-enter 180ms ease-out both;
 }
 
-/* ── Dashboard tab bar ─────────────────────────────────────────────────────── */
-.hm-tabs {
-  display: flex;
-  justify-content: center;
-  gap: var(--hm-space-2);
-  border-bottom: 1px solid var(--hm-border);
-  margin-bottom: var(--hm-space-5);
-}
-.hm-tab {
-  padding: var(--hm-space-3) var(--hm-space-6);
-  font-size: var(--hm-text-base);
-  font-weight: 600;
-  color: var(--hm-text-subtle);
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  cursor: pointer;
-  min-height: 48px;
-  white-space: nowrap;
-  transition: color var(--hm-duration-fast) var(--hm-ease),
-              border-color var(--hm-duration-fast) var(--hm-ease);
-}
-.hm-tab:hover { color: var(--hm-text); }
-.hm-tab.is-active {
-  color: var(--hm-primary);
-  border-bottom-color: var(--hm-primary);
-}
-@media (max-width: 479px) {
-  .hm-tabs { gap: 0; }
-  .hm-tab { padding: var(--hm-space-2) var(--hm-space-2); font-size: var(--hm-text-xs, 0.75rem); flex: 1; min-width: 0; white-space: nowrap; }
-}
-
 .hm-dashboard {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -163,6 +133,9 @@
 
 /* Filter toggle — hidden on desktop (sidebar always visible), shown on mobile via responsive.css */
 .hm-filter-toggle { display: none; }
+/* District view: force-hide the toggle even on mobile, where responsive.css uses
+   !important to always show it. Higher specificity (id + attribute) wins. */
+#hm-filter-toggle[hidden] { display: none !important; }
 
 .hm-feed-header {
   display: flex; align-items: flex-end; justify-content: space-between;
@@ -179,17 +152,75 @@
 .hm-feed-header h1 { margin-bottom: 4px; }
 .hm-feed-header p  { margin-bottom: 0; }
 
+/* Feed section must not overflow its 1fr grid cell */
+.hm-dashboard > section { min-width: 0; }
+
 .hm-grid-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--hm-space-4);
 }
 
+/* ── District / exam-centre card (Find Aspirants landing view) ── */
+.hm-district-card {
+  display: flex;
+  align-items: center;
+  gap: var(--hm-space-4);
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  background: var(--hm-surface);
+  position: relative;
+}
+.hm-district-card--mine {
+  border: 1.5px solid var(--hm-primary);
+  background: linear-gradient(135deg, var(--hm-primary-100) 0%, var(--hm-surface) 65%);
+}
+.hm-district-card__mine-badge {
+  position: absolute;
+  top: 10px; right: 12px;
+  font-size: 10px;
+  height: 20px;
+  padding: 0 8px;
+}
+
+/* Icon now reuses .hm-avatar.hm-avatar--card directly (first-letter avatar,
+   same component as aspirant name cards) — no bespoke icon-bubble styling
+   needed here. */
+
+.hm-district-card__body {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.hm-district-card__name {
+  font-size: 16px; font-weight: 700; color: var(--hm-text); margin: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hm-district-card__count {
+  align-self: flex-start;
+  background: var(--hm-surface-2); color: var(--hm-text-muted);
+}
+.hm-district-card--mine .hm-district-card__count {
+  background: #fff; color: var(--hm-primary-600, var(--hm-primary));
+}
+
+.hm-district-card__arrow {
+  font-size: 24px; font-weight: 700; line-height: 1;
+  color: var(--hm-text-subtle); flex-shrink: 0;
+  transition: transform var(--hm-duration-fast, 140ms) var(--hm-ease, ease-out),
+              color var(--hm-duration-fast, 140ms) var(--hm-ease, ease-out);
+}
+.hm-district-card:hover .hm-district-card__arrow { transform: translateX(3px); color: var(--hm-primary); }
+
+.hm-district-card--skeleton { cursor: default; }
+
 /* ── Mate card ── */
 .hm-mate {
   display: flex; flex-direction: column;
   gap: var(--hm-space-3);
   position: relative;
+  min-width: 0;
 }
 
 /* Zenter Plus — highlighted card */
@@ -293,6 +324,7 @@
   gap: 10px;
   align-items: stretch;
   min-height: 88px;
+  min-width: 0;
 }
 
 /* Route wrap: icon track (left) + text column (right) */
@@ -606,10 +638,31 @@
   gap: var(--hm-space-6);
   align-items: start;
 }
-.hm-profile-card { text-align: center; }
-.hm-profile-card .hm-avatar { margin: 0 auto var(--hm-space-3); }
-.hm-profile-card__name { font-size: var(--hm-text-xl); margin-bottom: 4px; }
-.hm-profile-card__phone { color: var(--hm-text-subtle); font-size: var(--hm-text-sm); margin-bottom: var(--hm-space-3); }
+.hm-profile-card { text-align: left; position: relative; }
+/* Plus badge/upgrade-link floats independently in the corner — kept out of
+   the identity row's flex flow so it never squeezes the name/phone. z-index
+   ensures it visually sits on top if a long name's ellipsis point ever
+   reaches this far (its background is opaque, so it cleanly covers the
+   trailing edge rather than looking like a broken overlap). */
+.hm-profile-card__plus-slot { position: absolute; top: var(--hm-space-3); right: var(--hm-space-3); z-index: 1; }
+.hm-profile-card__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--hm-space-3);
+  min-width: 0;
+  margin-bottom: var(--hm-space-3);
+}
+.hm-profile-card__identity-text { min-width: 0; }
+.hm-profile-card__name {
+  font-size: var(--hm-text-lg);
+  margin-bottom: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hm-profile-card__phone {
+  color: var(--hm-text-subtle); font-size: var(--hm-text-sm); margin-bottom: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hm-profile-card__plus-slot .hm-badge { white-space: nowrap; }
 
 .hm-section-card { margin-bottom: var(--hm-space-4); }
 .hm-section-card__header {

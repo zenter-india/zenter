@@ -1,7 +1,7 @@
 // HallMate — Login page OTP flow.
 // Loaded only from login.html. Handles: phone → send OTP → verify → post-login redirect.
 
-import { auth, createRecaptcha, resetRecaptcha, signInWithPhoneNumber } from './firebase-config.js';
+import { auth, createRecaptcha, resetRecaptcha, signInWithPhoneNumber, isNativePlatform, sendOtpNative } from './firebase-config.js';
 import { handlePostLogin, redirectIfAuthed } from './auth.js';
 import { normalizePhoneIN } from './utils.js';
 import { setButtonBusy } from './ui.js';
@@ -73,11 +73,18 @@ async function sendOtp() {
   setButtonBusy(btn, true, 'Sending…');
 
   try {
-    // Singleton verifier — same instance across retries. Firebase handles
-    // re-execution and token refresh internally; manual clear-on-every-click
-    // caused "already rendered" + flicker bugs in the previous version.
-    const verifier = createRecaptcha('hm-recaptcha-container');
-    confirmationResult = await signInWithPhoneNumber(auth, phone, verifier);
+    if (isNativePlatform()) {
+      // Android/iOS app: invisible reCAPTCHA can't complete inside the native
+      // WebView, so verification goes through the native plugin instead
+      // (see firebase-config.js for why). Same ConfirmationResult shape.
+      confirmationResult = await sendOtpNative(phone);
+    } else {
+      // Singleton verifier — same instance across retries. Firebase handles
+      // re-execution and token refresh internally; manual clear-on-every-click
+      // caused "already rendered" + flicker bugs in the previous version.
+      const verifier = createRecaptcha('hm-recaptcha-container');
+      confirmationResult = await signInWithPhoneNumber(auth, phone, verifier);
+    }
 
     document.getElementById('hm-otp-target').textContent = phone;
     showStep('otp');
@@ -86,7 +93,7 @@ async function sendOtp() {
   } catch (err) {
     console.error('[login] sendOtp', err);
     // Tear down the cached verifier so the next attempt gets a clean one.
-    resetRecaptcha();
+    if (!isNativePlatform()) resetRecaptcha();
     showError('phone', toMessage(err));
   } finally {
     setButtonBusy(btn, false);

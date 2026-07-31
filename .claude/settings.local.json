@@ -126,7 +126,11 @@
       "Bash(curl -s http://localhost:5173)",
       "Bash(git fetch *)",
       "Bash(git show *)",
-      "Bash(unzip -l assets/logos/favicon.svg.zip)"
+      "Bash(unzip -l assets/logos/favicon.svg.zip)",
+      "Bash(grep -rl *)",
+      "Bash(grep -n *)",
+      "Bash(node -e ' *)",
+      "Bash(git revert *)"
     ]
   }
 }

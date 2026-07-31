@@ -38,15 +38,22 @@
         <!-- LEFT — identity card -->
         <aside>
           <div class="hm-card hm-profile-card">
-            <div class="hm-avatar hm-avatar--lg" id="hm-profile-avatar">HM</div>
-            <p class="hm-profile-card__name" id="hm-profile-name">Your name</p>
-            <p class="hm-profile-card__phone" id="hm-profile-phone">+91 ••••• •••••</p>
-            <!-- Zenter Plus status -->
-            <div id="hm-plus-status" style="margin-top:var(--hm-space-2);" hidden>
+            <!-- Zenter Plus status — floats in the top-right corner, out of
+                 the identity row so a long name/phone never has to compete
+                 with it for space. -->
+            <div id="hm-plus-status" class="hm-profile-card__plus-slot" hidden>
               <span class="hm-badge hm-badge--plus">⭐ Zenter Plus</span>
             </div>
-            <div id="hm-plus-upgrade-link" style="margin-top:var(--hm-space-2);" hidden>
+            <div id="hm-plus-upgrade-link" class="hm-profile-card__plus-slot" hidden>
               <a href="/plus.html" style="font-size:var(--hm-text-xs);color:var(--hm-primary);font-weight:600;">Get Zenter Plus →</a>
+            </div>
+
+            <div class="hm-profile-card__identity">
+              <div class="hm-avatar hm-avatar--md" id="hm-profile-avatar">HM</div>
+              <div class="hm-profile-card__identity-text">
+                <p class="hm-profile-card__name" id="hm-profile-name">Your name</p>
+                <p class="hm-profile-card__phone" id="hm-profile-phone">+91 ••••• •••••</p>
+              </div>
             </div>
 
             <!-- Verified badge callout — hidden once verified -->
@@ -57,8 +64,7 @@
                 ✓ Get the Verified Badge
               </p>
               <p style="margin:0 0 10px;font-size:12px;color:#166534;line-height:1.5;">
-                Verify your Roll no as in admit card to earn a green ✓ Verified badge on your profile card,
-                unlock contact reveals, and gain trust from centre mates.
+                Verify your Roll no as in admit card to earn the ✓ Verified badge and unlock contact reveals.
               </p>
               <a href="#hm-verification-section" style="font-size:12px;font-weight:600;color:#15803d;text-decoration:underline;">
                 Verify now ↓

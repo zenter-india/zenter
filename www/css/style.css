@@ -72,6 +72,7 @@
 
   /* Layout */
   --hm-navbar-h: 72px;
+  --hm-bottomnav-h: 60px;
   --hm-container-max: 1180px;
 }
 
@@ -92,6 +93,7 @@ html, body { height: 100%; }
 body {
   margin: 0;
   padding-top: var(--hm-navbar-h); /* offset for fixed navbar */
+  padding-bottom: 0;
   font-family: var(--hm-font-body);
   font-size: var(--hm-text-base);
   line-height: 1.55;
@@ -100,6 +102,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+}
+
+/* Reserve space above the fixed bottom tab bar, once it's visible
+   (logged-in users on app pages — see components/bottom-nav.html). */
+body:has(#hm-bottomnav:not([hidden])) {
+  padding-bottom: calc(var(--hm-bottomnav-h) + env(safe-area-inset-bottom));
 }
 
 h1, h2, h3, h4, h5, h6 {
