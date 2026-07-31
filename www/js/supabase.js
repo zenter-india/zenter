@@ -156,6 +156,18 @@ export function adminDeleteFeedback(feedbackId, requesterPhone) {
   );
 }
 
+// Admin "delete user" — goes through admin_delete_user (SECURITY DEFINER,
+// checks p_requester_phone has role='admin') rather than deleteUserData()'s
+// direct table DELETE, which is revoked for anon/authenticated.
+export function adminDeleteUser(targetId, requesterPhone) {
+  return query(
+    supabase.rpc('admin_delete_user', {
+      p_target_id:       targetId,
+      p_requester_phone: requesterPhone,
+    })
+  );
+}
+
 /** Recent reports (blocks with reasons). */
 export function getRecentReports(limit = 50) {
   return query(

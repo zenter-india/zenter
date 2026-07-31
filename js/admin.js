@@ -1451,8 +1451,8 @@ document.addEventListener('click', async (e) => {
       danger: true,
     }, async () => {
       btn.disabled = true;
-      const { deleteUserData } = await import('./supabase.js');
-      const { error } = await deleteUserData(id);
+      const { adminDeleteUser } = await import('./supabase.js');
+      const { error } = await adminDeleteUser(id, adminPhone);
       if (error) { toast('Error: ' + error.message, 'error'); btn.disabled = false; return; }
       allUsers = allUsers.filter(u => u.id !== id);
       renderFilteredUsers();
