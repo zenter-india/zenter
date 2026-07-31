@@ -3,14 +3,16 @@
  * `js/profile.js` section model:
  *   - Permanent (locked): full name, gender, exam type — shown, never editable.
  *   - Editable: college, exam-centre fields, travel/stay.
- * One "Edit profile" toggle flips the whole card set into inputs with Save /
- * Cancel (web `enterEditAll` / `saveAll` / `exitEditAll`). Saving validates the
- * required exam-centre fields and persists via `useUpdateProfile` keyed by phone;
- * for a UPSC CMS centre change the exam-centre state is re-derived from the centre
- * (getCmsCentreState), exactly like web. A failure keeps the member in edit mode
- * with an inline error and no partial write.
+ * `editing` is controlled by the parent (ProfileScreen) — the entry trigger is
+ * a pen icon next to the username in the identity card, not a button here.
+ * This card set flips into inputs with Save / Cancel (web `enterEditAll` /
+ * `saveAll` / `exitEditAll`). Saving validates the required exam-centre fields
+ * and persists via `useUpdateProfile` keyed by phone; for a UPSC CMS centre
+ * change the exam-centre state is re-derived from the centre
+ * (getCmsCentreState), exactly like web. A failure keeps the member in edit
+ * mode with an inline error and no partial write.
  */
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { colors, space, fonts } from '@/theme';
 import { Text, Card, Input, Button, useToast } from '@/components';
@@ -48,15 +50,37 @@ function initialForm(me: User): Form {
   };
 }
 
-export function ProfileEditor({ me, phone }: { me: User; phone: string | null }) {
+export function ProfileEditor({
+  me,
+  phone,
+  editing,
+  onCancel,
+  onSaved,
+}: {
+  me: User;
+  phone: string | null;
+  editing: boolean;
+  onCancel: () => void;
+  onSaved: () => void;
+}) {
   const isCms = me.exam_type === 'UPSC CMS';
   const update = useUpdateProfile(phone);
   const { show } = useToast();
 
-  const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Form>(() => initialForm(me));
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // The parent flips `editing` on (pen icon next to the username) — reset the
+  // form/errors to the current record each time editing starts.
+  useEffect(() => {
+    if (editing) {
+      setForm(initialForm(me));
+      setErrors({});
+      setSaveError(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing]);
 
   const districtOptions = useMemo<SelectOption[]>(
     () => districtsFor(form.exam_centre_state).map((d) => ({ value: d, label: d })),
@@ -65,17 +89,10 @@ export function ProfileEditor({ me, phone }: { me: User; phone: string | null })
 
   const patch = (p: Partial<Form>) => setForm((prev) => ({ ...prev, ...p }));
 
-  function startEdit() {
-    setForm(initialForm(me));
-    setErrors({});
-    setSaveError(null);
-    setEditing(true);
-  }
-
   function cancelEdit() {
-    setEditing(false);
     setErrors({});
     setSaveError(null);
+    onCancel();
   }
 
   function validate(): Record<string, string | null> {
@@ -122,7 +139,7 @@ export function ProfileEditor({ me, phone }: { me: User; phone: string | null })
     try {
       await update.mutateAsync(payload);
       show('Profile updated.', 'success');
-      setEditing(false);
+      onSaved();
     } catch (e) {
       setSaveError((e as Error)?.message || 'Save failed. Please try again.');
     }
@@ -254,9 +271,7 @@ export function ProfileEditor({ me, phone }: { me: User; phone: string | null })
             style={styles.actionBtn}
           />
         </View>
-      ) : (
-        <Button title="Edit profile" size="lg" onPress={startEdit} />
-      )}
+      ) : null}
     </View>
   );
 }

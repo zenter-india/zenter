@@ -4,7 +4,7 @@ import { ConnectionsBadge } from '@/features/connections/ConnectionsBadge';
 import { ChatsBadge } from '@/features/chat/ChatsBadge';
 
 /**
- * Bottom-tab shell (FR-32, AD-3). Order: Requests · Find · Connections · Chats.
+ * Bottom-tab shell (FR-32, AD-3). Order: Requests · Find · Co-ordinations · Chats.
  * Uses the custom {@link TabBar} dock (spring press + active pill + safe-area
  * height) instead of the default bar, whose Android ripple clipped on this bar.
  */

@@ -5,26 +5,30 @@
  * Composes:
  *  - Story 6.1: identity card (initials avatar, name, own phone) + view/edit
  *    sections (ProfileEditor) reading the FULL self record (qk.profile), which is
- *    never overwritten by a partial fetch (AD-2).
+ *    never overwritten by a partial fetch (AD-2). Edit is triggered by the pen
+ *    icon next to the username, not a bottom button — `editing` lives here and
+ *    is passed down as a controlled prop.
  *  - Story 6.2: Roll-Number verification (VerificationSection).
- *  - Story 6.3: pause / reactivate (amber banner + confirm). Delete lives in
- *    Settings (Flow 7: "Settings/About → Delete Account"), reached via the
- *    "Settings" button in Privacy & account — no header gear anymore, matching
- *    web's profile.html (which has no separate settings icon either).
+ *  - Story 6.3: pause / reactivate (amber banner + confirm) and delete account
+ *    (danger-outlined button + confirm), both inline here — legal links/FAQ/
+ *    sign-out now live in the header hamburger menu (ProfileMenuButton)
+ *    instead of a separate Settings screen, so there's nothing left to route
+ *    to there.
  */
 import { useState } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { colors, space, radius, fonts, badgeVariants } from '@/theme';
-import { Text, Avatar, Badge, Button, Card, EmptyState, AsyncBoundary, useToast } from '@/components';
+import { Text, Avatar, Badge, Button, Card, Icon, EmptyState, AsyncBoundary, useToast } from '@/components';
 import { useSession } from '@/stores/session';
 import { useProfile } from '@/data/useProfile';
-import { usePauseProfile } from '@/data/useAccount';
+import { usePauseProfile, useDeleteAccount } from '@/data/useAccount';
 import { formatPhone } from '@/domain/masking';
-import { FEED_ROUTE } from '@/features/auth/routing';
+import { FEED_ROUTE, SIGN_IN_ROUTE } from '@/features/auth/routing';
 import type { User } from '@/types/user';
 import { track } from '@/lib/observability';
+import { logout } from '@/lib/auth';
 import { ScreenHeader } from '@/features/profile/ScreenHeader';
 import { VerificationSection } from '@/features/profile/VerificationSection';
 import { ProfileEditor } from '@/features/profile/ProfileEditor';
@@ -65,8 +69,11 @@ export default function ProfileScreen() {
 
 function ProfileBody({ me, phone }: { me: User; phone: string | null }) {
   const pause = usePauseProfile(phone);
+  const del = useDeleteAccount();
   const { show } = useToast();
   const [pauseConfirm, setPauseConfirm] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [editing, setEditing] = useState(false);
   const paused = !!me.is_profile_paused;
 
   async function applyPause(next: boolean) {
@@ -83,6 +90,18 @@ function ProfileBody({ me, phone }: { me: User; phone: string | null }) {
     }
   }
 
+  async function confirmDelete() {
+    try {
+      await del.mutateAsync(me.id);
+      await logout();
+      if (router.canDismiss()) router.dismissAll();
+      router.replace(SIGN_IN_ROUTE);
+    } catch (e) {
+      setDeleteConfirm(false);
+      show((e as Error)?.message || 'Delete failed. Please try again.', 'danger');
+    }
+  }
+
   return (
     <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
       {/* Identity — avatar/name/phone/Plus, then Roll No verification and the
@@ -92,9 +111,22 @@ function ProfileBody({ me, phone }: { me: User; phone: string | null }) {
         <View style={styles.identity}>
           <Avatar name={me.full_name} size={64} />
           <View style={styles.identityText}>
-            <Text variant="h3" numberOfLines={1}>
-              {me.full_name?.trim() || 'Your name'}
-            </Text>
+            <View style={styles.nameRow}>
+              <Text variant="h3" numberOfLines={1} style={styles.nameText}>
+                {me.full_name?.trim() || 'Your name'}
+              </Text>
+              {!editing ? (
+                <Pressable
+                  onPress={() => setEditing(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Edit profile"
+                  hitSlop={8}
+                  style={({ pressed }) => [styles.editBtn, pressed && styles.pressed]}
+                >
+                  <Icon name="edit-2" size={16} color={colors.textMuted} />
+                </Pressable>
+              ) : null}
+            </View>
             <Text variant="small" accessibilityLabel="Your phone number">
               {formatPhone(phone)}
             </Text>
@@ -130,10 +162,17 @@ function ProfileBody({ me, phone }: { me: User; phone: string | null }) {
         ) : null}
       </Card>
 
-      {/* View / edit sections (Story 6.1) */}
-      <ProfileEditor me={me} phone={phone} />
+      {/* View / edit sections (Story 6.1) — editing is triggered by the pen
+         icon next to the username above, not a button in here. */}
+      <ProfileEditor
+        me={me}
+        phone={phone}
+        editing={editing}
+        onCancel={() => setEditing(false)}
+        onSaved={() => setEditing(false)}
+      />
 
-      {/* Privacy & account (Story 6.3 pause; delete lives in Settings) */}
+      {/* Privacy & account (Story 6.3 pause + delete) */}
       <Card style={styles.account}>
         <Text variant="h3">Privacy & account</Text>
         <Text variant="bodyMuted">
@@ -157,17 +196,18 @@ function ProfileBody({ me, phone }: { me: User; phone: string | null }) {
             onPress={() => (paused ? applyPause(false) : setPauseConfirm(true))}
             busy={pause.isPending}
           />
-          {/* Settings (legal links, delete account) — used to be reached via
-             the header gear; now a plain in-page link, matching web's
-             profile.html which has no separate settings page/icon either. */}
-          <Button
-            title="Settings"
-            icon="settings"
-            variant="ghost"
-            size="sm"
-            onPress={() => router.push('/settings')}
-          />
         </View>
+        <Button
+          title="Delete account"
+          variant="ghost"
+          size="sm"
+          onPress={() => setDeleteConfirm(true)}
+          style={styles.deleteBtn}
+          accessibilityLabel="Delete account"
+        />
+        <Text variant="caption">
+          Deleting removes your profile and connections permanently.
+        </Text>
       </Card>
 
       <ConfirmDialog
@@ -182,6 +222,17 @@ function ProfileBody({ me, phone }: { me: User; phone: string | null }) {
         }}
         onCancel={() => setPauseConfirm(false)}
       />
+
+      <ConfirmDialog
+        visible={deleteConfirm}
+        title="Delete your account?"
+        message="This permanently deletes your Zenter profile and connections. This action cannot be undone."
+        confirmLabel="Delete permanently"
+        danger
+        busy={del.isPending}
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm(false)}
+      />
     </ScrollView>
   );
 }
@@ -192,6 +243,10 @@ const styles = StyleSheet.create({
   identityCard: { gap: 0 },
   identity: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   identityText: { flex: 1, gap: 2 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
+  nameText: { flex: 1 },
+  editBtn: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', borderRadius: radius.full },
+  pressed: { opacity: 0.6 },
   plusCta: { marginTop: space[3] },
   pausedBanner: {
     marginTop: space[3],
@@ -205,4 +260,5 @@ const styles = StyleSheet.create({
   pausedText: { fontFamily: fonts.bodyMedium, fontSize: 13, color: badgeVariants.warning.fg },
   account: { gap: space[3] },
   accountActions: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  deleteBtn: { borderColor: colors.danger },
 });

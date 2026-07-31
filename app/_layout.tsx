@@ -90,9 +90,11 @@ export default function RootLayout() {
           {/* Exam gate (Story 3.1): full-screen, unbypassable — no back gesture. */}
           <Stack.Screen name="maintenance" options={{ gestureEnabled: false }} />
           <Stack.Screen name="chat/[id]" />
-          {/* Self-profile + settings (Epic 6): pushed screens over the tabs. */}
+          {/* Self-profile (Epic 6): pushed screen over the tabs. Legal links,
+             FAQ, and sign-out now live in the header hamburger menu
+             (ProfileMenuButton); delete account is inline on Profile — no
+             separate settings screen. */}
           <Stack.Screen name="profile" />
-          <Stack.Screen name="settings" />
           {/* Zenter Plus subscription screen (payment + coupon + comparison). */}
           <Stack.Screen name="plus" />
           {/* Blocked users list (Story 8.2): pushed screen from Profile. */}

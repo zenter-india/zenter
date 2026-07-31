@@ -1,13 +1,12 @@
 /**
  * Header entry point to the self-profile + account menu (EXPERIENCE.md IA:
  * "Profile (self) — Header menu"). A hamburger button, mounted in the Find
- * Aspirants header, that opens a dropdown listing the same items as the web
- * navbar's profile dropdown (components/navbar.html on `main`): Profile,
- * Requests, Find aspirants, Districts, Co-ordinations, Chats, Contact us,
- * Feedback, Log out — except "Co-ordinations" is relabeled "Connections"
- * here to match this app's own bottom-tab-bar wording for the same screen
- * (app/(tabs)/_layout.tsx), rather than introduce two names for one
- * destination inside a single app.
+ * Aspirants header, opening a dropdown. Deliberately excludes items already
+ * reachable via the bottom tab bar (Requests, Find, Co-ordinations, Chats) —
+ * this menu's job is the account/support/legal surface, not navigation
+ * already one tap away: Zenter Plus, Profile, Privacy Policy, Terms &
+ * Conditions, Community Guidelines, Refund & Cancellation Policy, FAQ,
+ * Contact support, Feedback, Log out.
  */
 import { useRef, useState } from 'react';
 import { Modal, Platform, Pressable, View, StyleSheet } from 'react-native';
@@ -62,13 +61,14 @@ export function ProfileMenuButton() {
   }
 
   const items: MenuItem[] = [
+    { label: 'Zenter Plus', icon: 'star', onPress: () => go('/plus') },
     { label: 'Profile', icon: 'user', onPress: () => go('/profile') },
-    { label: 'Requests', icon: 'inbox', onPress: () => go('/(tabs)/requests') },
-    { label: 'Find aspirants', icon: 'search', onPress: () => go('/(tabs)/feed') },
-    { label: 'Districts', icon: 'map-pin', onPress: () => go('/(tabs)/feed') },
-    { label: 'Connections', icon: 'users', onPress: () => go('/(tabs)/connections') },
-    { label: 'Chats', icon: 'message-circle', onPress: () => go('/(tabs)/chats') },
-    { label: 'Contact us', icon: 'phone', onPress: () => go('/contact') },
+    { label: 'Privacy Policy', icon: 'shield', onPress: () => go('/privacy') },
+    { label: 'Terms & Conditions', icon: 'file-text', onPress: () => go('/terms') },
+    { label: 'Community Guidelines', icon: 'users', onPress: () => go('/community') },
+    { label: 'Refund & Cancellation Policy', icon: 'rotate-ccw', onPress: () => go('/refund') },
+    { label: 'FAQ', icon: 'help-circle', onPress: () => go('/faq') },
+    { label: 'Contact support', icon: 'phone', onPress: () => go('/contact') },
     { label: 'Feedback', icon: 'edit-2', onPress: () => go('/feedback') },
     { label: 'Log out', icon: 'log-out', onPress: handleLogout, danger: true },
   ];

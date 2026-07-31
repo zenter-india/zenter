@@ -15,7 +15,7 @@ import { Icon, IconName } from './Icon';
 const META: Record<string, { label: string; icon: IconName; badge?: 'requests' | 'chats' }> = {
   requests: { label: 'Requests', icon: 'inbox', badge: 'requests' },
   feed: { label: 'Find', icon: 'search' },
-  connections: { label: 'Connections', icon: 'users' },
+  connections: { label: 'Co-ordinations', icon: 'users' },
   chats: { label: 'Chats', icon: 'message-circle', badge: 'chats' },
 };
 
