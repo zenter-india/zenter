@@ -7,7 +7,8 @@
     "preset": "jest-expo",
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1"
-    }
+    },
+    "setupFiles": ["./jest.setup.js"]
   },
   "scripts": {
     "start": "expo start --dev-client",

@@ -1,9 +1,9 @@
 import Constants from 'expo-constants';
 import * as Sentry from '@sentry/react-native';
-import { getAuth } from '@react-native-firebase/auth';
 import { supabase } from '@/api/client';
 import { queryClient } from '@/data/queryClient';
 import { qk } from '@/data/keys';
+import { getCurrentPhone } from '@/stores/session';
 
 /**
  * One observability pipeline (AD-13). Sentry for crashes; a single `track()` for
@@ -20,7 +20,7 @@ const dsn = (Constants.expoConfig?.extra as { sentryDsn?: string } | undefined)?
  * .user_id is nullable and early boot events aren't attributable anyway.
  */
 function currentUserId(): string | null {
-  const phone = getAuth().currentUser?.phoneNumber;
+  const phone = getCurrentPhone();
   if (!phone) return null;
   return queryClient.getQueryData<{ id: string }>(qk.profile(phone))?.id ?? null;
 }

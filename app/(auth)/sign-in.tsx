@@ -5,17 +5,18 @@ import { Redirect, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { colors, space, fonts } from '@/theme';
 import { Text, Input, Button } from '@/components';
-import { startPhoneAuth, normalizePhoneIN, mapAuthError } from '@/features/auth/firebasePhone';
-import { otpSession } from '@/features/auth/otpSession';
+import { startPhoneAuth, normalizePhoneIN, mapAuthError, isRateLimitError } from '@/features/auth/phoneAuth';
 import { useAuthCooldown } from '@/features/auth/useAuthCooldown';
 import { useSession } from '@/stores/session';
 
 /**
  * Phone entry (Story 2.1, FR-1). A 10-digit Indian mobile behind a `+91` prefix
- * is normalized to E.164 (normalizePhoneIN) and a native Firebase OTP is sent via
- * startPhoneAuth — NO reCAPTCHA (AD-4). The pending confirmation is handed to the
- * OTP screen through the otpSession store (it is non-serializable). Invalid input
- * blocks with the documented copy before any network call.
+ * is normalized to E.164 (normalizePhoneIN) and an OTP is sent via
+ * startPhoneAuth (Supabase Auth, Twilio Verify backend) — no reCAPTCHA. The
+ * phone is handed to the OTP screen as a route param (serializable — unlike
+ * the old Firebase ConfirmationResult, Supabase's verifyOtp only needs the
+ * phone string). Invalid input blocks with the documented copy before any
+ * network call.
  */
 export default function SignInScreen() {
   const [raw, setRaw] = useState('');
@@ -24,7 +25,7 @@ export default function SignInScreen() {
   const { isCoolingDown, cooldownText, triggerCooldown } = useAuthCooldown();
   const { user, phone: sessionPhone } = useSession();
 
-  // If Firebase's auth-state check resolves AFTER the boot screen's own
+  // If the auth-state check resolves AFTER the boot screen's own
   // AUTH_READY_TIMEOUT_MS already redirected here as logged-out (slow cold
   // start / poor network), route forward through the same post-auth
   // resolution `index.tsx` uses instead of stranding the user on this form.
@@ -40,15 +41,14 @@ export default function SignInScreen() {
     setError(null);
     setBusy(true);
     try {
-      const confirmation = await startPhoneAuth(phone);
-      otpSession.set(phone, confirmation);
-      router.push('/(auth)/otp');
+      await startPhoneAuth(phone);
+      router.push({ pathname: '/(auth)/otp', params: { phone } });
     } catch (err) {
-      const code = (err as { code?: string })?.code;
-      if (code === 'auth/too-many-requests') {
+      const authError = err as { code?: string; message?: string };
+      if (isRateLimitError(authError)) {
         triggerCooldown(5);
       }
-      setError(mapAuthError(code));
+      setError(mapAuthError(authError));
     } finally {
       setBusy(false);
     }

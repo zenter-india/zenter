@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { colors, space, fonts } from '@/theme';
 import { Text, OtpInput, Button, useToast } from '@/components';
-import { confirmOtp, startPhoneAuth, mapAuthError } from '@/features/auth/firebasePhone';
-import { otpSession, useOtpSession } from '@/features/auth/otpSession';
+import { confirmOtp, startPhoneAuth, mapAuthError, isRateLimitError } from '@/features/auth/phoneAuth';
 import { resolvePostAuthRoute } from '@/features/auth/routing';
 import { useAuthCooldown } from '@/features/auth/useAuthCooldown';
 
@@ -13,12 +12,13 @@ const RESEND_SECONDS = 30;
 
 /**
  * OTP verification (Story 2.1, FR-2). Six-cell code with autofill + auto-submit
- * on the 6th digit; 30s resend lock; Firebase errors mapped to documented copy.
- * On success, post-auth routing (Story 2.2) decides feed vs onboarding vs a
- * stored deep link, replacing the stack so auth never stays in history (FR-3).
+ * on the 6th digit; 30s resend lock; Supabase Auth errors mapped to documented
+ * copy. On success, post-auth routing (Story 2.2) decides feed vs onboarding
+ * vs a stored deep link, replacing the stack so auth never stays in history
+ * (FR-3).
  */
 export default function OtpScreen() {
-  const { phone, confirmation } = useOtpSession();
+  const { phone } = useLocalSearchParams<{ phone: string }>();
   const toast = useToast();
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +44,7 @@ export default function OtpScreen() {
         setError('Enter the complete 6-digit code.');
         return;
       }
-      if (!confirmation) {
+      if (!phone) {
         setError('Something went wrong. Please try again.');
         return;
       }
@@ -52,23 +52,20 @@ export default function OtpScreen() {
       setError(null);
       setBusy(true);
       try {
-        const cred = await confirmOtp(confirmation, fullCode);
-        const verifiedPhone = cred?.user?.phoneNumber ?? phone ?? '';
+        const session = await confirmOtp(phone, fullCode);
+        const verifiedPhone = session?.user?.phone ? `+${session.user.phone.replace(/^\+/, '')}` : phone;
         const target = await resolvePostAuthRoute(verifiedPhone);
-        // Set before clearing: otpSession.clear() synchronously re-renders this
-        // still-mounted screen via useOtpSession(), and without this flag the
-        // now-null confirmation/phone would trip the guard below into a
-        // <Redirect to sign-in> that can win the race against router.replace.
-        // Both updates land in the same batched re-render (React 19).
+        // Set before navigating away: avoids the guard below (no confirmation
+        // object anymore, just this flag) racing router.replace on the same
+        // still-mounted screen.
         setVerified(true);
-        router.replace(target); // navigate first, then drop the handoff (avoids guard race)
-        otpSession.clear();
+        router.replace(target);
       } catch (err) {
-        const code = (err as { code?: string })?.code;
-        if (code === 'auth/too-many-requests') {
+        const authError = err as { code?: string; message?: string };
+        if (isRateLimitError(authError)) {
           triggerCooldown(5);
         }
-        setError(mapAuthError(code));
+        setError(mapAuthError(authError));
         setCode('');
         setResetKey((k) => k + 1); // remount cells + refocus
         submitting.current = false;
@@ -77,7 +74,7 @@ export default function OtpScreen() {
     },
     // triggerCooldown is useCallback-stable in useAuthCooldown, so listing it
     // satisfies the dependency rule without re-creating `verify` each render.
-    [confirmation, phone, triggerCooldown],
+    [phone, triggerCooldown],
   );
 
   async function onResend() {
@@ -91,16 +88,15 @@ export default function OtpScreen() {
     setCode('');
     setResetKey((k) => k + 1);
     try {
-      const next = await startPhoneAuth(phone);
-      otpSession.setConfirmation(next);
+      await startPhoneAuth(phone);
       setSecondsLeft(RESEND_SECONDS);
       toast.show('Code sent again.', 'info');
     } catch (err) {
-      const code = (err as { code?: string })?.code;
-      if (code === 'auth/too-many-requests') {
+      const authError = err as { code?: string; message?: string };
+      if (isRateLimitError(authError)) {
         triggerCooldown(5);
       }
-      setError(mapAuthError(code));
+      setError(mapAuthError(authError));
     } finally {
       resending.current = false;
       setBusy(false);
@@ -108,13 +104,12 @@ export default function OtpScreen() {
   }
 
   function onChangeNumber() {
-    otpSession.clear();
     router.back();
   }
 
-  // Guard: no pending confirmation (e.g. deep-linked straight here / hot reload).
+  // Guard: no pending phone (e.g. deep-linked straight here / hot reload).
   // Skipped once verify() has succeeded — see the `verified` state above.
-  if ((!confirmation || !phone) && !verified) {
+  if (!phone && !verified) {
     return <Redirect href="/(auth)/sign-in" />;
   }
 

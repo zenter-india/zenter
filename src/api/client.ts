@@ -1,15 +1,16 @@
 import 'react-native-url-polyfill/auto';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import { env } from '@/lib/env';
 
 /**
  * The single Supabase client for the whole app (AD-1: one data-access layer).
  *
- * Authorization model (AD-4): Firebase Phone OTP is the sole identity system.
- * Supabase runs on the anon/publishable key with `persistSession: false` and
- * `autoRefreshToken: false` — the app never uses Supabase Auth sessions. The
- * client-trusted, phone-scoped access model is an accepted, documented v1 risk;
- * do not add Supabase Auth here.
+ * Authorization model: Supabase Auth (phone OTP via Twilio Verify) is the
+ * identity system — `persistSession`/`autoRefreshToken` are on, backed by
+ * AsyncStorage, so a session survives app restarts and refreshes itself
+ * before the JWT expires. RLS policies key off `auth.uid()` via
+ * `current_app_uid()`/`is_admin()` (see `supabase/migrations/20260708_0*`).
  *
  * Do NOT call createClient anywhere else. All backend I/O goes through src/api/*.
  *
@@ -24,9 +25,10 @@ export const supabase = createClient(
   env.supabaseAnonKey || 'misconfigured',
   {
     auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
+      storage: AsyncStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: false, // no web redirect/OAuth flow on RN
     },
   },
 );
