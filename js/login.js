@@ -1,13 +1,19 @@
 // HallMate — Login page OTP flow.
 // Loaded only from login.html. Handles: phone → send OTP → verify → post-login redirect.
+//
+// Runs on Supabase Auth's phone provider (Twilio Verify backend) — replaces
+// the former Firebase Phone Auth + invisible reCAPTCHA + Capacitor-native
+// bridge. signInWithOtp/verifyOtp is identical whether this page is loaded in
+// a plain browser tab or the Capacitor-wrapped native shell, so there's a
+// single code path for both now — no reCAPTCHA, no native branch.
 
-import { auth, createRecaptcha, resetRecaptcha, signInWithPhoneNumber, isNativePlatform, sendOtpNative } from './firebase-config.js';
+import { supabase } from './supabase.js';
 import { handlePostLogin, redirectIfAuthed } from './auth.js';
 import { normalizePhoneIN } from './utils.js';
 import { setButtonBusy } from './ui.js';
 import { STORAGE_KEYS, ROUTES } from './config.js';
 
-let confirmationResult = null;
+let phone = null;
 let resendTimer = null;
 
 // ─── Init ───────────────────────────────────────────────────────────────────
@@ -26,9 +32,9 @@ async function init() {
     }
   } catch { /* sessionStorage unavailable in some private-mode browsers */ }
 
-  // ASYNC PATH — Firebase confirms the session (covers cold-start / no-cache).
+  // ASYNC PATH — Supabase confirms the session (covers cold-start / no-cache).
   // If there's any cached auth user (even without profileCompleted), hide the
-  // form while Firebase resolves to avoid a flash of the login UI before redirect.
+  // form while it resolves to avoid a flash of the login UI before redirect.
   const card = document.querySelector('.hm-auth__card');
   try {
     if (sessionStorage.getItem(STORAGE_KEYS.authUser) && card) card.hidden = true;
@@ -61,9 +67,9 @@ async function init() {
 
 async function sendOtp() {
   const raw = document.getElementById('hm-phone').value.trim();
-  const phone = normalizePhoneIN(raw);
+  const normalized = normalizePhoneIN(raw);
 
-  if (!phone) {
+  if (!normalized) {
     showError('phone', 'Enter a valid 10-digit Indian mobile number.');
     return;
   }
@@ -73,27 +79,16 @@ async function sendOtp() {
   setButtonBusy(btn, true, 'Sending…');
 
   try {
-    if (isNativePlatform()) {
-      // Android/iOS app: invisible reCAPTCHA can't complete inside the native
-      // WebView, so verification goes through the native plugin instead
-      // (see firebase-config.js for why). Same ConfirmationResult shape.
-      confirmationResult = await sendOtpNative(phone);
-    } else {
-      // Singleton verifier — same instance across retries. Firebase handles
-      // re-execution and token refresh internally; manual clear-on-every-click
-      // caused "already rendered" + flicker bugs in the previous version.
-      const verifier = createRecaptcha('hm-recaptcha-container');
-      confirmationResult = await signInWithPhoneNumber(auth, phone, verifier);
-    }
+    const { error } = await supabase.auth.signInWithOtp({ phone: normalized });
+    if (error) throw error;
 
+    phone = normalized;
     document.getElementById('hm-otp-target').textContent = phone;
     showStep('otp');
     startResendCountdown(30);
     document.getElementById('hm-otp-1')?.focus();
   } catch (err) {
     console.error('[login] sendOtp', err);
-    // Tear down the cached verifier so the next attempt gets a clean one.
-    if (!isNativePlatform()) resetRecaptcha();
     showError('phone', toMessage(err));
   } finally {
     setButtonBusy(btn, false);
@@ -103,7 +98,7 @@ async function sendOtp() {
 // ─── Verify OTP ──────────────────────────────────────────────────────────────
 
 async function verifyOtp() {
-  if (!confirmationResult) { showStep('phone'); return; }
+  if (!phone) { showStep('phone'); return; }
 
   const cells = Array.from(document.querySelectorAll('.hm-otp__cell'));
   const code = cells.map((c) => c.value).join('');
@@ -118,8 +113,18 @@ async function verifyOtp() {
   setButtonBusy(btn, true, 'Verifying…');
 
   try {
-    const result = await confirmationResult.confirm(code);
-    await handlePostLogin(result.user); // redirects — execution ends here
+    const { data, error } = await supabase.auth.verifyOtp({ phone, token: code, type: 'sms' });
+    if (error) throw error;
+
+    // Bridge this Supabase Auth session to the caller's existing users row by
+    // phone match (see supabase/migrations/20260708_01_auth_link.sql). Safe to
+    // call unconditionally — idempotent, and a null result just means a
+    // genuinely new user with no existing row yet (onboarding's own insert
+    // sets auth_uid in that case).
+    const { error: linkError } = await supabase.rpc('link_auth_account');
+    if (linkError) console.warn('[login] link_auth_account failed (expected for new users)', linkError.message);
+
+    await handlePostLogin(data.user); // redirects — execution ends here
   } catch (err) {
     console.error('[login] verifyOtp', err);
     showError('otp', toMessage(err));
@@ -209,20 +214,30 @@ function clearError(scope) {
   el.hidden = true;
 }
 
-// Maps Firebase error codes to human-readable messages.
+// Maps Supabase Auth errors to human-readable messages.
+//
+// BEST-EFFORT pending empirical verification (mirrors the mobile app's
+// src/features/auth/phoneAuth.ts): Supabase's error `code` vocabulary for
+// phone-OTP isn't as documented as Firebase's `auth/*` strings — this keys
+// first on `err.code` where GoTrue does supply one, falling back to matching
+// `err.message` substrings. Confirm these against real responses.
 function toMessage(err) {
-  const MAP = {
-    'auth/invalid-phone-number':      'Invalid phone number. Use 10 digits without country code.',
-    'auth/too-many-requests':         'Too many attempts. Please wait a moment and try again.',
-    'auth/invalid-verification-code': 'Incorrect code. Please check and try again.',
-    'auth/code-expired':              'Code expired. Request a new one.',
-    'auth/missing-phone-number':      'Enter your mobile number.',
-    'auth/quota-exceeded':            'SMS quota exceeded. Try again later.',
-    'auth/captcha-check-failed':      'reCAPTCHA failed. Please refresh and try again.',
-    'auth/network-request-failed':    'Network error. Check your connection.',
-    'auth/user-disabled':             'This account has been disabled.',
+  const CODES = {
+    over_sms_send_rate_limit: 'Too many attempts. Please wait a moment and try again.',
+    sms_send_failed: 'Could not send the code. Please try again.',
+    over_request_rate_limit: 'Too many attempts. Please wait a moment and try again.',
+    otp_expired: 'Code expired. Request a new one.',
+    invalid_credentials: 'Incorrect code. Please check and try again.',
+    validation_failed: 'Invalid phone number. Use 10 digits without country code.',
   };
-  return MAP[err?.code] || 'Something went wrong. Please try again.';
+  if (err?.code && CODES[err.code]) return CODES[err.code];
+
+  const message = err?.message || '';
+  if (/invalid.*phone/i.test(message)) return 'Invalid phone number. Use 10 digits without country code.';
+  if (/token.*expired|invalid/i.test(message)) return 'Incorrect or expired code. Please check and try again.';
+  if (/rate limit|too many/i.test(message)) return 'Too many attempts. Please wait a moment and try again.';
+  if (/network/i.test(message)) return 'Network error. Check your connection.';
+  return 'Something went wrong. Please try again.';
 }
 
 document.addEventListener('DOMContentLoaded', init);

@@ -3,9 +3,9 @@ import { SUPABASE } from './config.js';
 
 export const supabase = createClient(SUPABASE.url, SUPABASE.anonKey, {
   auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-    detectSessionInUrl: false,
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: false, // no OAuth/magic-link redirect flow in use
   },
   global: {
     headers: { 'x-client-info': 'hallmate-web/0.1.0' },

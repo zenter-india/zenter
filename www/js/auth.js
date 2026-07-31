@@ -1,4 +1,4 @@
-import { auth, onAuthStateChanged, signOut } from './firebase-config.js';
+import { supabase } from './supabase.js';
 import { getUserByPhone } from './supabase.js';
 import { STORAGE_KEYS, ROUTES } from './config.js';
 
@@ -6,8 +6,18 @@ const listeners = new Set();
 let currentUser = null;
 let ready = false;
 
-onAuthStateChanged(auth, (user) => {
-  currentUser = user ? { uid: user.uid, phoneNumber: user.phoneNumber } : null;
+// Supabase returns `phone` without a leading `+` (e.g. `919999999999`), unlike
+// Firebase's `+919999999999` — reconcile here so every downstream consumer
+// (getUserByPhone, getRoleByPhone, etc.) keeps seeing the same format it
+// always has.
+function toE164(rawPhone) {
+  if (!rawPhone) return null;
+  return rawPhone.startsWith('+') ? rawPhone : `+${rawPhone}`;
+}
+
+supabase.auth.onAuthStateChange((_event, session) => {
+  const user = session?.user ?? null;
+  currentUser = user ? { uid: user.id, phoneNumber: toE164(user.phone) } : null;
 
   if (currentUser) {
     sessionStorage.setItem(STORAGE_KEYS.authUser, JSON.stringify(currentUser));
@@ -30,10 +40,10 @@ export function onAuthChange(fn) {
   return () => listeners.delete(fn);
 }
 
-// Resolves with the current user once Firebase reports auth state.
+// Resolves with the current user once Supabase reports auth state.
 // A safety timeout GUARANTEES this always resolves (default 8s) so the UI can
-// never deadlock on a permanent loader if onAuthStateChanged never fires
-// (Firebase cold-start failure, blocked network, ad-blockers, etc.). On timeout
+// never deadlock on a permanent loader if onAuthStateChange never fires
+// (cold-start failure, blocked network, ad-blockers, etc.). On timeout
 // it resolves with whatever currentUser we have — null is treated as logged-out,
 // which deterministically routes the user to login rather than hanging forever.
 export function whenReady(timeoutMs = 8000) {
@@ -52,11 +62,12 @@ export function whenReady(timeoutMs = 8000) {
   });
 }
 
-// Called immediately after a successful OTP confirmation.
+// Called immediately after a successful OTP confirmation, with the raw
+// Supabase Auth user (data.user from verifyOtp() — `.phone`, no leading `+`).
 // Checks Supabase users table by phone to decide where to send the user.
-export async function handlePostLogin(firebaseUser) {
+export async function handlePostLogin(authUser) {
   try {
-    const { data, error } = await getUserByPhone(firebaseUser.phoneNumber);
+    const { data, error } = await getUserByPhone(toE164(authUser.phone));
     const hasProfile = !error && data?.profile_completed === true;
     // Cache so guards + navbar can read without an extra Supabase round-trip.
     try { sessionStorage.setItem(STORAGE_KEYS.profileCompleted, String(hasProfile)); } catch {}
@@ -71,14 +82,14 @@ export async function handlePostLogin(firebaseUser) {
 }
 
 export async function logout(redirectTo = ROUTES.landing) {
-  await signOut(auth);
+  await supabase.auth.signOut();
   sessionStorage.removeItem(STORAGE_KEYS.authUser);
   sessionStorage.removeItem(STORAGE_KEYS.profileCompleted);
   sessionStorage.removeItem('hm.user.role'); // admin cache
   window.location.assign(redirectTo);
 }
 
-// Ensures both Firebase auth AND onboarding completion before granting access.
+// Ensures both auth AND onboarding completion before granting access.
 // Uses a sessionStorage cache so most calls are instant (no extra Supabase fetch).
 // Falls back to a single getUserByPhone() when the cache is absent (e.g. after
 // a browser restart that clears sessionStorage).
@@ -121,7 +132,7 @@ export async function redirectIfAuthed(redirectTo = ROUTES.dashboard) {
 }
 
 // ─── Admin guard ─────────────────────────────────────────────────────────────
-// Requires Firebase auth + Supabase role='admin'. Caches role in sessionStorage
+// Requires an authenticated session + Supabase role='admin'. Caches role in sessionStorage
 // so admin pages render instantly on subsequent navigations (no flicker).
 // Non-admin users are bounced to /dashboard.html — never see admin UI.
 const ROLE_CACHE_KEY = 'hm.user.role';
