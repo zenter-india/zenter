@@ -23,6 +23,7 @@ export const LIVE_EXAMS = [
   'NEET MDS',
   'NEET SS',
   'FMGE',
+  'JEE Main',
 ] as const;
 
 /** Union of the live exam type strings. */
@@ -51,6 +52,7 @@ export const examYearDisplay: Record<string, string> = {
   'NEET MDS': 'NEET MDS 2026',
   'NEET SS': 'NEET SS 2026',
   FMGE: 'FMGE 2026 Jun',
+  'JEE Main': 'JEE Main 2026',
 };
 
 /** Minimal self-projection needed to compute feed gating. */

@@ -26,6 +26,7 @@ const EXAM_LABELS: Record<ExamType, string> = {
   'NEET MDS': 'NEET MDS',
   'NEET SS': 'NEET SS',
   FMGE: 'FMGE 2026 Jun',
+  'JEE Main': 'JEE Main 2026',
 };
 
 export const EXAM_OPTIONS: SelectOption[] = LIVE_EXAMS.map((value) => ({
