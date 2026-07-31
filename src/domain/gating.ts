@@ -16,6 +16,7 @@
  * UI that iterates it.
  */
 export const LIVE_EXAMS = [
+  'JEE Main',
   'NEET UG',
   'NEET PG',
   'UPSC CMS',
@@ -23,7 +24,6 @@ export const LIVE_EXAMS = [
   'NEET MDS',
   'NEET SS',
   'FMGE',
-  'JEE Main',
 ] as const;
 
 /** Union of the live exam type strings. */
