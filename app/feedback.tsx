@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { colors, space, fonts, radius } from '@/theme';
 import { Text, Button, useToast } from '@/components';
@@ -42,10 +42,7 @@ export default function FeedbackScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text variant="h2">Send Feedback</Text>
@@ -63,7 +60,6 @@ export default function FeedbackScreen() {
           textAlignVertical="top"
           value={msg}
           onChangeText={setMsg}
-          autoFocus
         />
 
         <View style={styles.actions}>
@@ -81,7 +77,7 @@ export default function FeedbackScreen() {
           />
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 

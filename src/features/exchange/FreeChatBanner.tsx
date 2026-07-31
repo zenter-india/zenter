@@ -42,9 +42,21 @@ export function FreeChatBanner({ userId }: { userId: string | null | undefined }
       </View>
       <View style={styles.body}>
         {remaining > 0 ? (
-          <Text variant="small" color={colors.textMuted}>
-            {`You have ${remaining} free ${remaining === 1 ? 'chat' : 'chats'} remaining.`}
-          </Text>
+          <>
+            <Text variant="small" color={colors.textMuted}>
+              {`You have ${remaining} free ${remaining === 1 ? 'chat' : 'chats'} remaining.`}
+            </Text>
+            <Pressable
+              onPress={onUpgrade}
+              accessibilityRole="button"
+              accessibilityLabel="Unlock entire exam centre with Zenter Plus"
+              hitSlop={6}
+            >
+              <Text variant="small" color={colors.secondary} style={styles.link}>
+                Unlock entire exam centre →
+              </Text>
+            </Pressable>
+          </>
         ) : (
           <>
             <Text variant="small" color={colors.text} style={styles.zeroTitle}>

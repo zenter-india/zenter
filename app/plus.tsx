@@ -477,7 +477,7 @@ export default function PlusScreen() {
           {COMPARISON.map((row, i) => (
             <View key={i} style={[styles.compareRow, styles.compareBorder]}>
               <Text style={[styles.compareCell, styles.compareFeatureCol]}>{row.feature}</Text>
-              <Text style={[styles.compareCell, styles.compareValueCol]}>
+              <Text style={[styles.compareCell, styles.compareValueCol]} numberOfLines={1}>
                 {row.free === true ? (
                   <Text style={styles.check}>✓</Text>
                 ) : row.free === false ? (
@@ -486,7 +486,7 @@ export default function PlusScreen() {
                   <Text style={styles.limitText}>{row.free}</Text>
                 )}
               </Text>
-              <Text style={[styles.compareCell, styles.compareValueCol]}>
+              <Text style={[styles.compareCell, styles.compareValueCol]} numberOfLines={1}>
                 {row.plus === true ? (
                   <Text style={styles.check}>✓</Text>
                 ) : (
@@ -690,7 +690,7 @@ const styles = StyleSheet.create({
   compareBorder: { borderTopWidth: 1, borderTopColor: colors.border },
   compareCell: { paddingHorizontal: space[3], paddingVertical: space[2] },
   compareFeatureCol: { flex: 1, fontFamily: fonts.body, fontSize: 13, color: colors.text },
-  compareValueCol: { width: 72, textAlign: 'center', fontFamily: fonts.body, fontSize: 13 },
+  compareValueCol: { width: 84, paddingHorizontal: space[1], textAlign: 'center', fontFamily: fonts.body, fontSize: 13 },
   compareHeader: {
     fontFamily: fonts.bodySemibold,
     fontSize: 11,
@@ -700,8 +700,8 @@ const styles = StyleSheet.create({
   },
   check: { color: colors.success600, fontSize: 16 },
   cross: { color: colors.textSubtle, fontSize: 16 },
-  limitText: { color: colors.textMuted, fontSize: 12 },
-  plusValue: { color: colors.primary, fontFamily: fonts.bodyBold, fontSize: 12 },
+  limitText: { color: colors.textMuted, fontSize: 11 },
+  plusValue: { color: colors.primary, fontFamily: fonts.bodyBold, fontSize: 11 },
 
   // Coupon
   couponSection: { gap: space[1] },

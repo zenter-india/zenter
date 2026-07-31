@@ -45,7 +45,7 @@ export default function ContactScreen() {
         </View>
 
         <Card style={styles.card}>
-          <Text style={{ fontSize: 32, marginBottom: space[2] }}>📞</Text>
+          <Text style={{ fontSize: 32, lineHeight: 38, marginBottom: space[2] }}>📞</Text>
           <Text variant="h3">Call support</Text>
           <Text variant="bodyMuted" style={{ marginBottom: space[3] }}>
             Available Mon – Sat, 9 am – 6 pm IST. Fastest way to resolve OTP or login issues.
@@ -58,7 +58,7 @@ export default function ContactScreen() {
         </Card>
 
         <Card style={styles.card}>
-          <Text style={{ fontSize: 32, marginBottom: space[2] }}>✉️</Text>
+          <Text style={{ fontSize: 32, lineHeight: 38, marginBottom: space[2] }}>✉️</Text>
           <Text variant="h3">Email support</Text>
           <Text variant="bodyMuted" style={{ marginBottom: space[3] }}>
             We reply within 24 hours. Great for onboarding, privacy, or connection questions.

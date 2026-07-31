@@ -16,7 +16,6 @@ import {
 } from '@/features/feed/filtersStore';
 import { MateFeedCard } from '@/features/feed/MateFeedCard';
 import { FreeChatBanner } from '@/features/exchange/FreeChatBanner';
-import { PrivacyReassurance } from '@/features/feed/PrivacyReassurance';
 import { ProfileMenuButton } from '@/features/profile/ProfileMenuButton';
 
 /**
@@ -148,7 +147,6 @@ export default function FindScreen() {
       </TabHeader>
 
       <View style={styles.listWrap}>
-        <PrivacyReassurance userId={me?.id} />
         <FreeChatBanner userId={me?.id} />
         <AsyncBoundary<FeedItem[]>
           isLoading={isLoading}
