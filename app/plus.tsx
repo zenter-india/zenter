@@ -326,6 +326,39 @@ export default function PlusScreen() {
     }
   }, [me, phone, buying, finalPaise, appliedCoupon, queryClient, show, config?.paymentProvider]);
 
+  // ── Restore purchases (Guideline 3.1.1: a non-consumable is never re-charged,
+  //    so reinstalling or moving to a new device needs a way back to the
+  //    entitlement without a fresh checkout) ─────────────────────────────────
+  const [restoring, setRestoring] = useState(false);
+  const handleRestore = useCallback(async () => {
+    if (!me?.id || restoring) return;
+    setRestoring(true);
+    const provider = getPaymentProvider(config?.paymentProvider);
+    if (!provider.restore) {
+      show('Restore is not available for this payment method.', 'danger');
+      setRestoring(false);
+      return;
+    }
+    const outcome = await provider.restore(me.id);
+    switch (outcome.status) {
+      case 'success':
+        setPurchased(true);
+        track('payment_restored', { provider: provider.id });
+        show('🎉 Zenter Plus restored!', 'success');
+        queryClient.invalidateQueries({ queryKey: qk.profile(phone ?? '') });
+        queryClient.invalidateQueries({ queryKey: qk.status(phone ?? '') });
+        break;
+      case 'not_found':
+        show('No previous Zenter Plus purchase found on this account.', 'info');
+        break;
+      case 'unavailable':
+      case 'failed':
+        show(`⚠️ ${outcome.message}`, 'danger');
+        break;
+    }
+    setRestoring(false);
+  }, [me, phone, restoring, queryClient, show, config?.paymentProvider]);
+
   // ── Derived display values ────────────────────────────────────────────────
   const displayPrice = finalPaise != null ? finalPaise / 100 : basePrice ?? 49;
   const showStrikethrough = appliedCoupon && basePrice != null && finalPaise != null && finalPaise !== basePrice * 100;
@@ -566,6 +599,16 @@ export default function PlusScreen() {
             onPress={handleBuy}
             style={purchased || isPlus ? styles.successBtn : undefined}
           />
+          {!isPlus && !purchased && getPaymentProvider(config?.paymentProvider).restore ? (
+            <Button
+              title="Restore Purchases"
+              variant="ghost"
+              busy={restoring}
+              disabled={restoring}
+              onPress={handleRestore}
+              style={styles.backLink}
+            />
+          ) : null}
           <Button title="← Back to Home" variant="ghost" onPress={goBack} style={styles.backLink} />
         </View>
       </ScrollView>

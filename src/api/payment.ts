@@ -204,6 +204,57 @@ export async function verifyPlayPurchase(
   }
 }
 
+// ─── verifyApplePurchase ──────────────────────────────────────────────────────
+
+/**
+ * Verify an Apple In-App Purchase server-side and grant Plus membership —
+ * the App Store counterpart of {@link verifyRazorpayPayment}. `receipt` is
+ * the base64 App Store receipt (`ProductPurchase.transactionReceipt` from
+ * `react-native-iap`) — attacker-supplied input that must be validated
+ * against Apple's `verifyReceipt` endpoint server-side, never trusted as-is.
+ * See `supabase/functions/verify-apple-purchase`.
+ */
+export async function verifyApplePurchase(
+  productId: string,
+  receipt: string,
+  userId: string,
+): Promise<PaymentResult<VerifyResponse>> {
+  try {
+    const resp = await fetch(`${EDGE_BASE}/verify-apple-purchase`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: env.supabaseAnonKey,
+      },
+      body: JSON.stringify({
+        product_id: productId,
+        receipt,
+        user_id: userId,
+      }),
+    });
+
+    const data = await resp.json();
+    if (!resp.ok) {
+      return {
+        data: null,
+        error: {
+          code: 'verification_failed',
+          message: data.error || 'Payment verification failed',
+        },
+      };
+    }
+    return { data: data as VerifyResponse, error: null };
+  } catch (err) {
+    return {
+      data: null,
+      error: {
+        code: 'verification_failed',
+        message: err instanceof Error ? err.message : 'Payment verification failed',
+      },
+    };
+  }
+}
+
 // ─── claimFreePlus ────────────────────────────────────────────────────────────
 
 /**

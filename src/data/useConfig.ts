@@ -15,11 +15,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { qk } from './keys';
 import { getPlatformConfig, type ConfigRow } from '@/api/config';
-import {
-  DEFAULT_PAYMENT_PROVIDER,
-  toPaymentProviderId,
-  type PaymentProviderId,
-} from '@/features/payments';
+import { toPaymentProviderId, type PaymentProviderId } from '@/features/payments';
 
 /** Parsed platform config consumed across the app. */
 export interface AppConfig {
@@ -32,12 +28,14 @@ export interface AppConfig {
   /** Whether the exam centre is shown on seeded profile cards. */
   seededCentreVisible: boolean;
   /**
-   * Checkout gateway for Zenter Plus (`payment_provider` key). Lets the app be
-   * moved onto Google Play Billing — which Play requires for digital goods —
-   * without a rebuild or store review. Unknown/missing values fall back to
-   * DEFAULT_PAYMENT_PROVIDER. See src/features/payments/index.ts.
+   * Remote override for the Zenter Plus checkout gateway (`payment_provider`
+   * key), or `null` when unset/unrecognized — `null` means "no override,"
+   * letting `getPaymentProvider` (src/features/payments/index.ts) fall back
+   * to this platform's required gateway (Apple IAP on iOS, Play Billing on
+   * Android, Razorpay on web) rather than forcing one gateway everywhere.
+   * Intended as an emergency kill-switch, not the normal path.
    */
-  paymentProvider: PaymentProviderId;
+  paymentProvider: PaymentProviderId | null;
 }
 
 /** Fallbacks used when a key is missing (matches the web defaults). */
@@ -46,7 +44,7 @@ export const CONFIG_DEFAULTS: AppConfig = {
   plusEnabled: true,
   seededVisible: true,
   seededCentreVisible: true,
-  paymentProvider: DEFAULT_PAYMENT_PROVIDER,
+  paymentProvider: null,
 };
 
 /** Derive the typed config object from raw platform_config rows. */
@@ -68,9 +66,10 @@ export function parseConfig(rows: ConfigRow[] | null | undefined): AppConfig {
     plusEnabled: map.get('plus_enabled') !== false,
     seededVisible: map.get('seeded_users_visible') !== false,
     seededCentreVisible: map.get('seeded_exam_centre_visible') !== false,
-    // Unknown or absent values fall back rather than disabling checkout, so a
-    // typo in platform_config can never leave Plus unbuyable.
-    paymentProvider: toPaymentProviderId(map.get('payment_provider')) ?? DEFAULT_PAYMENT_PROVIDER,
+    // Unknown/absent stays null (no override) rather than forcing a gateway,
+    // so a typo in platform_config can never override every platform's
+    // correct default onto one gateway — see AppConfig.paymentProvider.
+    paymentProvider: toPaymentProviderId(map.get('payment_provider')),
   };
 }
 

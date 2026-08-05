@@ -26,7 +26,7 @@
  * charging the buyer full price.
  */
 import { verifyPlayPurchase } from '@/api/payment';
-import type { CheckoutOutcome, CheckoutRequest, PaymentProvider } from './types';
+import type { CheckoutOutcome, CheckoutRequest, PaymentProvider, RestoreOutcome } from './types';
 
 /**
  * Play Console product id for Zenter Plus. MUST match the managed product in
@@ -41,6 +41,7 @@ type IapModule = {
   getProducts: (opts: { skus: string[] }) => Promise<{ productId: string }[]>;
   requestPurchase: (opts: { skus: string[] }) => Promise<PlayPurchase | PlayPurchase[]>;
   finishTransaction: (opts: { purchase: PlayPurchase; isConsumable: boolean }) => Promise<unknown>;
+  getAvailablePurchases: () => Promise<PlayPurchase[]>;
 };
 
 type PlayPurchase = {
@@ -140,6 +141,46 @@ export const playBillingProvider: PaymentProvider = {
     } finally {
       if (connected) {
         // Never let teardown mask the real outcome above.
+        await iap.endConnection().catch(() => undefined);
+      }
+    }
+  },
+
+  /**
+   * Re-grant Plus from Play purchase history — same rationale as
+   * `appleIapProvider.ts`'s `restore`: a non-consumable is never re-charged,
+   * so a reinstall/new device needs this instead of a fresh purchase.
+   */
+  async restore(userId: string): Promise<RestoreOutcome> {
+    const iap = loadSdk();
+    if (!iap) return { status: 'unavailable', message: SDK_MISSING };
+
+    let connected = false;
+    try {
+      connected = await iap.initConnection();
+      if (!connected) return { status: 'unavailable', message: SDK_MISSING };
+
+      const purchases = await iap.getAvailablePurchases();
+      const purchase = purchases.find((p) => p.productId === PLAY_PRODUCT_ID);
+      const token = purchase?.purchaseToken;
+      if (!purchase || !token) {
+        return { status: 'not_found' };
+      }
+
+      const { error } = await verifyPlayPurchase(purchase.productId, token, userId);
+      if (error) {
+        return { status: 'failed', message: 'Verification failed. Contact support@zenter.in' };
+      }
+
+      await iap.finishTransaction({ purchase, isConsumable: false }).catch(() => undefined);
+      return { status: 'success', reference: purchase.transactionId ?? token };
+    } catch (err: unknown) {
+      return {
+        status: 'failed',
+        message: err instanceof Error ? err.message : 'Restore failed. Please try again.',
+      };
+    } finally {
+      if (connected) {
         await iap.endConnection().catch(() => undefined);
       }
     }
