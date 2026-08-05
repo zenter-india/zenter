@@ -14,12 +14,13 @@ Legend: **PASS** · **ACTION REQUIRED** · **RELEASE BLOCKER** · **OWNER CONFIR
       (requires either your manual capture, or explicit go-ahead to use the simulator for this)
 
 ## Build
-- [x] **PASS** — Build 10 (1.0.0) uploaded to App Store Connect, TestFlight processing complete
-- [x] **PASS** — No code/config change discovered in this audit that requires a new build
+- [ ] **RELEASE BLOCKER (superseded)** — Build 10's commit is the exact pre-payments-work git HEAD (`6c8e822`)
+      — it contains none of the Apple IAP/Play Billing/Restore Purchases code. A new build is required; see
+      `PAYMENTS_REVIEW.md`. New builds now underway.
 
 ## App Review
-- [ ] **RELEASE BLOCKER** — No reviewer-safe sign-in path exists (no test OTP number configured in Supabase
-      Auth) — see `APP_REVIEW_INFORMATION.md`
+- [x] **PASS** — Reviewer sign-in confirmed live: Supabase Auth Test OTP `916363613007=123123` — see
+      `APP_REVIEW_INFORMATION.md`
 - [x] **PASS** — Review notes drafted, ready to paste (`APP_REVIEW_INFORMATION.md`)
 - [ ] **OWNER CONFIRMATION REQUIRED** — Contact first/last name split, phone number to list
 
@@ -52,8 +53,9 @@ Legend: **PASS** · **ACTION REQUIRED** · **RELEASE BLOCKER** · **OWNER CONFIR
       (`UGC_COMPLIANCE.md`)
 
 ## Payments
-- [ ] **RELEASE BLOCKER** — Zenter Plus (digital feature unlock) is sold via Razorpay on iOS with no Apple IAP
-      path — Guideline 3.1.1 (`PAYMENTS_REVIEW.md`)
+- [x] **PASS (implemented, pending real-purchase test)** — Real Apple IAP (StoreKit via `react-native-iap`)
+      + Restore Purchases built, code committed, both Edge Function secrets live. Not yet end-to-end tested
+      with a Sandbox purchase — do that once the new build installs. (`PAYMENTS_REVIEW.md`)
 
 ## Production Environment
 - [x] **PASS** — Single production Supabase project, no dev/staging leakage, no mock auth, no hard-coded

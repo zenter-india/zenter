@@ -24,10 +24,17 @@ logged-out user straight to `/(auth)/welcome` → phone entry → OTP.
 (migrated from Firebase Phone Auth this development cycle). The OTP is a real SMS sent to a real phone number
 — there is no username/password option.
 
-### RELEASE BLOCKER: no reviewer-safe login path exists yet
+### RESOLVED: reviewer-safe login path is configured
 
-I searched the Supabase Auth configuration, migrations, and app code for any of the following and found
-**none**:
+Confirmed live in Supabase Auth's phone Test OTP config: `916363613007=123123`. The reviewer types
+`6363613007` into Zenter's normal phone field (same as any real Indian number) and `123123` as the OTP — this
+bypasses real SMS delivery for that number only; every other number still goes through real Twilio SMS
+exactly as before.
+
+The rest of this section is kept for context on how it works and why it was needed:
+
+Originally, I searched the Supabase Auth configuration, migrations, and app code for any of the following and
+found **none**:
 
 - a fixed reviewer/test account
 - a hard-coded or config-driven test OTP

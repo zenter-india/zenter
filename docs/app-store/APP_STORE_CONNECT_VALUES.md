@@ -44,9 +44,14 @@ Target path once produced: assets/app-store/ios/01-find.png ... 06-profile.png
 Sign-in required: Yes
 
 Username (phone number):
-OWNER INPUT REQUIRED — RELEASE BLOCKER. No test OTP number is configured yet. Set one up in Supabase
-Auth (Authentication → Providers → Phone → Test OTP numbers) for the production project, then put that
-phone number here. See APP_REVIEW_INFORMATION.md for exactly why and how.
+6363613007
+(Reviewer types this into Zenter's normal phone-entry field, same as any real Indian number.)
+
+Password (OTP code):
+123123
+(Confirmed live in Supabase Auth's phone Test OTP config as `916363613007=123123` — no `+` prefix, per
+Supabase's own field format. Bypasses real SMS delivery for this number only; every other number still
+goes through real Twilio SMS.)
 
 Password (fixed OTP code):
 OWNER INPUT REQUIRED — the fixed code you assign to the test number above.
