@@ -3,23 +3,26 @@
  *
  * App Store Review Guideline 3.1.1 requires StoreKit for in-app digital-goods
  * unlocks, which Zenter Plus is. This provider exists so that's a config
- * choice rather than a rewrite — see `./types.ts`. Mirrors
- * `playBillingProvider.ts`'s structure closely; `react-native-iap` drives
- * both platforms through the same JS surface (pinned to `12.16.4` — the
- * newer major line is a StoreKit-2/event-based rewrite with a materially
- * different API, deliberately not used here to keep both providers on one
- * simple, promise-based pattern).
+ * choice rather than a rewrite — see `./types.ts`. Built against
+ * `react-native-iap@16` (Nitro/StoreKit-2 native) via `_iapCommon.ts`'s
+ * shared plumbing — see that file's header for why the older, simpler-API
+ * major line isn't used.
+ *
+ * The purchase token this library returns for iOS is a signed StoreKit 2 JWS
+ * transaction, not a classic base64 receipt — server-side verification uses
+ * Apple's App Store Server API (`GET /inApps/v1/transactions/{id}`), not the
+ * legacy `verifyReceipt` endpoint, for exactly that reason.
  *
  * ─── NOT YET ACTIVE — two things are still required ──────────────────────────
  *  1. A Non-Consumable In-App Purchase product in App Store Connect whose id
  *     equals {@link APPLE_PRODUCT_ID}, "Ready to Submit," priced to match
  *     Zenter Plus. (Non-Consumable, not a subscription — Plus never expires,
  *     see `verify-razorpay-payment`'s grant: `premium_expiry_date: null`.)
- *  2. A `verify-apple-purchase` Supabase Edge Function that validates the
- *     receipt against Apple's `verifyReceipt` endpoint (with the app's
- *     shared secret) and flips `users.plus_member` — the exact counterpart
- *     of `verify-razorpay-payment`. Client-side verification alone is
- *     trivially spoofable and must not be relied on to grant entitlements.
+ *  2. A `verify-apple-purchase` Supabase Edge Function that decodes the JWS,
+ *     validates it against the App Store Server API, and flips
+ *     `users.plus_member` — the exact counterpart of `verify-razorpay-payment`.
+ *     Client-side verification alone is trivially spoofable and must not be
+ *     relied on to grant entitlements.
  *
  * ─── Coupon limitation (deliberate, not an oversight) ────────────────────────
  * Same reasoning as `playBillingProvider.ts`: the App Store product's fixed
@@ -27,6 +30,7 @@
  * rather than silently charging full price.
  */
 import { verifyApplePurchase } from '@/api/payment';
+import { loadIapSdk, isCancellation, bridgePurchaseRequest } from './_iapCommon';
 import type { CheckoutOutcome, CheckoutRequest, PaymentProvider, RestoreOutcome } from './types';
 
 /**
@@ -36,53 +40,19 @@ import type { CheckoutOutcome, CheckoutRequest, PaymentProvider, RestoreOutcome 
  */
 export const APPLE_PRODUCT_ID = 'zenter_plus';
 
-/** Minimal slice of the `react-native-iap` (12.x) surface this provider drives. */
-type IapModule = {
-  initConnection: () => Promise<boolean>;
-  endConnection: () => Promise<boolean>;
-  getProducts: (opts: { skus: string[] }) => Promise<{ productId: string }[]>;
-  requestPurchase: (opts: { sku: string }) => Promise<ApplePurchase | ApplePurchase[] | void>;
-  finishTransaction: (opts: { purchase: ApplePurchase; isConsumable: boolean }) => Promise<unknown>;
-  getAvailablePurchases: () => Promise<ApplePurchase[]>;
-};
-
-type ApplePurchase = {
-  productId: string;
-  transactionId?: string;
-  transactionReceipt: string;
-};
-
 const SDK_MISSING =
   'The App Store is not available in this build. Please update the app from the App Store.';
-
-/** The IAP native module, or null when it isn't linked into this binary. */
-function loadSdk(): IapModule | null {
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const iap = require('react-native-iap');
-    return (iap?.default ?? iap ?? null) as IapModule | null;
-  } catch {
-    return null;
-  }
-}
-
-/** StoreKit surfaces a user-dismissed sheet as a thrown error, not a distinct result. */
-function isCancellation(err: unknown): boolean {
-  const code = (err as { code?: string })?.code ?? '';
-  const message = (err as { message?: string })?.message ?? '';
-  return code === 'E_USER_CANCELLED' || /cancel/i.test(code) || /cancel/i.test(message);
-}
 
 export const appleIapProvider: PaymentProvider = {
   id: 'apple_iap',
   label: 'Apple In-App Purchase',
 
   isAvailable() {
-    return loadSdk() !== null;
+    return loadIapSdk() !== null;
   },
 
   async checkout({ userId, couponCode }: CheckoutRequest): Promise<CheckoutOutcome> {
-    const iap = loadSdk();
+    const iap = loadIapSdk();
     if (!iap) return { status: 'unavailable', message: SDK_MISSING };
 
     // See the coupon note in the module header: refuse rather than overcharge.
@@ -96,42 +66,47 @@ export const appleIapProvider: PaymentProvider = {
     let connected = false;
     try {
       connected = await iap.initConnection();
-      if (!connected) {
-        return { status: 'unavailable', message: SDK_MISSING };
-      }
+      if (!connected) return { status: 'unavailable', message: SDK_MISSING };
 
       // The App Store refuses a purchase for an unknown/not-ready product;
       // check first so the failure is explainable instead of an opaque error.
-      const products = await iap.getProducts({ skus: [APPLE_PRODUCT_ID] });
-      if (!products.some((p) => p.productId === APPLE_PRODUCT_ID)) {
+      const products = await iap.fetchProducts({ skus: [APPLE_PRODUCT_ID], type: 'in-app' });
+      if (!products?.some((p) => p.id === APPLE_PRODUCT_ID)) {
         return {
           status: 'unavailable',
           message: 'Zenter Plus is not available on this account right now.',
         };
       }
 
-      const result = await iap.requestPurchase({ sku: APPLE_PRODUCT_ID });
-      const purchase = Array.isArray(result) ? result[0] : result;
-      const receipt = purchase?.transactionReceipt;
-      if (!purchase || !receipt) {
+      const { purchase, error, timedOut } = await bridgePurchaseRequest(iap, APPLE_PRODUCT_ID, {
+        request: { apple: { sku: APPLE_PRODUCT_ID } },
+        type: 'in-app',
+      });
+
+      if (timedOut) return { status: 'cancelled' };
+      if (error) {
+        if (isCancellation(error)) return { status: 'cancelled' };
+        return { status: 'failed', message: error.message || 'Payment failed. Please try again.' };
+      }
+      const jws = purchase?.purchaseToken;
+      if (!purchase || !jws) {
         return { status: 'failed', message: 'Purchase did not complete. Please try again.' };
       }
 
-      // Server verifies the receipt with Apple and grants Plus. Only after
-      // that succeeds do we finish the transaction — acknowledging first
-      // would risk the App Store considering it settled while the
-      // entitlement never landed.
-      const { error } = await verifyApplePurchase(purchase.productId, receipt, userId);
-      if (error) {
+      // Server verifies the JWS transaction with Apple's App Store Server API
+      // and grants Plus. Only after that succeeds do we finish the
+      // transaction — acknowledging first would risk the App Store
+      // considering it settled while the entitlement never landed.
+      const { error: verifyErr } = await verifyApplePurchase(purchase.productId, purchase.id, userId);
+      if (verifyErr) {
         return { status: 'failed', message: 'Verification failed. Contact support@zenter.in' };
       }
 
       // Plus is a one-time unlock, so it is finished, not consumed.
-      await iap.finishTransaction({ purchase, isConsumable: false });
+      await iap.finishTransaction({ purchase, isConsumable: false }).catch(() => undefined);
 
-      return { status: 'success', reference: purchase.transactionId ?? receipt.slice(0, 32) };
+      return { status: 'success', reference: purchase.id };
     } catch (err: unknown) {
-      if (isCancellation(err)) return { status: 'cancelled' };
       return {
         status: 'failed',
         message: err instanceof Error ? err.message : 'Payment failed. Please try again.',
@@ -148,11 +123,11 @@ export const appleIapProvider: PaymentProvider = {
    * Re-grant Plus from App Store purchase history — required for App Review
    * (Guideline 3.1.1) and for real users after a reinstall/new device, since a
    * non-consumable is never re-charged. Runs the exact same server-side
-   * verify-and-grant path as a fresh purchase; the only difference is the
-   * receipt comes from `getAvailablePurchases()` instead of `requestPurchase()`.
+   * verify-and-grant path as a fresh purchase; the only difference is the JWS
+   * comes from `getAvailablePurchases()` instead of the purchase-updated event.
    */
   async restore(userId: string): Promise<RestoreOutcome> {
-    const iap = loadSdk();
+    const iap = loadIapSdk();
     if (!iap) return { status: 'unavailable', message: SDK_MISSING };
 
     let connected = false;
@@ -162,17 +137,18 @@ export const appleIapProvider: PaymentProvider = {
 
       const purchases = await iap.getAvailablePurchases();
       const purchase = purchases.find((p) => p.productId === APPLE_PRODUCT_ID);
-      if (!purchase?.transactionReceipt) {
+      const jws = purchase?.purchaseToken;
+      if (!purchase || !jws) {
         return { status: 'not_found' };
       }
 
-      const { error } = await verifyApplePurchase(purchase.productId, purchase.transactionReceipt, userId);
+      const { error } = await verifyApplePurchase(purchase.productId, purchase.id, userId);
       if (error) {
         return { status: 'failed', message: 'Verification failed. Contact support@zenter.in' };
       }
 
       await iap.finishTransaction({ purchase, isConsumable: false }).catch(() => undefined);
-      return { status: 'success', reference: purchase.transactionId ?? purchase.transactionReceipt.slice(0, 32) };
+      return { status: 'success', reference: purchase.id };
     } catch (err: unknown) {
       return {
         status: 'failed',

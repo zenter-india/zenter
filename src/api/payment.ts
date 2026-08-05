@@ -208,15 +208,14 @@ export async function verifyPlayPurchase(
 
 /**
  * Verify an Apple In-App Purchase server-side and grant Plus membership —
- * the App Store counterpart of {@link verifyRazorpayPayment}. `receipt` is
- * the base64 App Store receipt (`ProductPurchase.transactionReceipt` from
- * `react-native-iap`) — attacker-supplied input that must be validated
- * against Apple's `verifyReceipt` endpoint server-side, never trusted as-is.
- * See `supabase/functions/verify-apple-purchase`.
+ * the App Store counterpart of {@link verifyRazorpayPayment}. `transactionId`
+ * (`Purchase.id` from `react-native-iap`) is attacker-supplied input that
+ * must be validated against Apple's App Store Server API server-side, never
+ * trusted as-is. See `supabase/functions/verify-apple-purchase`.
  */
 export async function verifyApplePurchase(
   productId: string,
-  receipt: string,
+  transactionId: string,
   userId: string,
 ): Promise<PaymentResult<VerifyResponse>> {
   try {
@@ -228,7 +227,7 @@ export async function verifyApplePurchase(
       },
       body: JSON.stringify({
         product_id: productId,
-        receipt,
+        transaction_id: transactionId,
         user_id: userId,
       }),
     });
