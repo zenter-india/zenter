@@ -22,15 +22,40 @@ import {
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
 import { ToastProvider } from '@/components';
 import { QueryProvider } from '@/data/QueryProvider';
-import { SessionProvider } from '@/stores/session';
+import { SessionProvider, useSession } from '@/stores/session';
+import { useMyUserId } from '@/features/connections/useMyUserId';
 import { initObservability } from '@/lib/observability';
 import { useForegroundRefresh } from '@/lib/useForegroundRefresh';
+import {
+  setupAndroidNotificationChannel,
+  registerForPushNotificationsAsync,
+  attachNotificationResponseListener,
+} from '@/lib/pushNotifications';
 import { DeepLinkCapture } from '@/features/auth/DeepLinkCapture';
 import { SafetyReminderHost } from '@/features/connections/SafetyReminder';
 import { SuspensionGate } from '@/features/safety/SuspensionGate';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 initObservability();
+setupAndroidNotificationChannel().catch(() => {});
+
+/** Headless: registers/re-registers the device push token on every authenticated
+ *  app start (fresh sign-in, cold start with a persisted session, token refresh) —
+ *  not just a fresh OTP verify, since a token can need re-registration on reinstall
+ *  or rotation even when the session itself never changed. */
+function PushRegistration() {
+  const { ready } = useSession();
+  const userId = useMyUserId();
+
+  useEffect(() => {
+    if (!ready || !userId) return;
+    registerForPushNotificationsAsync(userId).catch(() => {});
+  }, [ready, userId]);
+
+  useEffect(() => attachNotificationResponseListener(), []);
+
+  return null;
+}
 
 /**
  * Root layout (AD-3). Bundles brand fonts (AD-7) and hosts the global toast.
@@ -76,6 +101,7 @@ export default function RootLayout() {
       <ToastProvider>
         {/* Dark status-bar content — the app is light-themed with light headers. */}
         <StatusBar style="dark" />
+        <PushRegistration />
         <DeepLinkCapture />
         {/* Accept-flow safety reminder (FR-29): rendered once, shown from any surface. */}
         <SafetyReminderHost />
@@ -104,7 +130,14 @@ export default function RootLayout() {
           {/* Overlays → native presentations (FR-34): profile preview + filters as sheets */}
           <Stack.Screen name="mate/[id]" options={{ presentation: 'formSheet', sheetAllowedDetents: [0.6, 1] }} />
           <Stack.Screen name="filters" options={{ presentation: 'formSheet', sheetAllowedDetents: [0.5, 0.9] }} />
-          <Stack.Screen name="feedback" options={{ presentation: 'formSheet', sheetAllowedDetents: [0.5, 0.9] }} />
+          {/* Plain push, NOT formSheet: this is the only menu item opened from
+             ProfileMenuButton's own <Modal>, and presenting a formSheet (also a
+             native modal on iOS) while that Modal is still dismissing races two
+             modal presentations on the same window — the actual cause of the
+             blank-sheet bug, which a JS-side navigation delay could not reliably
+             fix. Every other menu item is already a plain push and has never
+             shown this bug. */}
+          <Stack.Screen name="feedback" />
           <Stack.Screen name="faq" />
           <Stack.Screen name="contact" />
           {/* Long-form policy pages, mirroring the website's footer links. */}

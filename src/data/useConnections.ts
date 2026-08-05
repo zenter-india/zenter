@@ -29,6 +29,19 @@ import {
 } from '@/domain/relationships';
 import type { IncomingRequest } from '@/data/useRequests';
 import { captureError } from '@/lib/observability';
+import { EDGE_BASE } from '@/api/pushTokens';
+import { env } from '@/lib/env';
+
+/** Fire-and-forget push notify — never awaited, never blocks the UI action. */
+function notifyPush(payload: Record<string, string>): void {
+  fetch(`${EDGE_BASE}/send-push-notification`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', apikey: env.supabaseAnonKey },
+    body: JSON.stringify(payload),
+  }).catch((e) => {
+    if (__DEV__) console.warn('[push] notify failed', e);
+  });
+}
 
 // ─── Query + relationship projection ─────────────────────────────────────────
 
@@ -119,6 +132,9 @@ export function useSendRequest(userId: string) {
     onError: (_err, _receiverId, ctx) => {
       if (ctx?.prevConns) qc.setQueryData(connKey, ctx.prevConns);
     },
+    onSuccess: (data) => {
+      if (data?.id) notifyPush({ type: 'connection_request', connection_id: data.id });
+    },
     onSettled: () => invalidate(),
   });
 }
@@ -187,6 +203,9 @@ export function useAccept(userId: string) {
     onError: (_err, _vars, ctx) => {
       if (ctx?.prevConns) qc.setQueryData(connKey, ctx.prevConns);
       if (ctx?.prevReqs) qc.setQueryData(reqKey, ctx.prevReqs);
+    },
+    onSuccess: (_result, vars) => {
+      notifyPush({ type: 'connection_accepted', connection_id: vars.connectionId });
     },
     // Accept creates a conversation → also refresh the chat list.
     onSettled: () => invalidate(true),

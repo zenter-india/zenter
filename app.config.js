@@ -82,6 +82,14 @@ module.exports = ({ config }) => ({
     // builds succeed while Sentry is unconfigured. Remove that flag once the
     // three SENTRY_* values are supplied as EAS secrets.
     '@sentry/react-native/expo',
+    [
+      'expo-notifications',
+      {
+        icon: './assets/icon.png',
+        color: '#ffffff',
+        defaultChannel: 'default',
+      },
+    ],
   ],
   extra: {
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,

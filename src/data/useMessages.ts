@@ -24,6 +24,8 @@ import {
   type Message,
   type Conversation,
 } from '@/api/chat';
+import { EDGE_BASE } from '@/api/pushTokens';
+import { env } from '@/lib/env';
 
 /** A message plus optimistic-send metadata used only for rendering. */
 export type ChatMessage = Message & {
@@ -179,6 +181,15 @@ export function useMessages(conversationId: string | null | undefined, userId: s
         next[idx] = { ...target, id: realId || target.id, _status: 'sent' };
         return next;
       });
+      if (realId && conversationId) {
+        fetch(`${EDGE_BASE}/send-push-notification`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: env.supabaseAnonKey },
+          body: JSON.stringify({ type: 'chat_message', conversation_id: conversationId, message_id: realId }),
+        }).catch((e) => {
+          if (__DEV__) console.warn('[push] chat_message notify failed', e);
+        });
+      }
     },
     onError: (_err, { clientToken }) => {
       // Drop the optimistic bubble; the screen restores the composer from sendError.
