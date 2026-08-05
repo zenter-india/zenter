@@ -92,4 +92,14 @@ export interface PaymentProvider {
    * restore from (Razorpay isn't a store — there's nothing to query).
    */
   restore?(userId: string): Promise<RestoreOutcome>;
+  /**
+   * The store's own product metadata for Zenter Plus — currently just its
+   * localized, formatted price string (e.g. "₹199.00"), read directly from
+   * the platform's product catalog. Omitted on providers with no catalog to
+   * query (Razorpay's price is server-computed, not store-fetched). Callers
+   * MUST treat `null` (fetch failed / product not found) as "unknown," never
+   * fall back to a guessed or server-computed number — a store's displayed
+   * price must always come from the store itself.
+   */
+  getProductInfo?(): Promise<{ displayPrice: string } | null>;
 }

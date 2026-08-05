@@ -30,7 +30,10 @@ export type IapPurchaseError = {
 export type IapModule = {
   initConnection: () => Promise<boolean>;
   endConnection: () => Promise<boolean>;
-  fetchProducts: (opts: { skus: string[]; type?: 'in-app' }) => Promise<{ id: string }[] | null>;
+  fetchProducts: (opts: {
+    skus: string[];
+    type?: 'in-app';
+  }) => Promise<{ id: string; displayPrice?: string | null }[] | null>;
   requestPurchase: (opts: {
     request: { apple?: { sku: string } } | { google?: { skus: string[] } };
     type: 'in-app';

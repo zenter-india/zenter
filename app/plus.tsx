@@ -19,7 +19,7 @@
  * here and no rebuild.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { View, ScrollView, StyleSheet, TextInput, Pressable } from 'react-native';
+import { View, ScrollView, StyleSheet, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -167,6 +167,15 @@ export default function PlusScreen() {
   const [finalPaise, setFinalPaise] = useState<number | null>(null);
   const [priceLoading, setPriceLoading] = useState(true);
 
+  // Apple's own StoreKit price for `zenter_plus` — the sole source of truth
+  // for what's displayed on iOS (never platform_config.plus_price_paise or
+  // the Razorpay probe below, which have no relationship to what App Store
+  // Connect actually has configured). 'unavailable' covers both "fetch
+  // failed" and "product not found" — in either case we must not fall back
+  // to a guessed number.
+  const [applePriceStatus, setApplePriceStatus] = useState<'loading' | 'ready' | 'unavailable'>('loading');
+  const [applePrice, setApplePrice] = useState<string | null>(null);
+
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
@@ -207,6 +216,28 @@ export default function PlusScreen() {
       setPriceLoading(false);
     })();
   }, [me?.id]);
+
+  // ── Apple StoreKit price fetch (iOS only) ─────────────────────────────────
+  // Deliberately independent of the Razorpay probe above — this screen's
+  // displayed price on iOS must come only from Apple's product catalog.
+  useEffect(() => {
+    const provider = getPaymentProvider(config?.paymentProvider);
+    if (!provider.getProductInfo) return; // not an IAP provider — Razorpay price stands
+    let cancelled = false;
+    setApplePriceStatus('loading');
+    provider.getProductInfo().then((info) => {
+      if (cancelled) return;
+      if (info?.displayPrice) {
+        setApplePrice(info.displayPrice);
+        setApplePriceStatus('ready');
+      } else {
+        setApplePriceStatus('unavailable');
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [config?.paymentProvider]);
 
   // ── Track page view ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -360,15 +391,27 @@ export default function PlusScreen() {
   }, [me, phone, restoring, queryClient, show, config?.paymentProvider]);
 
   // ── Derived display values ────────────────────────────────────────────────
+  // isAppleIap: on iOS the resolved provider is 'apple_iap' (see
+  // src/features/payments/index.ts's platform-aware default) — whenever
+  // that's true, every price shown below comes from `applePrice`
+  // (StoreKit's own product catalog), never platform_config.plus_price_paise
+  // or the Razorpay probe.
+  const isAppleIap = getPaymentProvider(config?.paymentProvider).id === 'apple_iap';
   const displayPrice = finalPaise != null ? finalPaise / 100 : basePrice ?? 49;
   const showStrikethrough = appliedCoupon && basePrice != null && finalPaise != null && finalPaise !== basePrice * 100;
   const ctaLabel = isPlus
     ? '⭐ You are already Zenter Plus!'
     : purchased
       ? '⭐ Welcome to Zenter Plus!'
-      : finalPaise === 0
-        ? 'Claim Zenter Plus — FREE'
-        : `Get Zenter Plus — ₹${displayPrice}`;
+      : isAppleIap
+        ? applePriceStatus === 'ready'
+          ? `Get Zenter Plus — ${applePrice}`
+          : applePriceStatus === 'unavailable'
+            ? 'Zenter Plus unavailable'
+            : 'Loading price…'
+        : finalPaise === 0
+          ? 'Claim Zenter Plus — FREE'
+          : `Get Zenter Plus — ₹${displayPrice}`;
 
   // ── Plus not enabled gate ─────────────────────────────────────────────────
   if (!plusEnabled) {
@@ -398,14 +441,26 @@ export default function PlusScreen() {
             Plus gives you priority visibility, featured card and co-ordinate with every centre
             aspirant.
           </Text>
-          {!priceLoading && (
-            <View style={styles.heroPriceRow}>
-              {basePrice != null && basePrice !== DISCOUNTED_PRICE ? (
-                <Text style={styles.heroPriceStrike}>₹{basePrice}</Text>
-              ) : null}
-              <Text style={styles.heroPrice}>₹{DISCOUNTED_PRICE}</Text>
-              <Text style={styles.heroPriceSuffix}>/ exam season</Text>
-            </View>
+          {isAppleIap ? (
+            // iOS: Apple's real price only — the Razorpay-only "discounted"
+            // hero price below has no equivalent here (coupons aren't
+            // usable with Apple IAP; see the CTA section's price row).
+            applePriceStatus === 'ready' && (
+              <View style={styles.heroPriceRow}>
+                <Text style={styles.heroPrice}>{applePrice}</Text>
+                <Text style={styles.heroPriceSuffix}>/ exam season</Text>
+              </View>
+            )
+          ) : (
+            !priceLoading && (
+              <View style={styles.heroPriceRow}>
+                {basePrice != null && basePrice !== DISCOUNTED_PRICE ? (
+                  <Text style={styles.heroPriceStrike}>₹{basePrice}</Text>
+                ) : null}
+                <Text style={styles.heroPrice}>₹{DISCOUNTED_PRICE}</Text>
+                <Text style={styles.heroPriceSuffix}>/ exam season</Text>
+              </View>
+            )
           )}
           <Text variant="small" style={styles.heroSeason}>
             One-time for NEET UG 2026
@@ -413,8 +468,12 @@ export default function PlusScreen() {
         </View>
 
         {/* "Early Access Offer" promo — tapping Get now fills the coupon field
-           below (the web equivalent copies the code and scrolls to the input). */}
-        {!isPlus && !purchased && (
+           below (the web equivalent copies the code and scrolls to the input).
+           Hidden on iOS: the coupon field only talks to Razorpay's pricing
+           endpoint, which Apple IAP checkout ignores entirely (see
+           appleIapProvider.ts) — advertising a coupon-based discount here
+           would be misleading when the real Apple price can't reflect it. */}
+        {!isAppleIap && !isPlus && !purchased && (
           <LinearGradient
             colors={[colors.promoNavy, colors.promoNavyDeep]}
             start={{ x: 0, y: 0 }}
@@ -580,21 +639,46 @@ export default function PlusScreen() {
 
         {/* Price + CTA */}
         <View style={styles.ctaSection}>
-          {!priceLoading && !isPlus && !purchased && (
-            <View style={styles.priceRow}>
-              {showStrikethrough && (
-                <Text style={styles.priceStrike}>₹{basePrice}</Text>
-              )}
-              <Text style={styles.priceFinal}>
-                {finalPaise === 0 ? 'FREE' : `₹${displayPrice}`}
-              </Text>
-              <Text style={styles.priceSuffix}>/ exam season</Text>
-            </View>
+          {isAppleIap ? (
+            // iOS: every price here is Apple's own StoreKit product data —
+            // never platform_config.plus_price_paise or the Razorpay probe.
+            !isPlus &&
+            !purchased && (
+              <View style={styles.priceRow}>
+                {applePriceStatus === 'loading' ? (
+                  <>
+                    <ActivityIndicator size="small" color={colors.textMuted} />
+                    <Text style={styles.priceSuffix}>Loading price…</Text>
+                  </>
+                ) : applePriceStatus === 'ready' ? (
+                  <>
+                    <Text style={styles.priceFinal}>{applePrice}</Text>
+                    <Text style={styles.priceSuffix}>/ exam season</Text>
+                  </>
+                ) : (
+                  <Text style={styles.priceSuffix}>
+                    Price unavailable right now — please try again shortly.
+                  </Text>
+                )}
+              </View>
+            )
+          ) : (
+            !priceLoading && !isPlus && !purchased && (
+              <View style={styles.priceRow}>
+                {showStrikethrough && (
+                  <Text style={styles.priceStrike}>₹{basePrice}</Text>
+                )}
+                <Text style={styles.priceFinal}>
+                  {finalPaise === 0 ? 'FREE' : `₹${displayPrice}`}
+                </Text>
+                <Text style={styles.priceSuffix}>/ exam season</Text>
+              </View>
+            )
           )}
           <Button
             title={ctaLabel}
             block
-            disabled={isPlus || purchased || buying}
+            disabled={isPlus || purchased || buying || (isAppleIap && applePriceStatus !== 'ready')}
             busy={buying}
             onPress={handleBuy}
             style={purchased || isPlus ? styles.successBtn : undefined}

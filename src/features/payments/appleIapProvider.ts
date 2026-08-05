@@ -160,4 +160,34 @@ export const appleIapProvider: PaymentProvider = {
       }
     }
   },
+
+  /**
+   * Apple's own localized price for `zenter_plus`, straight from StoreKit's
+   * product catalog — the single source of truth for what the Plus screen
+   * displays on iOS. Never derived from `platform_config.plus_price_paise`
+   * or the Razorpay price probe, which have no relationship to what App
+   * Store Connect actually has configured for this product.
+   */
+  async getProductInfo(): Promise<{ displayPrice: string } | null> {
+    const iap = loadIapSdk();
+    if (!iap) return null;
+
+    let connected = false;
+    try {
+      connected = await iap.initConnection();
+      if (!connected) return null;
+
+      const products = await iap.fetchProducts({ skus: [APPLE_PRODUCT_ID], type: 'in-app' });
+      const product = products?.find((p) => p.id === APPLE_PRODUCT_ID);
+      if (!product?.displayPrice) return null;
+
+      return { displayPrice: product.displayPrice };
+    } catch {
+      return null;
+    } finally {
+      if (connected) {
+        await iap.endConnection().catch(() => undefined);
+      }
+    }
+  },
 };
