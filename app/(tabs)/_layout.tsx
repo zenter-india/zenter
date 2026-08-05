@@ -17,7 +17,10 @@ export default function TabsLayout() {
       <Tabs
         initialRouteName="feed"
         tabBar={(props) => <TabBar {...(props as any)} />}
-        screenOptions={{ headerShown: false, animation: 'shift' }}
+        // 'shift' crossfades between screen snapshots and can flash blank when the
+        // destination tab hasn't rendered content yet (lazy mount + in-flight
+        // fetch) — 'fade' is a softer transition that doesn't expose that gap.
+        screenOptions={{ headerShown: false, animation: 'fade', lazy: false }}
       >
         <Tabs.Screen name="requests" />
         <Tabs.Screen name="feed" />

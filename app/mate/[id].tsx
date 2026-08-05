@@ -69,18 +69,9 @@ export default function MateProfile() {
 
 function ProfileBody({ user, onBlock }: { user: FeedItem; onBlock: () => void }) {
   return (
-    <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false} bounces={false}>
       {/* Route timeline + badges + travel/stay — read-only (no onPress/footer). */}
       <MateCard data={toMateCardData(user)} />
-
-      {user.exam_center ? (
-        <View style={styles.detail}>
-          <Text variant="caption">Exam centre</Text>
-          <Text variant="body" color={colors.text}>
-            {user.exam_center}
-          </Text>
-        </View>
-      ) : null}
 
       {/* Masked contact — the hard invariant: number stays hidden until an
           accepted Contact Exchange (Epic 7). */}

@@ -9,7 +9,7 @@
  * Contact support, Feedback, Log out.
  */
 import { useRef, useState } from 'react';
-import { Modal, Platform, Pressable, View, StyleSheet } from 'react-native';
+import { Modal, Pressable, View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { colors, space, radius, fonts, shadows } from '@/theme';
@@ -27,10 +27,15 @@ type MenuItem = {
 export function ProfileMenuButton() {
   const [open, setOpen] = useState(false);
   const insets = useSafeAreaInsets();
-  // Deferred action, run once this Modal has actually finished dismissing —
-  // firing router.push (esp. into a formSheet-presented screen like /feedback)
-  // in the same tick as closing this Modal races two native presentations on
-  // iOS and can leave the pushed screen rendering blank/broken.
+  // Deferred action, run only once this Modal's dismiss animation has fully
+  // settled. Two overlapping native presentation transitions on the same
+  // window (this Modal's UIKit dismiss + a formSheet-presented screen like
+  // /feedback being pushed) can leave the pushed screen rendering blank on
+  // iOS — Modal's own `onDismiss` callback fires a touch before UIKit has
+  // actually finished tearing down the presentation, so it isn't a reliable
+  // enough signal on its own. A fixed timeout, used uniformly on both
+  // platforms instead of racing onDismiss, gives a guaranteed serialization
+  // gap regardless of that timing slop.
   const pendingAction = useRef<(() => void) | null>(null);
 
   const runPending = () => {
@@ -42,9 +47,7 @@ export function ProfileMenuButton() {
   const deferThenClose = (action: () => void) => {
     pendingAction.current = action;
     setOpen(false);
-    // Modal's onDismiss (iOS-only) is the reliable signal, but Android doesn't
-    // fire it — fall back to a timeout matching the fade animation there.
-    if (Platform.OS !== 'ios') setTimeout(runPending, 250);
+    setTimeout(runPending, 400);
   };
 
   const close = () => setOpen(false);
@@ -90,7 +93,6 @@ export function ProfileMenuButton() {
         transparent
         animationType="fade"
         onRequestClose={close}
-        onDismiss={runPending}
       >
         <Pressable style={styles.backdrop} onPress={close}>
           <View style={[styles.menu, { marginTop: insets.top + 52 }]}>

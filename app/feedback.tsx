@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { colors, space, fonts, radius } from '@/theme';
 import { Text, Button, useToast } from '@/components';
@@ -7,6 +8,7 @@ import { useSession } from '@/stores/session';
 import { useProfile } from '@/data/useProfile';
 import { submitFeedback } from '@/api/feedback';
 import { TextInput } from 'react-native-gesture-handler';
+import { ScreenHeader } from '@/features/profile/ScreenHeader';
 
 export default function FeedbackScreen() {
   const { phone } = useSession();
@@ -42,11 +44,11 @@ export default function FeedbackScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScreenHeader title="Send Feedback" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
-          <Text variant="h2">Send Feedback</Text>
-          <Text variant="bodyMuted" style={{ marginTop: space[2] }}>
+          <Text variant="bodyMuted">
             Tell us what you love, what&apos;s broken, or what we should build next!
           </Text>
         </View>
@@ -77,7 +79,7 @@ export default function FeedbackScreen() {
           />
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

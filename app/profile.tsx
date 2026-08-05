@@ -6,8 +6,9 @@
  *  - Story 6.1: identity card (initials avatar, name, own phone) + view/edit
  *    sections (ProfileEditor) reading the FULL self record (qk.profile), which is
  *    never overwritten by a partial fetch (AD-2). Edit is triggered by the pen
- *    icon next to the username, not a bottom button — `editing` lives here and
- *    is passed down as a controlled prop.
+ *    icon in the header's top-right corner, not a bottom button — `editing`
+ *    lives in ProfileScreen (above the async boundary, so the header can show
+ *    the pen the instant data loads) and is passed down as a controlled prop.
  *  - Story 6.2: Roll-Number verification (VerificationSection).
  *  - Story 6.3: pause / reactivate (amber banner + confirm) and delete account
  *    (danger-outlined button + confirm), both inline here — legal links/FAQ/
@@ -37,12 +38,29 @@ import { ConfirmDialog } from '@/features/profile/ConfirmDialog';
 export default function ProfileScreen() {
   const { phone } = useSession();
   const q = useProfile(phone);
+  const [editing, setEditing] = useState(false);
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace(FEED_ROUTE));
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScreenHeader title="My profile" onBack={goBack} />
+      <ScreenHeader
+        title="My profile"
+        onBack={goBack}
+        rightSlot={
+          q.data && !editing ? (
+            <Pressable
+              onPress={() => setEditing(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Edit profile"
+              hitSlop={8}
+              style={({ pressed }) => [styles.editBtn, pressed && styles.pressed]}
+            >
+              <Icon name="edit-2" size={20} color={colors.text} />
+            </Pressable>
+          ) : null
+        }
+      />
 
       <AsyncBoundary<User | null>
         isLoading={q.isLoading}
@@ -61,19 +79,28 @@ export default function ProfileScreen() {
           />
         }
       >
-        {(me) => (me ? <ProfileBody me={me} phone={phone} /> : null)}
+        {(me) => (me ? <ProfileBody me={me} phone={phone} editing={editing} setEditing={setEditing} /> : null)}
       </AsyncBoundary>
     </SafeAreaView>
   );
 }
 
-function ProfileBody({ me, phone }: { me: User; phone: string | null }) {
+function ProfileBody({
+  me,
+  phone,
+  editing,
+  setEditing,
+}: {
+  me: User;
+  phone: string | null;
+  editing: boolean;
+  setEditing: (v: boolean) => void;
+}) {
   const pause = usePauseProfile(phone);
   const del = useDeleteAccount();
   const { show } = useToast();
   const [pauseConfirm, setPauseConfirm] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
-  const [editing, setEditing] = useState(false);
   const paused = !!me.is_profile_paused;
 
   async function applyPause(next: boolean) {
@@ -111,22 +138,9 @@ function ProfileBody({ me, phone }: { me: User; phone: string | null }) {
         <View style={styles.identity}>
           <Avatar name={me.full_name} size={64} />
           <View style={styles.identityText}>
-            <View style={styles.nameRow}>
-              <Text variant="h3" numberOfLines={1} style={styles.nameText}>
-                {me.full_name?.trim() || 'Your name'}
-              </Text>
-              {!editing ? (
-                <Pressable
-                  onPress={() => setEditing(true)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Edit profile"
-                  hitSlop={8}
-                  style={({ pressed }) => [styles.editBtn, pressed && styles.pressed]}
-                >
-                  <Icon name="edit-2" size={16} color={colors.textMuted} />
-                </Pressable>
-              ) : null}
-            </View>
+            <Text variant="h3" numberOfLines={1}>
+              {me.full_name?.trim() || 'Your name'}
+            </Text>
             <Text variant="small" accessibilityLabel="Your phone number">
               {formatPhone(phone)}
             </Text>
@@ -163,7 +177,7 @@ function ProfileBody({ me, phone }: { me: User; phone: string | null }) {
       </Card>
 
       {/* View / edit sections (Story 6.1) — editing is triggered by the pen
-         icon next to the username above, not a button in here. */}
+         icon in the header, not a button in here. */}
       <ProfileEditor
         me={me}
         phone={phone}
@@ -188,6 +202,7 @@ function ProfileBody({ me, phone }: { me: User; phone: string | null }) {
             size="sm"
             onPress={() => router.push('/blocked')}
             accessibilityLabel="Manage blocked users"
+            style={styles.accountActionBtn}
           />
           <Button
             title={paused ? 'Reactivate profile' : 'Pause my profile'}
@@ -195,6 +210,7 @@ function ProfileBody({ me, phone }: { me: User; phone: string | null }) {
             size="sm"
             onPress={() => (paused ? applyPause(false) : setPauseConfirm(true))}
             busy={pause.isPending}
+            style={styles.accountActionBtn}
           />
         </View>
         <Button
@@ -243,9 +259,7 @@ const styles = StyleSheet.create({
   identityCard: { gap: 0 },
   identity: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   identityText: { flex: 1, gap: 2 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  nameText: { flex: 1 },
-  editBtn: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center', borderRadius: radius.full },
+  editBtn: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', borderRadius: radius.full },
   pressed: { opacity: 0.6 },
   plusCta: { marginTop: space[3] },
   pausedBanner: {
@@ -259,6 +273,7 @@ const styles = StyleSheet.create({
   },
   pausedText: { fontFamily: fonts.bodyMedium, fontSize: 13, color: badgeVariants.warning.fg },
   account: { gap: space[3] },
-  accountActions: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  accountActions: { flexDirection: 'row', gap: space[2] },
+  accountActionBtn: { flex: 1 },
   deleteBtn: { borderColor: colors.danger },
 });
