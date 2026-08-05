@@ -16,9 +16,18 @@ expo-env.d.ts
 .env
 .env.local
 .env*.local
+/secrets/
+/credentials.json
+/credentials/
 
 # Metro
 .metro-health-check*
+
+# Supabase CLI local state (project link cache, not source)
+/supabase/.temp/
+
+# Vercel CLI local project link (unrelated to this app; leftover local state)
+/.vercel/
 
 # Debug
 npm-debug.*
