@@ -6,7 +6,7 @@
  * (white-on-danger ≈ 3.76:1, the documented accepted contrast for destructive
  * labels — never color alone, the word "Delete permanently" carries the meaning).
  */
-import { Modal, View, StyleSheet } from 'react-native';
+import { Modal, View, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radius, space } from '@/theme';
 import { Text, Button } from '@/components';
@@ -42,7 +42,9 @@ export function ConfirmDialog({
           <Text variant="h3" color={danger ? colors.danger : undefined}>
             {title}
           </Text>
-          <Text variant="bodyMuted">{message}</Text>
+          <ScrollView style={styles.messageScroll}>
+            <Text variant="bodyMuted">{message}</Text>
+          </ScrollView>
           <View style={styles.actions}>
             <Button
               title={cancelLabel}
@@ -79,6 +81,7 @@ const styles = StyleSheet.create({
     padding: space[5],
     gap: space[3],
   },
+  messageScroll: { maxHeight: 320, flexGrow: 0 },
   actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: space[2], marginTop: space[2] },
   btn: { flex: 1 },
   danger: { backgroundColor: colors.danger },

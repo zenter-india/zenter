@@ -241,8 +241,21 @@ function ProfileBody({
 
       <ConfirmDialog
         visible={deleteConfirm}
-        title="Delete your account?"
-        message="This permanently deletes your Zenter profile and connections. This action cannot be undone."
+        title="Delete Your Zenter Account"
+        message={
+          'If you wish to delete your Zenter account and associated Personal Data, you may submit a ' +
+          'deletion request using the Delete Account option available in your Zenter profile.\n\n' +
+          'Once you submit the request, Zenter may verify your account and will process the deletion ' +
+          'in accordance with its Privacy Policy and Applicable Law.\n\n' +
+          'Certain information may be retained where required or permitted by law, including information ' +
+          'necessary for legal compliance, fraud prevention, security, dispute resolution, payment records, ' +
+          'or other lawful purposes.\n\n' +
+          'For assistance, please contact:\n' +
+          'Email: support@zenter.in\n' +
+          'Phone: +91 70104 41518\n\n' +
+          'Zenter\n' +
+          'Owned and operated by AMSEL GOLD'
+        }
         confirmLabel="Delete permanently"
         danger
         busy={del.isPending}
