@@ -26,17 +26,18 @@ export function AgeGateModal({ visible, busy, onCancel, onConfirm }: AgeGateModa
       <View style={styles.backdrop}>
         <View style={[styles.card, { marginBottom: insets.bottom }]}>
           <Text variant="h2" style={styles.title}>
-            Confirm your age
+            Age confirmation (18+)
           </Text>
           <Text variant="bodyMuted" style={styles.body}>
-            Zenter is for adult exam aspirants. Please confirm you are 18 years or older to create
-            your profile.
+            By continuing, you confirm that you are 18 years of age or older. If you are under 18
+            years of age, please access Zenter only under the supervision and guidance of your
+            parent or legal guardian.
           </Text>
 
           <Pressable
             accessibilityRole="checkbox"
             accessibilityState={{ checked }}
-            accessibilityLabel="I confirm I am 18 years or older"
+            accessibilityLabel="I have read and agree to the above"
             onPress={() => setChecked((c) => !c)}
             style={styles.checkRow}
           >
@@ -47,13 +48,13 @@ export function AgeGateModal({ visible, busy, onCancel, onConfirm }: AgeGateModa
                 </Text>
               ) : null}
             </View>
-            <Text style={styles.checkLabel}>I confirm I am 18 years or older.</Text>
+            <Text style={styles.checkLabel}>I have read and agree to the above.</Text>
           </Pressable>
 
           <View style={styles.actions}>
             <Button title="Cancel" variant="ghost" size="md" onPress={onCancel} disabled={busy} style={styles.action} />
             <Button
-              title="Confirm & Save"
+              title="Continue"
               size="md"
               onPress={onConfirm}
               disabled={!checked}
