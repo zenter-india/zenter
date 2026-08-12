@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -66,6 +66,14 @@ export default function SignInScreen() {
           showsVerticalScrollIndicator={false}
         >
           <LinearGradient colors={[colors.primary, colors.primary600] as const} style={styles.hero}>
+            <View style={styles.logoBadge}>
+              <Image
+                source={require('../../assets/logo-transparent.png')}
+                style={styles.logo}
+                resizeMode="contain"
+                accessibilityLabel="Zenter"
+              />
+            </View>
             <Text variant="h1" color={colors.white}>
               Zenter
             </Text>
@@ -146,6 +154,16 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { flexGrow: 1 },
   hero: { paddingHorizontal: space[5], paddingVertical: space[7], gap: space[1], alignItems: 'flex-start' },
+  logoBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: space[2],
+  },
+  logo: { width: 44, height: 44 },
   heroSub: { opacity: 0.95 },
   form: { padding: space[5], gap: space[3] },
   lead: { marginBottom: space[1] },
