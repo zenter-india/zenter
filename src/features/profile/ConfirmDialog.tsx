@@ -47,19 +47,20 @@ export function ConfirmDialog({
           </ScrollView>
           <View style={styles.actions}>
             <Button
+              title={confirmLabel}
+              size="sm"
+              block
+              busy={busy}
+              onPress={onConfirm}
+              style={danger ? styles.danger : undefined}
+            />
+            <Button
               title={cancelLabel}
               variant="ghost"
               size="sm"
+              block
               onPress={onCancel}
               disabled={busy}
-              style={styles.btn}
-            />
-            <Button
-              title={confirmLabel}
-              size="sm"
-              busy={busy}
-              onPress={onConfirm}
-              style={[styles.btn, danger ? styles.danger : null]}
             />
           </View>
         </View>
@@ -82,7 +83,6 @@ const styles = StyleSheet.create({
     gap: space[3],
   },
   messageScroll: { maxHeight: 320, flexGrow: 0 },
-  actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: space[2], marginTop: space[2] },
-  btn: { flex: 1 },
+  actions: { gap: space[2], marginTop: space[2] },
   danger: { backgroundColor: colors.danger },
 });
