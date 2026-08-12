@@ -6,7 +6,7 @@ export const APP = Object.freeze({
   tagline: 'Find your exam centre mates',
   version: '0.1.0',
   supportEmail: 'support@zenter.in',
-  supportPhone: '+91 6363613007',
+  supportPhone: '+91 70104 41518',
 });
 
 // Public Supabase project credentials. Anon key is safe to ship to the browser
