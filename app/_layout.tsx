@@ -6,7 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-url-polyfill/auto';
 
 import { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -129,7 +129,18 @@ export default function RootLayout() {
           <Stack.Screen name="suspended" options={{ gestureEnabled: false }} />
           {/* Overlays → native presentations (FR-34): profile preview + filters as sheets */}
           <Stack.Screen name="mate/[id]" options={{ presentation: 'formSheet', sheetAllowedDetents: [0.6, 1] }} />
-          <Stack.Screen name="filters" options={{ presentation: 'formSheet', sheetAllowedDetents: [0.5, 0.9] }} />
+          {/* Android's formSheet free-drags between multiple detents in a way
+             iOS's native sheet doesn't (react-native-screens' Android sheet
+             snapping is looser than iOS's UISheetPresentationController) — a
+             single fixed detent on Android removes the "drag between stops"
+             behavior entirely, giving a stable half-height sheet instead. */}
+          <Stack.Screen
+            name="filters"
+            options={{
+              presentation: 'formSheet',
+              sheetAllowedDetents: Platform.OS === 'android' ? [0.75] : [0.5, 0.9],
+            }}
+          />
           {/* Plain push, NOT formSheet: this is the only menu item opened from
              ProfileMenuButton's own <Modal>, and presenting a formSheet (also a
              native modal on iOS) while that Modal is still dismissing races two
