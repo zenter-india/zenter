@@ -12,7 +12,7 @@
  * profile / connections) rather than per row.
  */
 import { useState } from 'react';
-import { Modal, View, TextInput, StyleSheet } from 'react-native';
+import { Modal, View, TextInput, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radius, space, fonts } from '@/theme';
 import { Text, Button } from '@/components';
@@ -42,7 +42,10 @@ export function BlockSheet({ visible, name, busy, onCancel, onSubmit }: BlockShe
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      <View style={styles.backdrop}>
+      <KeyboardAvoidingView
+        style={styles.backdrop}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <View style={[styles.card, { marginBottom: insets.bottom }]}>
           <Text variant="h3">{name ? `Block ${name}?` : 'Why are you blocking this user?'}</Text>
           <Text variant="bodyMuted">
@@ -82,7 +85,7 @@ export function BlockSheet({ visible, name, busy, onCancel, onSubmit }: BlockShe
             />
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
