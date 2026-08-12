@@ -67,9 +67,15 @@ module.exports = ({ config }) => ({
     [
       'expo-splash-screen',
       {
-        image: './assets/icon.png',
+        // Transparent-background cutout (assets/logo-transparent.png), not the
+        // opaque-white icon.png — a solid white square composited onto a
+        // solid background can show a faint edge on wide-gamut (P3) iOS
+        // displays even when the two whites look identical in code. Splash
+        // background matches BootSplash's brand orange so the native splash
+        // and the JS boot screen read as one continuous frame, not two.
+        image: './assets/logo-transparent.png',
         imageWidth: 200,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#FF6B35',
       },
     ],
     // Native crash reporting. DSN is read at runtime via EXPO_PUBLIC_SENTRY_DSN
