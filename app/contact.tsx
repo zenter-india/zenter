@@ -51,8 +51,8 @@ export default function ContactScreen() {
             Available Mon – Sat, 9 am – 6 pm IST. Fastest way to resolve OTP or login issues.
           </Text>
           <Button
-            title="📞 +91 6363613007"
-            onPress={() => openUrl('tel:+916363613007')}
+            title="📞 +91 70104 41518"
+            onPress={() => openUrl('tel:+917010441518')}
             accessibilityLabel="Call support"
           />
         </Card>

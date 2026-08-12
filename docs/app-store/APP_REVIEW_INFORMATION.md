@@ -10,9 +10,7 @@ already used to build/sign this app (Team ID H5G7S347ZN, "PON BUVANESHWARAN MATH
 - **Last name**: Buvaneshwaran — **OWNER ACTION REQUIRED: confirm exact first/last name split** (the source
   documents give the full name as one string; App Store Connect wants it split, and I should not guess where
   to cut a South Indian name that may not follow a Western first/last convention)
-- **Phone**: `+91 6363613007` (the in-app support number, `app/contact.tsx`) — **OWNER ACTION REQUIRED:
-  confirm this is the right number for Apple to reach specifically about this app, vs. the account holder's
-  personal number**
+- **Phone**: `+91 70104 41518` (the in-app support number, `app/contact.tsx`)
 - **Email**: `support@zenter.in` (in-app + privacy policy, verified live)
 
 ## Sign-In Information
@@ -108,7 +106,7 @@ My profile → scroll to "Privacy & account" → "Delete account" → confirm. T
 deletes the profile and connections (see ACCOUNT_DELETION.md for the exact backend behavior).
 
 CONTACT
-support@zenter.in / +91 6363613007
+support@zenter.in / +91 70104 41518
 ```
 
 **OWNER ACTION REQUIRED**: fill in the bracketed payments paragraph above once the Payments Audit's release

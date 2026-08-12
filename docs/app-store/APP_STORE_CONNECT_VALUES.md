@@ -63,7 +63,7 @@ Contact last name:
 OWNER INPUT REQUIRED — see above
 
 Phone:
-OWNER INPUT REQUIRED — confirm +91 6363613007 is the right number for Apple to call about this app
++91 70104 41518
 
 Email:
 support@zenter.in
