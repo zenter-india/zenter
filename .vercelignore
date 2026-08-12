@@ -1,0 +1,6 @@
+# Native mobile app projects — not part of the website deployment.
+# (This repo has no build step, so Vercel would otherwise try to serve
+# these directories as static files.)
+android/
+ios/
+node_modules/
