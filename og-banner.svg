@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0F172A"/>
+      <stop offset="100%" style="stop-color:#1E293B"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FF6B35"/>
+      <stop offset="100%" style="stop-color:#FF8C5A"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="20" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Subtle orange glow top-left -->
+  <ellipse cx="200" cy="200" rx="300" ry="200" fill="#FF6B35" opacity="0.08" filter="url(#glow)"/>
+  <!-- Subtle blue glow bottom-right -->
+  <ellipse cx="1000" cy="480" rx="280" ry="200" fill="#4F46E5" opacity="0.08" filter="url(#glow)"/>
+
+  <!-- Orange accent bar left edge -->
+  <rect x="0" y="0" width="6" height="630" fill="url(#accent)"/>
+
+  <!-- Z logo mark -->
+  <rect x="80" y="220" width="72" height="72" rx="16" fill="#FF6B35"/>
+  <text x="116" y="272" font-family="'Poppins', system-ui, sans-serif" font-size="44" font-weight="700" fill="white" text-anchor="middle">Z</text>
+
+  <!-- Brand name -->
+  <text x="172" y="267" font-family="'Poppins', system-ui, sans-serif" font-size="40" font-weight="700" fill="#F1F5F9">Zenter</text>
+
+  <!-- ADMIN tag (subtle) -->
+  <rect x="172" y="275" width="0" height="0" fill="none"/>
+
+  <!-- Main headline -->
+  <text x="80" y="360" font-family="'Inter', system-ui, sans-serif" font-size="52" font-weight="700" fill="#F1F5F9">Find Your NEET UG</text>
+  <text x="80" y="428" font-family="'Inter', system-ui, sans-serif" font-size="52" font-weight="700" fill="#FF6B35">Travel &amp; Stay Mates</text>
+
+  <!-- Subtext -->
+  <text x="80" y="490" font-family="'Inter', system-ui, sans-serif" font-size="24" fill="#94A3B8">Connect with verified centre mates · Coordinate travel · Walk in together</text>
+
+  <!-- Right side: subtle card illustration -->
+  <rect x="840" y="140" width="280" height="160" rx="16" fill="#1E293B" stroke="#334155" stroke-width="1.5"/>
+  <circle cx="876" cy="185" r="24" fill="#4F46E5"/>
+  <text x="876" y="193" font-family="'Inter', sans-serif" font-size="18" font-weight="700" fill="white" text-anchor="middle">AR</text>
+  <rect x="912" y="173" width="120" height="12" rx="6" fill="#334155"/>
+  <rect x="912" y="193" width="80" height="10" rx="5" fill="#1E3A5F" opacity="0.8"/>
+  <text x="912" y="188" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8">Aarav R.</text>
+  <text x="912" y="204" font-family="'Inter', sans-serif" font-size="10" fill="#64748B">Pune → Mumbai</text>
+  <rect x="856" y="225" width="64" height="22" rx="11" fill="#1E3A5F"/>
+  <text x="888" y="240" font-family="'Inter', sans-serif" font-size="11" fill="#3B82F6" text-anchor="middle">🚂 Train</text>
+  <rect x="928" y="225" width="64" height="22" rx="11" fill="#1A2E22"/>
+  <text x="960" y="240" font-family="'Inter', sans-serif" font-size="11" fill="#10B981" text-anchor="middle">🏨 Stay</text>
+
+  <rect x="840" y="320" width="280" height="160" rx="16" fill="#1E293B" stroke="#334155" stroke-width="1.5"/>
+  <circle cx="876" cy="365" r="24" fill="#DB2777"/>
+  <text x="876" y="373" font-family="'Inter', sans-serif" font-size="18" font-weight="700" fill="white" text-anchor="middle">PS</text>
+  <text x="912" y="368" font-family="'Inter', sans-serif" font-size="12" fill="#94A3B8">Priya S.</text>
+  <text x="912" y="384" font-family="'Inter', sans-serif" font-size="10" fill="#64748B">Local · Has accommodation</text>
+  <rect x="856" y="405" width="80" height="22" rx="11" fill="#1A2E22"/>
+  <text x="896" y="420" font-family="'Inter', sans-serif" font-size="11" fill="#10B981" text-anchor="middle">✓ Verified</text>
+
+  <!-- Bottom bar -->
+  <rect x="0" y="590" width="1200" height="40" fill="#0F172A" opacity="0.7"/>
+  <text x="80" y="616" font-family="'Inter', sans-serif" font-size="16" fill="#64748B">zenter.in · Phone verified · Mutual consent · Centre-matched</text>
+</svg>

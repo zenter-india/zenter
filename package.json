@@ -1,7 +1,7 @@
 {
-  "name": "hallmate",
+  "name": "zenter",
   "version": "0.1.0",
-  "description": "HallMate — find your NEET PG exam centre mates.",
+  "description": "Zenter — find your exam centre mates.",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,10 +11,17 @@
     "test:e2e:report": "playwright show-report"
   },
   "devDependencies": {
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.4.0",
+    "@capacitor/core": "^8.4.0",
     "@playwright/test": "^1.49.0"
   },
   "dependencies": {
+    "@capacitor-firebase/authentication": "^8.3.0",
+    "@capacitor/ios": "^8.4.1",
     "@vercel/analytics": "^2.0.1",
-    "@vercel/speed-insights": "^2.0.0"
+    "@vercel/speed-insights": "^2.0.0",
+    "firebase": "^12.15.0"
   }
 }

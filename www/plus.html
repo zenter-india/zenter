@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#FF6B35" />
+  <title>Zenter Plus - Unlimited Chats & More</title>
+  <meta name="description" content="Upgrade to Zenter Plus for unlimited chats, Verified Aspirant Badge, featured profile, and priority visibility." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://zenter.in/plus.html" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="/css/style.css" rel="stylesheet" />
+  <link href="/css/components.css" rel="stylesheet" />
+  <link href="/css/responsive.css" rel="stylesheet" />
+
+  <link rel="icon" href="/assets/logos/favicon.svg?v=2" type="image/svg+xml" />
+
+  <style>
+    .plus-hero {
+      text-align: center;
+      padding: var(--hm-space-7) var(--hm-space-4) var(--hm-space-5);
+    }
+    .plus-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: var(--hm-space-3);
+    }
+    .plus-price {
+      font-size: 48px;
+      font-weight: 800;
+      color: var(--hm-text);
+      line-height: 1;
+      margin: var(--hm-space-3) 0 var(--hm-space-1);
+    }
+    .plus-price span {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--hm-text-muted);
+    }
+    .plus-season {
+      font-size: 14px;
+      color: var(--hm-text-muted);
+      margin-bottom: var(--hm-space-5);
+    }
+    .plus-features {
+      list-style: none;
+      padding: 0;
+      margin: 0 auto var(--hm-space-5);
+      max-width: 400px;
+      text-align: left;
+    }
+    .plus-features li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--hm-border);
+      font-size: 15px;
+    }
+    .plus-features li:last-child { border-bottom: 0; }
+    .plus-features li .icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .plus-cta {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    .plus-compare {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .plus-compare table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .plus-compare th, .plus-compare td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--hm-border);
+      text-align: left;
+      vertical-align: middle;
+    }
+    .plus-compare th:not(:first-child),
+    .plus-compare td:not(:first-child) {
+      text-align: center;
+      width: 80px;
+    }
+    .plus-compare th {
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--hm-text-muted);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .plus-compare .check { color: #16a34a; font-size: 18px; display: block; text-align: center; }
+    .plus-compare .cross { color: #94a3b8; font-size: 18px; display: block; text-align: center; }
+    .plus-compare .col-plus { color: var(--hm-primary); font-weight: 700; }
+
+    /* Responsive */
+    @media (max-width: 767px) {
+      .plus-hero { padding: var(--hm-space-5) var(--hm-space-3) var(--hm-space-4); }
+      .plus-price { font-size: 36px; }
+      .plus-price span { font-size: 16px; }
+      .plus-features li { font-size: 14px; padding: 8px 0; }
+      .plus-compare table { font-size: 13px; }
+      .plus-compare th, .plus-compare td { padding: 10px 8px; }
+    }
+    @media (max-width: 479px) {
+      .plus-price { font-size: 30px; }
+      .plus-compare table { font-size: 12px; }
+      .plus-compare th, .plus-compare td { padding: 8px 6px; }
+    }
+  </style>
+</head>
+<body>
+  <div data-include="navbar"></div>
+
+  <main class="hm-page" id="hm-main">
+    <div class="hm-container" style="max-width: 640px; padding-bottom: var(--hm-space-7);">
+
+      <!-- Hero -->
+      <div class="plus-hero">
+        <div class="plus-badge">⭐ Zenter Plus</div>
+        <h1 style="font-size: var(--hm-text-3xl); font-weight: 800; margin-bottom: var(--hm-space-2);">
+          Unlock your entire exam centre.
+        </h1>
+        <p style="color: var(--hm-text-muted); font-size: var(--hm-text-lg); margin-bottom: var(--hm-space-4);">
+          Plus gives you priority visibility, featured card and co-ordinate with every centre aspirant.
+        </p>
+        <div class="hm-plus-discount-line" style="visibility:hidden;margin-bottom:var(--hm-space-1);display:flex;align-items:baseline;justify-content:center;gap:8px;flex-wrap:wrap;">
+          <span class="plus-price" style="font-size:18px;font-weight:400;color:var(--hm-text-muted);text-decoration:line-through;margin:0;">₹49</span>
+          <span style="font-size:40px;font-weight:800;color:var(--hm-primary);line-height:1;">₹99</span>
+          <span style="font-size:16px;font-weight:500;color:var(--hm-text-muted);">/ exam season</span>
+        </div>
+        <p class="plus-season">One-time for NEET UG 2026</p>
+      </div>
+
+      <!-- ZenterFirst coupon banner -->
+      <div style="background:linear-gradient(135deg,#1e3a5f 0%,#0f2540 100%);border:1.5px solid #facc15;border-radius:14px;padding:18px 20px;margin-bottom:var(--hm-space-5);text-align:center;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:#facc15;text-transform:uppercase;margin-bottom:6px;">🎉 Early Access Offer</div>
+        <div style="font-size:15px;font-weight:600;color:#fff;margin-bottom:12px;">Founding members get Zenter Plus <span style="color:#facc15;">at a discounted price</span></div>
+        <div style="display:inline-flex;align-items:center;gap:10px;background:rgba(250,204,21,0.12);border:1.5px dashed #facc15;border-radius:8px;padding:8px 18px;margin-bottom:10px;">
+          <span style="font-size:18px;font-weight:800;letter-spacing:3px;color:#facc15;font-family:monospace;">ZENTERFIRST</span>
+          <button onclick="(function(b){try{var code='ZENTERFIRST';if(navigator.clipboard){navigator.clipboard.writeText(code)}else{var t=document.createElement('textarea');t.value=code;t.style.cssText='position:fixed;opacity:0';document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t)}var input=document.getElementById('hm-coupon-input');if(input){input.value=code;input.scrollIntoView({behavior:'smooth',block:'center'});input.focus()}}catch(e){}})(this)"
+            style="background:none;border:1px solid #facc15;color:#facc15;font-size:11px;font-weight:700;border-radius:5px;padding:3px 8px;cursor:pointer;">Get now</button>
+        </div>
+      </div>
+
+      <!-- Card preview — side by side -->
+      <div style="margin-bottom: var(--hm-space-5); text-align:center;">
+        <p style="font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--hm-text-muted);margin-bottom:var(--hm-space-3);">How your card looks</p>
+        <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;max-width:640px;margin:0 auto;">
+          <!-- Free card -->
+          <div style="flex:1;min-width:260px;max-width:300px;">
+            <p style="font-size:11px;color:var(--hm-text-muted);margin-bottom:6px;">Free</p>
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px;text-align:left;box-shadow:0 2px 8px rgba(0,0,0,.06);">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                <div style="width:44px;height:44px;border-radius:50%;background:#4f46e5;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;">AR</div>
+                <div>
+                  <p style="margin:0;font-size:15px;font-weight:700;">Arun R.</p>
+                  <div style="display:flex;gap:4px;margin-top:3px;">
+                    <span style="font-size:11px;background:#eff6ff;color:#2563eb;padding:2px 8px;border-radius:8px;">Male</span>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                <span style="font-size:13px;">🏠</span>
+                <span style="font-size:12px;color:#64748b;"><strong>Pune</strong>, Maharashtra</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="font-size:13px;">📋</span>
+                <span style="font-size:12px;color:#64748b;">Sion Hospital, Mumbai</span>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <span style="font-size:11px;background:#f1f5f9;padding:4px 10px;border-radius:8px;color:#475569;">🚆 Train</span>
+                <span style="font-size:11px;background:#f1f5f9;padding:4px 10px;border-radius:8px;color:#475569;">🏨 Needs stay</span>
+              </div>
+              <div style="margin-top:12px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:11px;color:#94a3b8;">2 chats max</span>
+                <span style="font-size:12px;padding:5px 14px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;color:var(--hm-primary);font-weight:600;">Connect</span>
+              </div>
+            </div>
+          </div>
+          <!-- Plus card -->
+          <div style="flex:1;min-width:260px;max-width:300px;">
+            <p style="font-size:11px;color:#92400e;font-weight:700;margin-bottom:6px;">✨ Plus</p>
+            <div style="background:linear-gradient(135deg,#fffbeb 0%,#ffffff 60%);border:1.5px solid #fde68a;border-radius:16px;padding:20px;text-align:left;box-shadow:0 4px 20px rgba(251,191,36,.25);">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                <div style="width:44px;height:44px;border-radius:50%;background:#db2777;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;box-shadow:0 2px 8px rgba(219,39,119,.3);">PR</div>
+                <div>
+                  <p style="margin:0;font-size:15px;font-weight:700;">Priya R.</p>
+                  <div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap;">
+                    <span style="font-size:11px;background:#fdf2f8;color:#db2777;padding:2px 8px;border-radius:8px;">Female</span>
+                    <span style="font-size:11px;background:#fef9c3;color:#854d0e;border:1px solid #fef08a;padding:2px 8px;border-radius:8px;font-weight:700;">⭐ Plus</span>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                <span style="font-size:13px;">🏠</span>
+                <span style="font-size:12px;color:#64748b;"><strong>Mumbai</strong>, Maharashtra</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+                <span style="font-size:13px;">📋</span>
+                <span style="font-size:12px;color:#64748b;">Sion Hospital, Mumbai</span>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <span style="font-size:11px;background:#fef9c3;padding:4px 10px;border-radius:8px;color:#854d0e;">🏠 Has stay</span>
+                <span style="font-size:11px;background:#fef9c3;padding:4px 10px;border-radius:8px;color:#854d0e;">🚗 Self Drive</span>
+              </div>
+              <div style="margin-top:12px;padding-top:10px;border-top:1px solid #fde68a;display:flex;align-items:center;justify-content:space-between;">
+                <span style="font-size:11px;color:#16a34a;font-weight:600;">✨ Unlimited chats</span>
+                <span style="font-size:12px;padding:5px 14px;border-radius:8px;border:none;background:var(--hm-primary);color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(255,107,53,.3);">Connect</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div class="hm-card" style="padding: var(--hm-space-5); margin-bottom: var(--hm-space-5);">
+        <ul class="plus-features">
+          <li>
+            <span class="icon">✨</span>
+            <div>
+              <strong>Featured Profile</strong>
+              <p style="margin:2px 0 0;font-size:13px;color:var(--hm-text-muted);">Your profile card gets a gold border and warm glow — visually distinct from every free user in the feed.</p>
+            </div>
+          </li>
+          <li>
+            <span class="icon">🔝</span>
+            <div>
+              <strong>Priority Visibility</strong>
+              <p style="margin:2px 0 0;font-size:13px;color:var(--hm-text-muted);">Your profile appears above all free users in your district's find aspirants feed.</p>
+            </div>
+          </li>
+          <li>
+            <span class="icon">💬</span>
+            <div>
+              <strong>Unlock entire exam centre</strong>
+              <p style="margin:2px 0 0;font-size:13px;color:var(--hm-text-muted);">Free users get 2 accesses. Plus breaks the barrier and lets you co-ordinate with the entire exam centre.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Free vs Plus comparison -->
+      <h2 style="font-size: var(--hm-text-lg); font-weight: 700; margin-bottom: var(--hm-space-3); text-align:center;">Free vs Plus</h2>
+      <div class="hm-card plus-compare" style="margin-bottom: var(--hm-space-5); overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Free</th>
+              <th class="col-plus">Plus ⭐</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Browse district aspirants</td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>Send &amp; receive requests</td>
+              <td><span class="check">✓</span></td>
+              <td><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>Featured profile (gold card)</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>⭐ Plus Badge on card</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>Priority position in feed</td>
+              <td><span class="cross">✗</span></td>
+              <td><span class="check">✓</span></td>
+            </tr>
+            <tr>
+              <td>Active co-ordinations</td>
+              <td style="font-size:13px;color:var(--hm-text-muted);">2 only</td>
+              <td style="color:var(--hm-primary);font-weight:700;">Unlimited</td>
+            </tr>
+            <tr>
+              <td>Exchange contact</td>
+              <td style="font-size:13px;color:var(--hm-text-muted);">2 only</td>
+              <td style="color:var(--hm-primary);font-weight:700;">Unlimited</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Coupon code -->
+      <div style="margin-bottom:var(--hm-space-4);max-width:400px;margin-left:auto;margin-right:auto;">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="hm-coupon-input" placeholder="Have a coupon code?"
+            style="flex:1;padding:10px 14px;border:1px solid var(--hm-border);border-radius:var(--hm-radius-md);
+                   font-size:14px;background:var(--hm-surface);color:var(--hm-text);text-transform:uppercase;
+                   letter-spacing:1px;" maxlength="20" autocomplete="off" />
+          <button type="button" id="hm-coupon-apply" class="hm-btn hm-btn--ghost hm-btn--sm">Apply</button>
+        </div>
+        <button type="button" id="hm-coupon-remove" hidden
+          style="background:none;border:none;color:var(--hm-danger,#dc2626);font-size:12px;font-weight:600;
+                 cursor:pointer;padding:4px 0 0;text-decoration:underline;">
+          ✕ Remove coupon
+        </button>
+        <p id="hm-coupon-status" style="font-size:12px;margin-top:4px;min-height:18px;"></p>
+      </div>
+
+      <!-- CTA -->
+      <div class="plus-cta">
+        <div style="text-align:center;margin-bottom:var(--hm-space-3);">
+          <span id="hm-price-original" style="font-size:15px;color:var(--hm-text-muted);text-decoration:line-through;margin-right:8px;display:none;">₹49</span>
+          <span id="hm-price-final" style="font-size:22px;font-weight:700;color:var(--hm-text);visibility:hidden;">₹49</span>
+          <span style="font-size:13px;color:var(--hm-text-muted);margin-left:4px;">/ exam season</span>
+        </div>
+        <button class="hm-btn hm-btn--primary hm-btn--lg" id="hm-buy-plus" style="width:100%;font-size:17px;visibility:hidden;">
+          Get Zenter Plus
+        </button>
+        <p id="hm-plus-pay-status" style="text-align:center;font-size:13px;color:var(--hm-text-muted);margin-top:var(--hm-space-2);min-height:20px;"></p>
+        <p style="text-align:center;margin-top:var(--hm-space-3);">
+          <a href="/dashboard.html" style="color:var(--hm-primary);font-size:14px;font-weight:600;">← Back to Home</a>
+        </p>
+      </div>
+
+    </div>
+  </main>
+  <div data-include="bottom-nav"></div>
+  <script type="module" src="/js/app.js"></script>
+  <!-- Razorpay checkout SDK -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script type="module">
+    import { requireOnboarded } from '/js/auth.js';
+    import { getUserByPhone, trackEvent, createRazorpayOrder, verifyRazorpayPayment, claimFreePlus, query, from } from '/js/supabase.js';
+
+    let appliedCoupon = null;
+    let finalPaise    = null; // tracks current final price in paise; null until probe resolves
+
+    async function init() {
+      const firebaseUser = await requireOnboarded();
+      if (!firebaseUser) return;
+
+      const { data: me } = await getUserByPhone(firebaseUser.phoneNumber);
+      if (!me) return;
+
+      // Check if Plus is enabled
+      const { data: cfgRows } = await query(from('platform_config').select('key,value'));
+      const plusEnabled = cfgRows?.find(r => r.key === 'plus_enabled')?.value !== false;
+      if (!plusEnabled) {
+        document.body.innerHTML = '<div style="text-align:center;padding:40px 20px;"><p style="font-size:18px;margin-bottom:20px;">Zenter Plus is not available right now.</p><a href="/dashboard.html" style="color:#FF6B35;text-decoration:none;font-weight:600;">← Back to Home</a></div>';
+        return;
+      }
+
+      const btn           = document.getElementById('hm-buy-plus');
+      const status        = document.getElementById('hm-plus-pay-status');
+      const couponInput   = document.getElementById('hm-coupon-input');
+      const couponApply   = document.getElementById('hm-coupon-apply');
+      const couponStatus  = document.getElementById('hm-coupon-status');
+      const couponRemove  = document.getElementById('hm-coupon-remove');
+      let basePrice = null; // remember original price so we can restore on remove
+      const priceOriginal = document.getElementById('hm-price-original');
+      const priceFinal    = document.getElementById('hm-price-final');
+
+      // Fetch current price from server (admin-controlled via platform_config)
+      try {
+        const probe = await createRazorpayOrder(me.id, null, true);
+        const price = probe.original_paise / 100;
+        basePrice = price;
+        finalPaise = probe.original_paise;
+        document.querySelectorAll('.plus-price').forEach(el => {
+          el.textContent = `₹${price}`;
+          el.style.visibility = 'visible';
+        });
+        document.querySelectorAll('.hm-plus-discount-line').forEach(el => { el.style.visibility = 'visible'; });
+        if (priceFinal)   { priceFinal.textContent = `₹${price}`; priceFinal.style.visibility = 'visible'; }
+        if (priceOriginal)  priceOriginal.textContent = `₹${price}`;
+        btn.textContent = finalPaise === 0 ? 'Claim Zenter Plus — FREE' : `Get Zenter Plus — ₹${price}`;
+        btn.style.visibility = 'visible';
+      } catch {
+        // Fallback: show hardcoded values
+        document.querySelectorAll('.plus-price').forEach(el => { el.style.visibility = 'visible'; });
+        if (priceFinal) priceFinal.style.visibility = 'visible';
+        btn.textContent = 'Get Zenter Plus — ₹49';
+        btn.style.visibility = 'visible';
+      }
+
+      // Already Plus
+      if (me.plus_member) {
+        btn.disabled = true;
+        btn.textContent = '⭐ You are already Zenter Plus!';
+        btn.style.background = '#16a34a';
+        status.textContent = '';
+        if (couponInput) couponInput.disabled = true;
+        if (couponApply) couponApply.disabled = true;
+        return;
+      }
+
+      trackEvent('plus_page_view', me.id, { source: 'plus_page' });
+
+      // Coupon apply — server-side validation via dry_run
+      couponApply?.addEventListener('click', async () => {
+        const code = (couponInput.value || '').trim().toUpperCase();
+        if (!code) { couponStatus.textContent = ''; return; }
+        couponApply.disabled = true;
+        couponStatus.style.color = 'var(--hm-text-muted)';
+        couponStatus.textContent = 'Checking…';
+        try {
+          const probe = await createRazorpayOrder(me.id, code, true);
+          if (probe.coupon_applied) {
+            appliedCoupon = code;
+            finalPaise = probe.final_paise;
+            const discounted = probe.final_paise / 100;
+            const original   = probe.original_paise / 100;
+            priceFinal.textContent    = finalPaise === 0 ? 'FREE' : `₹${discounted}`;
+            priceOriginal.textContent = `₹${original}`;
+            priceOriginal.style.display = 'inline';
+            btn.textContent = finalPaise === 0 ? 'Claim Zenter Plus — FREE' : `Get Zenter Plus — ₹${discounted}`;
+            couponStatus.style.color = '#16a34a';
+            couponStatus.textContent = finalPaise === 0
+              ? `✓ 100% off! ${probe.coupon_label || ''} — Zenter Plus is free for you!`
+              : `✓ Coupon applied! ${probe.coupon_label || ''}`;
+            couponInput.disabled = true;
+            couponApply.textContent = '✓';
+            if (couponRemove) couponRemove.hidden = false;
+            trackEvent('coupon_applied', me.id, { coupon: code, price: discounted });
+          } else {
+            appliedCoupon = null;
+            couponStatus.style.color = '#dc2626';
+            couponStatus.textContent = '✗ Invalid coupon code.';
+            couponApply.disabled = false;
+          }
+        } catch {
+          couponStatus.style.color = '#dc2626';
+          couponStatus.textContent = '✗ Could not verify coupon. Try again.';
+          couponApply.disabled = false;
+        }
+      });
+
+      couponInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') couponApply?.click();
+      });
+
+      // Remove coupon — restore base price and re-enable Apply
+      couponRemove?.addEventListener('click', () => {
+        const prevCode = appliedCoupon;
+        appliedCoupon = null;
+        finalPaise = basePrice != null ? basePrice * 100 : null;
+        couponInput.value = '';
+        couponInput.disabled = false;
+        couponApply.disabled = false;
+        couponApply.textContent = 'Apply';
+        couponStatus.textContent = '';
+        couponStatus.style.color = 'var(--hm-text-muted)';
+        couponRemove.hidden = true;
+        if (basePrice != null) {
+          priceFinal.textContent = `₹${basePrice}`;
+          priceOriginal.style.display = 'none';
+          btn.textContent = `Get Zenter Plus — ₹${basePrice}`;
+        }
+        couponInput.focus();
+        trackEvent('coupon_removed', me.id, { coupon: prevCode });
+      });
+
+      // Buy button — free claim or Razorpay checkout
+      btn.addEventListener('click', async () => {
+        btn.disabled = true;
+        trackEvent('upgrade_cta_click', me.id, { source: 'plus_page', coupon: appliedCoupon });
+
+        // ── Zero-price path: skip payment gateway entirely ──────────────────
+        if (finalPaise === 0) {
+          status.textContent = 'Activating Zenter Plus…';
+          try {
+            await claimFreePlus(me.id);
+            btn.textContent = '⭐ Welcome to Zenter Plus!';
+            btn.style.background = '#16a34a';
+            status.style.color = '#16a34a';
+            status.textContent = '🎉 Zenter Plus activated! Redirecting…';
+            trackEvent('payment_success', me.id, { order_id: 'free', coupon: appliedCoupon });
+            setTimeout(() => { window.location.href = '/dashboard.html'; }, 2000);
+          } catch (err) {
+            status.style.color = '#dc2626';
+            status.textContent = '⚠️ ' + (err.message || 'Something went wrong. Please try again.');
+            btn.disabled = false;
+          }
+          return;
+        }
+
+        // ── Paid path: Razorpay checkout ─────────────────────────────────────
+        status.textContent = 'Creating order…';
+        try {
+          const order = await createRazorpayOrder(me.id, appliedCoupon);
+
+          const options = {
+            key:         order.key_id,
+            amount:      order.amount,
+            currency:    order.currency,
+            name:        'Zenter',
+            description: 'Zenter Plus — Unlimited Chats',
+            order_id:    order.order_id,
+            prefill:     { contact: firebaseUser.phoneNumber },
+            theme:       { color: '#FF6B35' },
+            modal: {
+              ondismiss: () => {
+                btn.disabled = false;
+                status.textContent = '';
+                trackEvent('payment_dismissed', me.id);
+              }
+            },
+            handler: async (response) => {
+              status.textContent = 'Verifying payment…';
+              try {
+                await verifyRazorpayPayment(
+                  response.razorpay_order_id,
+                  response.razorpay_payment_id,
+                  response.razorpay_signature,
+                  me.id
+                );
+                btn.textContent = '⭐ Welcome to Zenter Plus!';
+                btn.style.background = '#16a34a';
+                status.style.color = '#16a34a';
+                status.textContent = 'Payment successful! Redirecting…';
+                trackEvent('payment_success', me.id, { order_id: response.razorpay_order_id });
+                setTimeout(() => { window.location.href = '/dashboard.html'; }, 2000);
+              } catch (err) {
+                status.style.color = '#dc2626';
+                status.textContent = '⚠️ Verification failed. Contact support@zenter.in';
+                btn.disabled = false;
+                trackEvent('payment_verification_failed', me.id, { error: err.message });
+              }
+            },
+          };
+
+          const rzp = new window.Razorpay(options);
+          rzp.open();
+          status.textContent = '';
+        } catch (err) {
+          status.style.color = '#dc2626';
+          status.textContent = '⚠️ ' + (err.message || 'Something went wrong. Please try again.');
+          btn.disabled = false;
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
