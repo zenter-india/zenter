@@ -52,14 +52,18 @@ Deno.serve(async (req) => {
   const url = new URL(MSG91_OTP_URL);
   url.searchParams.set('template_id', TEMPLATE_ID);
   url.searchParams.set('mobile', mobile);
-  url.searchParams.set('otp', otp);
 
   let result: { type?: string; message?: string } = {};
   try {
-    // The DLT-approved ZENTER_OTP template has two more variables besides
-    // ##OTP##; they must be filled or the operator rejects the text for
-    // not matching the registered template.
-    const templateVars = { URL: 'zenter.in', MAIL: 'support@zenter.in' };
+    // EVERY ##...## variable in the template, ##OTP## included, is filled from
+    // this JSON body — that is what MSG91's own snippet for ZENTER_OTP sends
+    // (Templates -> Code { JSON }). Passing the code as an `otp` query param
+    // instead leaves ##OTP## unfilled, so the rendered text no longer matches
+    // the DLT-registered template and the operator drops it. MSG91 still
+    // answers `type: success` with a request id in that case, and the send
+    // never reaches its own SendOTP logs — which is exactly how this looked
+    // in production: healthy hooks, no log row, no SMS.
+    const templateVars = { OTP: otp, URL: 'zenter.in', MAIL: 'support@zenter.in' };
     const res = await fetch(url, { method: 'POST', headers: { authkey: AUTH_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(templateVars) });
     result = await res.json().catch(() => ({}));
     if (!res.ok || result.type !== 'success') {
