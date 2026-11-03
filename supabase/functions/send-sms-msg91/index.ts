@@ -10,6 +10,11 @@
 //
 // Required secrets: MSG91_AUTH_KEY, MSG91_TEMPLATE_ID (DLT-approved OTP
 // template containing the ##OTP## variable), SEND_SMS_HOOK_SECRET.
+//
+// MSG91 account requirement: API Security (IP whitelisting) must stay OFF.
+// Edge functions call out from changing AWS IPs, so there is nothing stable to
+// whitelist; with it on, MSG91 rejects every call with error code 418 — and
+// the rejection is invisible from here (see the `type: success` note below).
 import { Webhook } from 'https://esm.sh/standardwebhooks@1.0.0';
 
 const AUTH_KEY = Deno.env.get('MSG91_AUTH_KEY')!;
