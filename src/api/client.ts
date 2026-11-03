@@ -6,7 +6,7 @@ import { env } from '@/lib/env';
 /**
  * The single Supabase client for the whole app (AD-1: one data-access layer).
  *
- * Authorization model: Supabase Auth (phone OTP via Twilio Verify) is the
+ * Authorization model: Supabase Auth (phone OTP, SMS via MSG91) is the
  * identity system — `persistSession`/`autoRefreshToken` are on, backed by
  * AsyncStorage, so a session survives app restarts and refreshes itself
  * before the JWT expires. RLS policies key off `auth.uid()` via

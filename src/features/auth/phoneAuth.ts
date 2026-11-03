@@ -6,7 +6,8 @@ import type { AuthError, Session } from '@supabase/supabase-js';
  * module — see project history for why: Firebase's iOS silent-push device
  * verification is capped at Apple's low-priority background-delivery tier,
  * so it fell back to a reCAPTCHA web view too often to be usable. Supabase
- * Auth's phone provider, configured with Twilio Verify as the SMS backend,
+ * Auth's phone provider, with MSG91 delivering the SMS via the
+ * `send-sms-msg91` "Send SMS" hook,
  * has no such fallback — it's a direct SMS OTP send/check, same on iOS and
  * Android).
  *
@@ -17,7 +18,7 @@ import type { AuthError, Session } from '@supabase/supabase-js';
 
 /**
  * Send an OTP to an already-normalized E.164 number via Supabase Auth
- * (Twilio Verify under the hood). Caller must normalize with
+ * (MSG91 delivers the SMS). Caller must normalize with
  * normalizePhoneIN() first (mirrors the former sendOtp()/startPhoneAuth()).
  */
 export async function startPhoneAuth(e164: string): Promise<void> {
@@ -78,12 +79,12 @@ export function normalizePhoneIN(raw: string | null | undefined): string | null 
  * Firebase's `auth/*` strings for phone-OTP specifically — this keys first on
  * `error.code` where GoTrue does supply one, then falls back to matching
  * `error.message` substrings (Supabase's messages are human-readable and
- * fairly stable, but confirm these against real responses once Twilio Verify
+ * fairly stable, but confirm these against real responses once SMS delivery
  * is live — see TODO markers).
  */
 const AUTH_ERROR_CODES: Record<string, string> = {
   // TODO(verify): confirm these exact `error.code` values against a live
-  // Supabase project with Twilio Verify configured.
+  // Supabase project with the MSG91 send-SMS hook configured.
   over_sms_send_rate_limit: 'Too many attempts. Please wait a moment and try again.',
   sms_send_failed: 'Could not send the code. Please try again.',
   over_request_rate_limit: 'Too many attempts. Please wait a moment and try again.',

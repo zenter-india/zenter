@@ -15,12 +15,11 @@ module.exports = ({ config }) => ({
   userInterfaceStyle: 'light',
   ios: {
     bundleIdentifier: 'in.zenter.app',
-    googleServicesFile: process.env.GOOGLE_SERVICES_PLIST || './config/GoogleService-Info.plist',
     supportsTablet: false,
     infoPlist: {
       UIBackgroundModes: ['remote-notification'],
       // Export-compliance answer for App Store Connect: the app only uses
-      // standard OS-provided HTTPS/TLS (Supabase, Firebase) — no proprietary
+      // standard OS-provided HTTPS/TLS (Supabase, MSG91) — no proprietary
       // encryption — so it's exempt. Without this key, App Store Connect asks
       // the encryption question manually on every submission.
       ITSAppUsesNonExemptEncryption: false,
@@ -35,11 +34,10 @@ module.exports = ({ config }) => ({
       // dialog it describes will never actually appear.
       NSPhotoLibraryUsageDescription: 'Zenter does not access your photo library.',
     },
-    // Required for @react-native-firebase/auth's silent-push device
-    // verification on iOS (the APNs equivalent of Android's Play Integrity
-    // check) — without this entitlement the app never gets a valid APNs
-    // device token, so Firebase can't silently verify the device and always
-    // falls back to the reCAPTCHA web-view during phone sign-in.
+    // APNs entitlement for expo-notifications (connection requests, chat
+    // messages, accepted requests — see src/lib/pushNotifications.ts). It was
+    // originally added for Firebase Auth's silent-push device verification;
+    // that is gone with Firebase, but push itself still needs this.
     entitlements: {
       'aps-environment': APS_PRODUCTION_PROFILES.includes(process.env.EAS_BUILD_PROFILE) ? 'production' : 'development',
     },
@@ -55,9 +53,6 @@ module.exports = ({ config }) => ({
   plugins: [
     'expo-router',
     'expo-dev-client',
-    '@react-native-firebase/app',
-    '@react-native-firebase/auth',
-    './plugins/withExplicitApnsRegistration',
     [
       'expo-build-properties',
       {
