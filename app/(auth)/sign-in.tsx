@@ -12,7 +12,7 @@ import { useSession } from '@/stores/session';
 /**
  * Phone entry (Story 2.1, FR-1). A 10-digit Indian mobile behind a `+91` prefix
  * is normalized to E.164 (normalizePhoneIN) and an OTP is sent via
- * startPhoneAuth (Supabase Auth, Twilio Verify backend) — no reCAPTCHA. The
+ * startPhoneAuth (Supabase Auth, MSG91 SMS delivery) — no reCAPTCHA. The
  * phone is handed to the OTP screen as a route param (serializable — unlike
  * the old Firebase ConfirmationResult, Supabase's verifyOtp only needs the
  * phone string). Invalid input blocks with the documented copy before any

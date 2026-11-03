@@ -6,7 +6,8 @@ NEET MDS, NEET SS).
 
 Built with **Expo SDK 57** (custom dev client) + **Expo Router** + **TypeScript
 (strict)**. It talks to the same production backend as the website — Supabase for
-data, Firebase for phone-OTP authentication — so nothing needs to be provisioned
+data and phone-OTP authentication (SMS delivered by MSG91) — so nothing needs
+to be provisioned
 before you can run it.
 
 > ### ⚠️ Clone this branch, not the default one
@@ -50,22 +51,13 @@ setx JAVA_HOME "C:\Program Files\Android\Android Studio\jbr"                    
 ```
 
 > **This app cannot run in Expo Go, and it has no web target.** It uses native
-> modules (Firebase Auth, Reanimated, Razorpay), so it needs a custom **dev
-> client** on Android or iOS — see §3.
+> modules (Reanimated, Razorpay, react-native-iap, expo-notifications), so it
+> needs a custom **dev client** on Android or iOS — see §3.
 >
-> If you open `http://localhost:8081` or press `w` at the Metro prompt, the app
-> will bundle for web and then crash with:
->
-> ```
-> ERROR [Error: No Firebase App '[DEFAULT]' has been created -
->        call firebase.initializeApp()]   at src/stores/session.tsx
-> ```
->
-> That is expected, not a bug. `@react-native-firebase/auth` initialises itself
-> from the native `google-services.json` / `GoogleService-Info.plist`, and
-> neither exists on web. Press **`a`** (Android) or **`i`** (iOS) instead.
-> `react-native-web` and `react-dom` are present only because Expo's tooling
-> requires them.
+> Press **`a`** (Android) or **`i`** (iOS) at the Metro prompt. Opening
+> `http://localhost:8081` or pressing `w` bundles for web, which is not a
+> supported target. `react-native-web` and `react-dom` are present only because
+> Expo's tooling requires them.
 
 ---
 
@@ -96,8 +88,8 @@ npm run lint        # expo lint     → expect 0 errors, 0 warnings
 
 Only the Supabase **publishable (anon)** URL and key. These are designed to be
 shipped inside the app binary and are protected server-side by Postgres Row
-Level Security, so they are pre-filled in `.env.example`. The Firebase native
-config files are already committed under [`config/`](config/) — see
+Level Security, so they are pre-filled in `.env.example`. The Android FCM
+config for push is already committed under [`config/`](config/) — see
 [config/README.md](config/README.md) for why that is safe.
 
 Nothing secret is stored in this repo.
@@ -216,7 +208,7 @@ Connect credentials. Neither is in this repo — supply them as EAS credentials.
 │
 ├── __tests__/              # Jest unit tests over src/domain and payments
 ├── assets/                 # app icon + adaptive icon
-├── config/                 # Firebase native config (see config/README.md)
+├── config/                 # Android FCM config for push (see config/README.md)
 ├── app.config.js           # THE source of truth for native config
 ├── eas.json                # build profiles
 └── babel.config.js  tsconfig.json  eslint.config.js
@@ -234,25 +226,17 @@ Connect credentials. Neither is in this repo — supply them as EAS credentials.
 
 ## 6. Testing on real devices — read this before you file a bug
 
-**Phone OTP login will fail on a locally-built Android app until you register
-your machine's debug signing key with Firebase.** Firebase phone auth verifies
-the app via its signing certificate, and your local debug keystore is not the
-one used for the EAS builds.
+**Phone OTP login works from any build, local or EAS.** It is Supabase Auth
+with MSG91 delivering the SMS, so there is no signing-certificate registration
+and no reCAPTCHA — the old Firebase SHA-1 fingerprint step is gone.
 
-```bash
-# From the project root after `npx expo prebuild`:
-cd android && ./gradlew signingReport      # look for Variant: debug → SHA1 / SHA-256
-```
+To sign in without burning real SMS, use a number registered under **Supabase →
+Authentication → Sign In / Providers → Phone → Test Phone Numbers and OTPs**.
+Those entries must carry the country code (`916363613007=123123`, not
+`6363613007=123123`) or they never match what the app sends.
 
-Add both the SHA-1 and SHA-256 to **Firebase console → Project `new-hallmate` →
-Project settings → Your apps → Android `in.zenter.app` → Add fingerprint**, then
-rebuild. Builds produced by `eas build` are already signed with a registered
-key, so if you want to skip this step entirely, test with a `preview` APK from
-EAS instead.
-
-**On iOS, use a real device with a real phone number.** Firebase phone auth on
-iOS goes through APNs / reCAPTCHA; the Simulator cannot receive the silent push,
-and Firebase *test* numbers bypass the exact code path most likely to break.
+**On iOS, push notifications still need a real device** — the Simulator cannot
+register with APNs. Sign-in itself works fine in the Simulator.
 
 **Other notes:**
 
@@ -272,15 +256,14 @@ and Firebase *test* numbers bypass the exact code path most likely to break.
 
 | Symptom | Fix |
 |---|---|
-| `No Firebase App '[DEFAULT]' has been created` | You are running on **web**, which is not supported. Press `a` or `i` at the Metro prompt, not `w`. See the note in §1. |
 | Gradle: `Unsupported class file major version` / refuses to start | `JAVA_HOME` points at JDK 22+. Point it at JDK 17 or 21 — see §1. |
 | `npm run android` reports no devices | Attach a phone with USB debugging on, or start an emulator from Android Studio → Device Manager. Check with `adb devices`. |
 | A killed Gradle build left stale locks | `cd android && ./gradlew --stop`, then delete `android/.gradle`, or just `npx expo prebuild --clean` |
 | Red "Missing config" screen on launch | `.env` is absent or empty — `cp .env.example .env`, then restart Metro with `npm start --clear` |
-| `expo prebuild` fails on the Firebase plugin | `config/google-services.json` or `config/GoogleService-Info.plist` is missing — they ship with this repo, so restore them from git |
+| `expo prebuild` fails on the Android build | `config/google-services.json` is missing — it ships with this repo, so restore it from git |
 | Gradle fails with an "Unsupported class file major version" or JDK error | You are not on JDK 17. Check `java -version` and `JAVA_HOME`. |
 | `SDK location not found` | Set `ANDROID_HOME`, or create `android/local.properties` with `sdk.dir=/path/to/Android/Sdk` |
-| OTP never arrives on a local Android build | Debug SHA-1 not registered in Firebase — see §6 |
+| OTP never arrives | Check the `send-sms-msg91` function log in Supabase, then MSG91 → SendOTP → Logs (it lags ~10 min). MSG91 answers `type: success` even for rejected sends, so that alone proves nothing — see the function's header comment. |
 | Metro serves stale JavaScript | `npx expo start --clear` |
 | Native state is corrupt after a dependency change | `npx expo prebuild --clean` then rebuild |
 | Dependency versions drift from the SDK | `npx expo install --fix` |

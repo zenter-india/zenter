@@ -3,7 +3,7 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/api/client';
 
 /**
- * Global auth session. Supabase Auth (phone OTP via Twilio Verify) is the
+ * Global auth session. Supabase Auth (phone OTP, SMS via MSG91) is the
  * identity system; `phone` (E.164) is the app-wide user handle for backend
  * calls. `ready` gates the boot splash with a bounded timeout so a cold-start
  * failure resolves as logged-out.
