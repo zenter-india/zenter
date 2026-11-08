@@ -1,0 +1,3 @@
+# Every change needs a review from the code owner before it can merge.
+# Branch protection on this branch enforces "Require review from Code Owners".
+*       @zenter-india
